@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Models\Branch; // Import Branch model
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\PendingUserRegistration;
@@ -21,7 +22,10 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('auth/Register');
+        $branches = Branch::all(['id', 'name']);
+        return Inertia::render('auth/Register', [
+            'branches' => $branches,
+        ]);
     }
 
     /**
@@ -35,12 +39,24 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|string|max:255',
+            'date_of_birth' => 'nullable|date',
+            'gender' => 'nullable|string|in:male,female,other',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => $request->password,
+            'address' => $request->address,
+            'city' => $request->city,
+            'country' => $request->country,
+            'phone_number' => $request->phone_number,
+            'date_of_birth' => $request->date_of_birth,
+            'gender' => $request->gender,
             'account_status' => User::STATUS_PENDING,
             'account_type' => User::TYPE_EXTERNAL,
         ]);

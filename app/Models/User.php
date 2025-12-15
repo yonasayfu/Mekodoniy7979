@@ -16,6 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Lab404\Impersonate\Models\Impersonate;
 use Lab404\Impersonate\Services\ImpersonateManager;
+use App\Scopes\BranchScope; // Import BranchScope
 
 class User extends Authenticatable
 {
@@ -36,11 +37,22 @@ class User extends Authenticatable
     use TwoFactorAuthenticatable;
 
     /**
+     * The "booted" method of the model.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::addGlobalScope(new BranchScope);
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
     protected $fillable = [
+        'branch_id', // Add branch_id here
         'name',
         'email',
         'password',
@@ -50,7 +62,36 @@ class User extends Authenticatable
         'account_type',
         'approved_at',
         'approved_by',
+        'address',
+        'city',
+        'country',
+        'date_of_birth',
+        'gender',
     ];
+
+    /**
+     * Get the branch that owns the user.
+     */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    /**
+     * Get the donations for the user.
+     */
+    public function donations(): HasMany
+    {
+        return $this->hasMany(Donation::class);
+    }
+
+    /**
+     * Get the pledges made by the user.
+     */
+    public function pledges(): HasMany
+    {
+        return $this->hasMany(Pledge::class);
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -92,6 +133,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'approved_at' => 'datetime',
+            'date_of_birth' => 'date',
+            'gender' => 'string',
         ];
     }
 

@@ -1,29 +1,113 @@
-# Laravel Inertia Boilerplate
+# Mekodonia Home Connect
 
-Reusable Laravel 12 + Inertia + Vue starter focused on admin back-office apps.
+Mekodonia Home Connect is a web application designed to facilitate connection and support between donors and elders in need. This platform enables donors to make one-time or recurring pledges, schedule visits, and track the impact of their contributions through an intuitive dashboard and timeline.
 
-## Quick Start
-1. cp .env.example .env
-2. composer install && npm install
-3. php artisan key:generate
-4. php artisan migrate --seed
-5. composer dev (or run php artisan serve, php artisan queue:listen, 
-pm run dev separately)
+## Features
 
-## Handy Commands
-- php artisan make:module Inventory scaffolds a clean-architecture module (controller/service/DTO/request/resource). Adjust stubs in stubs/module/.
-- composer lint / 
-pm run lint (see GitHub Actions pipelines .github/workflows/*.yml).
-- php artisan test (Pest + PHPUnit). API smoke tests live under 	ests/Feature/Api.
+### Guest Donation (Phase 1)
+- **One-Time Donation Form**: Allows guests to make donations quickly and easily.
+- **Telebirr Integration (Mock)**: Simulates payment processing for one-time donations.
 
-## WebSockets / Laravel Reverb
-- Set BROADCAST_DRIVER=reverb and populate the REVERB_* variables in .env.
-- Run php artisan reverb:start alongside your dev processes to boot the websocket server.
-- Front-end clients can connect through Laravel Echo pointing at REVERB_HOST/REVERB_PORT.
+### Core Platform (Phase 2)
+- **User Authentication & Authorization**: Secure login and registration with role-based access control.
+- **Multi-tenancy**: Branch-level data isolation ensures Branch Admins only access data relevant to their assigned branch.
+- **Branch Management**: CRUD interface for Super Admins to manage organizational branches.
+- **Elder Management**: CRUD interface for Branch Admins to manage elder profiles, including personal details, priority levels, health status, special needs, monthly expenses, and profile media (images/videos).
 
-## Containers & Devcontainer
-- Copy docker-compose.example.yml to docker-compose.yml to spin up pp + db services for local development.
-- VS Code users can open the project in a container via .devcontainer/devcontainer.json.
+### Donor Experience (Phase 3)
+- **Donor Registration**: Enhanced registration form to capture donor-specific information (address, phone, date of birth, gender).
+- **Donor Dashboard**: Personalized dashboard for registered donors to view their contributions, supported elders, and quick actions.
+- **Pledging (Adopting an Elder)**: Functionality for donors to pledge support to specific elders, with options for amount and frequency.
+- **Auto-Payment (Mock)**: Simulated recurring payment setup for donors.
 
-## CI
-GitHub Actions provide lint + test pipelines (.github/workflows/lint.yml and 	ests.yml). Mirror these steps in your own CI to keep code style and tests green.
+### Advanced Features (Phase 4)
+- **Visit Scheduler**: Allows users to schedule visits to elders, with status tracking (pending, approved, rejected, completed).
+- **Impact Timeline**: Provides a chronological feed of events related to a donor's contributions and their impact.
+- **Offline Support (PWA)**: Configured as a Progressive Web App for improved performance and offline accessibility.
+- **Reporting**: Global reports for Super Admins to gain insights into donations, elders, and overall operations.
+- **Automation**: Cron jobs for sending reminders and future automated tasks.
+
+## Getting Started
+
+Follow these instructions to set up and run the project locally.
+
+### Prerequisites
+- PHP 8.2 or higher
+- Composer
+- Node.js 20 or higher
+- npm or Yarn
+- PostgreSQL database
+
+### Installation
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/yonasayfu/BasicBoilerPlateForLaravel.git .
+    ```
+    (Note: The actual repository name should be replaced if it's different)
+
+2.  **Install PHP Dependencies**:
+    ```bash
+    composer install
+    ```
+
+3.  **Install Node.js Dependencies**:
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
+
+4.  **Environment Setup**:
+    Copy the example environment file and generate an application key:
+    ```bash
+    cp .env.example .env
+    php artisan key:generate
+    ```
+    Edit the `.env` file to configure your database connection (ensure `DB_CONNECTION=pgsql` and provide your PostgreSQL credentials).
+
+5.  **Database Migration and Seeding**:
+    Run the database migrations and seed the database with initial data:
+    ```bash
+    php artisan migrate:fresh --seed
+    ```
+
+6.  **Build Frontend Assets**:
+    ```bash
+    npm run build
+    # or
+    yarn build
+    ```
+
+7.  **Serve the Application**:
+    ```bash
+    php artisan serve
+    ```
+    The application will be accessible at `http://127.0.0.1:8000`.
+
+## Running Tests
+```bash
+./vendor/bin/pest
+```
+
+## Code Style & Linting
+```bash
+vendor/bin/pint
+npm run format
+npm run lint
+```
+
+## Deployment
+A basic GitHub Actions workflow `ci.yml` is set up for Continuous Integration, including linting, testing, and a placeholder for deployment to DigitalOcean on pushes to the `main` branch.
+
+## PWA Setup
+The application is configured as a Progressive Web App (PWA) using `VitePWA`. This includes a manifest and placeholder icons for offline capabilities and improved user experience.
+
+## Contributing
+(Instructions for contributing to the project, if applicable)
+
+## License
+(Project license information)
+
+---
+*Generated by Gemini CLI*
