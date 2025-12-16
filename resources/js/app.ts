@@ -104,7 +104,7 @@ createInertiaApp({
         const app = createApp({ render: () => h(App, props) }).use(plugin);
 
         // Make route function globally available
-        app.config.globalProperties.$route = globalThis.route;
+        app.config.globalProperties.route = globalThis.route;
         window.route = globalThis.route;
 
         app.mount(el);

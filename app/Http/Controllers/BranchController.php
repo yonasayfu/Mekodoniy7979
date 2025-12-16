@@ -18,6 +18,11 @@ class BranchController extends Controller
         $branches = Branch::paginate(10);
         return Inertia::render('Branches/Index', [
             'branches' => $branches,
+            'can' => [
+                'create' => true,
+                'edit' => true,
+                'delete' => true,
+            ]
         ]);
     }
 
