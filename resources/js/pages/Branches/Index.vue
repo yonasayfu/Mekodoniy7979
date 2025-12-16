@@ -65,9 +65,9 @@ const can = computed(
         },
 );
 
-const canCreate = computed(() => canCreate);
-const canEdit = computed(() => canEdit);
-const canDelete = computed(() => canDelete);
+const canCreate = computed(() => props.can.create);
+const canEdit = computed(() => props.can.edit);
+const canDelete = computed(() => props.can.delete);
 
 const tableFilters = useTableFilters({
     route: '/branches',

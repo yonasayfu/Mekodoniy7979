@@ -222,4 +222,66 @@ class ExportConfig
             ],
         ];
     }
+
+    public static function branches(): array
+    {
+        return [
+            'label' => 'Branch Directory',
+            'type' => 'branches',
+            'filename_prefix' => 'branches',
+
+            'csv' => [
+                'headers' => [
+                    'ID',
+                    'Name',
+                    'Location',
+                    'Contact Person',
+                    'Contact Email',
+                    'Contact Phone',
+                ],
+                'fields' => [
+                    'id',
+                    'name',
+                    'location',
+                    'contact_person',
+                    'contact_email',
+                    'contact_phone',
+                ],
+            ],
+        ];
+    }
+
+    public static function elders(): array
+    {
+        return [
+            'label' => 'Elders Directory',
+            'type' => 'elders',
+            'filename_prefix' => 'elders',
+
+            'csv' => [
+                'headers' => [
+                    'ID',
+                    'Name',
+                    'Date of Birth',
+                    'Gender',
+                    'Health Conditions',
+                    'Sponsorship Status',
+                    'Branch Name',
+                ],
+                'fields' => [
+                    'id',
+                    'name',
+                    'date_of_birth',
+                    'gender',
+                    'health_conditions',
+                    'sponsorship_status',
+                    [
+                        'field' => 'branch.name',
+                        'default' => '—',
+                    ],
+                ],
+                'with_relations' => ['branch:id,name'],
+            ],
+        ];
+    }
 }

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('contact_person')->nullable();
             $table->string('contact_phone', 20)->nullable();
             $table->string('contact_email')->nullable();
+            $table->longText('notes')->nullable();
             $table->timestamps();
         });
     }

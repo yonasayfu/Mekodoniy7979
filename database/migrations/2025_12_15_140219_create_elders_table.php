@@ -29,6 +29,8 @@ return new class extends Migration
             $table->text('special_needs')->nullable();
             $table->decimal('monthly_expenses', 8, 2)->nullable();
             $table->string('video_url')->nullable();
+            $table->text('health_conditions')->nullable();
+            $table->string('sponsorship_status')->default('not_sponsored');
             $table->timestamps();
         });
     }

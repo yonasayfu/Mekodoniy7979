@@ -62,9 +62,13 @@ Route::middleware('auth')->group(function () {
         // Donor Dashboard Route
         Route::get('donors/dashboard', [DonorDashboardController::class, 'index'])->name('donors.dashboard');
 
+        Route::get('branches/export', [BranchController::class, 'export'])->name('branches.export');
+
         Route::resource('branches', BranchController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
             ->middleware('permission:branches.manage');
+
+        Route::get('elders/export', [ElderController::class, 'export'])->name('elders.export');
 
         Route::resource('elders', ElderController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])

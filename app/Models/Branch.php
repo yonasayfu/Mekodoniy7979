@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Branch extends Model
 {
     use HasFactory;
+    use RecordsActivity;
 
     protected $fillable = [
         'name',
@@ -33,5 +36,10 @@ class Branch extends Model
     public function elders(): HasMany
     {
         return $this->hasMany(Elder::class);
+    }
+
+    public function activityLogs(): MorphMany
+    {
+        return $this->morphMany(ActivityLog::class, 'subject');
     }
 }

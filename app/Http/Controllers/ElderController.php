@@ -6,20 +6,40 @@ use App\Http\Requests\StoreElderRequest;
 use App\Http\Requests\UpdateElderRequest;
 use App\Models\Elder;
 use App\Models\Branch; // Import Branch model
+use App\Support\Exports\ExportConfig;
+use App\Support\Exports\HandlesDataExport;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage; // Import Storage facade
 
 class ElderController extends Controller
 {
+    use HandlesDataExport;
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $elders = Elder::with('branch')->paginate(10);
+        $elders->through(fn ($elder) => [
+            'id' => $elder->id,
+            'first_name' => $elder->first_name,
+            'last_name' => $elder->last_name,
+            'date_of_birth' => $elder->date_of_birth,
+            'gender' => $elder->gender,
+            'priority_level' => $elder->priority_level,
+            'monthly_expenses' => $elder->monthly_expenses,
+            'branch_name' => $elder->branch->name,
+        ]);
+
         return Inertia::render('Elders/Index', [
             'elders' => $elders,
+            'can' => [
+                'create' => true,
+                'edit' => true,
+                'delete' => true,
+            ]
         ]);
     }
 
@@ -58,8 +78,20 @@ class ElderController extends Controller
      */
     public function show(Elder $elder)
     {
+        $elder->load('activityLogs.causer');
+
         return Inertia::render('Elders/Show', [
             'elder' => $elder->load('branch'),
+            'activity' => $elder->activityLogs,
+            'breadcrumbs' => [
+                [
+                    'label' => 'Elders',
+                    'url' => route('elders.index'),
+                ],
+                [
+                    'label' => $elder->name,
+                ],
+            ],
         ]);
     }
 
@@ -72,6 +104,20 @@ class ElderController extends Controller
         return Inertia::render('Elders/Edit', [
             'elder' => $elder->load('branch'),
             'branches' => $branches,
+            'activity' => $elder->activityLogs,
+            'breadcrumbs' => [
+                [
+                    'label' => 'Elders',
+                    'url' => route('elders.index'),
+                ],
+                [
+                    'label' => $elder->name,
+                    'url' => route('elders.show', $elder),
+                ],
+                [
+                    'label' => 'Edit',
+                ],
+            ],
         ]);
     }
 
@@ -131,5 +177,13 @@ class ElderController extends Controller
         }
         $elder->delete();
         return redirect()->route('elders.index')->with('success', 'Elder deleted successfully.');
+    }
+
+    public function export(Request $request)
+    {
+        return $this->handleExport($request, Elder::class, ExportConfig::elders(), [
+            'label' => 'Elders Directory',
+            'type' => 'elders',
+        ]);
     }
 }

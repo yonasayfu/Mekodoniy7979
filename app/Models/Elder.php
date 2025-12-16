@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsActivity;
 use App\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Elder extends Model
 {
     use HasFactory;
+    use RecordsActivity;
 
     protected $fillable = [
         'branch_id',
@@ -29,6 +32,8 @@ class Elder extends Model
         'special_needs',
         'monthly_expenses',
         'video_url',
+        'health_conditions',
+        'sponsorship_status',
     ];
 
     /**
@@ -79,5 +84,10 @@ class Elder extends Model
     public function timelineEvents(): HasMany
     {
         return $this->hasMany(TimelineEvent::class);
+    }
+
+    public function activityLogs(): MorphMany
+    {
+        return $this->morphMany(ActivityLog::class, 'subject');
     }
 }

@@ -5,11 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreBranchRequest;
 use App\Http\Requests\UpdateBranchRequest;
 use App\Models\Branch;
+use App\Support\Exports\ExportConfig;
+use App\Support\Exports\HandlesDataExport;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class BranchController extends Controller
 {
+    use HandlesDataExport;
+
     /**
      * Display a listing of the resource.
      */
@@ -48,8 +52,20 @@ class BranchController extends Controller
      */
     public function show(Branch $branch)
     {
+        $branch->load('activityLogs.causer');
+
         return Inertia::render('Branches/Show', [
             'branch' => $branch,
+            'activity' => $branch->activityLogs,
+            'breadcrumbs' => [
+                [
+                    'label' => 'Branches',
+                    'url' => route('branches.index'),
+                ],
+                [
+                    'label' => $branch->name,
+                ],
+            ],
         ]);
     }
 
@@ -58,8 +74,24 @@ class BranchController extends Controller
      */
     public function edit(Branch $branch)
     {
+        $branch->load('activityLogs.causer');
+
         return Inertia::render('Branches/Edit', [
             'branch' => $branch,
+            'activity' => $branch->activityLogs,
+            'breadcrumbs' => [
+                [
+                    'label' => 'Branches',
+                    'url' => route('branches.index'),
+                ],
+                [
+                    'label' => $branch->name,
+                    'url' => route('branches.show', $branch),
+                ],
+                [
+                    'label' => 'Edit',
+                ],
+            ],
         ]);
     }
 
@@ -79,5 +111,13 @@ class BranchController extends Controller
     {
         $branch->delete();
         return redirect()->route('branches.index')->with('success', 'Branch deleted successfully.');
+    }
+
+    public function export(Request $request)
+    {
+        return $this->handleExport($request, Branch::class, ExportConfig::branches(), [
+            'label' => 'Branch Directory',
+            'type' => 'branches',
+        ]);
     }
 }

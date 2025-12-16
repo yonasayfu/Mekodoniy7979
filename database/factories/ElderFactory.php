@@ -42,6 +42,8 @@ class ElderFactory extends Factory
             'special_needs' => $this->faker->optional(0.3)->sentence(),
             'monthly_expenses' => $this->faker->numberBetween(500, 2000),
             'video_url' => $this->faker->optional(0.2)->url(),
+            'health_conditions' => implode(', ', $this->faker->randomElements(['Hypertension', 'Diabetes', 'Arthritis', 'Dementia', 'Osteoporosis'], $this->faker->numberBetween(1, 3))),
+            'sponsorship_status' => $this->faker->randomElement(['sponsored', 'not_sponsored', 'partially_sponsored']),
         ];
     }
 
