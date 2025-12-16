@@ -2,8 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Pledge;
+use App\Models\Visit;
+use App\Models\User; // Ensure User model is imported
+use App\Notifications\PledgeReminderNotification;
+use App\Notifications\VisitReminderNotification;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log; // Import Log facade
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon; // Import Carbon for date manipulation
 
 class SendRemindersCommand extends Command
 {
@@ -26,15 +32,51 @@ class SendRemindersCommand extends Command
      */
     public function handle()
     {
-        Log::info('Sending reminders for upcoming events...');
+        $this->info('Starting reminder process...');
+        Log::info('Reminder command initiated.');
 
-        // Placeholder for reminder logic:
-        // 1. Fetch upcoming visits that need reminders
-        // 2. Fetch upcoming pledges that need reminders
-        // 3. For each, send a notification (e.g., email, in-app notification)
-        // 4. Update reminder status to avoid duplicates
+        // --- Pledge Reminders ---
+        $this->info('Checking for upcoming pledge reminders...');
+        $upcomingPledges = Pledge::where('status', 'active')
+            ->whereNotNull('next_payment_date')
+            ->where('next_payment_date', '<=', Carbon::now()->addDays(7)) // Remind 7 days before due date
+            ->get();
 
-        $this->info('Reminders sent successfully (mocked).');
-        Log::info('Reminders task completed.');
+        foreach ($upcomingPledges as $pledge) {
+            /** @var User $donor */
+            $donor = $pledge->user;
+
+            if ($donor) {
+                // In a real system, you'd check if a reminder was recently sent
+                // to avoid spamming the user.
+                $donor->notify(new PledgeReminderNotification($pledge, $donor));
+                $this->info("Sent pledge reminder to {$donor->email} for pledge ID: {$pledge->id}.");
+                Log::info("Pledge reminder sent for pledge ID: {$pledge->id} to user ID: {$donor->id}.");
+            }
+        }
+        $this->info('Pledge reminders processed.');
+
+        // --- Visit Reminders ---
+        $this->info('Checking for upcoming visit reminders...');
+        $upcomingVisits = Visit::where('status', 'approved')
+            ->where('visit_date', '>=', Carbon::now())
+            ->where('visit_date', '<=', Carbon::now()->addDays(3)) // Remind 3 days before visit
+            ->get();
+
+        foreach ($upcomingVisits as $visit) {
+            /** @var User $visitor */
+            $visitor = $visit->user;
+
+            if ($visitor) {
+                // In a real system, you'd check if a reminder was recently sent.
+                $visitor->notify(new VisitReminderNotification($visit, $visitor));
+                $this->info("Sent visit reminder to {$visitor->email} for visit ID: {$visit->id}.");
+                Log::info("Visit reminder sent for visit ID: {$visit->id} to user ID: {$visitor->id}.");
+            }
+        }
+        $this->info('Visit reminders processed.');
+
+        $this->info('Reminder process completed.');
+        Log::info('Reminder command finished.');
     }
 }

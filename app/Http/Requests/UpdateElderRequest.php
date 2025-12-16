@@ -31,12 +31,13 @@ class UpdateElderRequest extends FormRequest
             'city' => ['nullable', 'string', 'max:255'],
             'country' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:255'],
-            'bio' => ['nullable', 'string'],
-            'profile_picture' => ['nullable', 'image', 'max:2048'], // Max 2MB, for file upload
-            'priority_level' => ['required', 'string', 'in:low,medium,high'],
-            'health_status' => ['nullable', 'string'],
-            'special_needs' => ['nullable', 'string'],
-            'monthly_expenses' => ['nullable', 'numeric'],
-            'video_url' => ['nullable', 'string', 'url', 'max:255'],
-        ];
-    }}
+                        'bio' => ['nullable', 'string'],
+                        'profile_picture' => ['nullable', 'image', 'max:2048'], // Max 2MB, for file upload
+                        'priority_level' => ['required', 'string', 'in:low,medium,high'],
+                        'health_status' => ['nullable', 'string'],
+                        'special_needs' => ['nullable', 'string'],
+                        'monthly_expenses' => ['nullable', 'numeric'],
+                        'video' => ['nullable', 'file', 'mimetypes:video/*', 'max:102400'], // Max 100MB video file
+                    ];
+                }
+            }

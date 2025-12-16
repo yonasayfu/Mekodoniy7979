@@ -18,7 +18,13 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
+            $table->enum('account_status', ['pending', 'active', 'suspended'])->default('pending');
+            $table->enum('account_type', ['internal', 'external'])->default('internal');
+            $table->timestamp('approved_at')->nullable();
+            $table->foreignId('approved_by')->nullable()->constrained('users');
+            $table->foreignId('branch_id')->nullable()->constrained('branches');
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

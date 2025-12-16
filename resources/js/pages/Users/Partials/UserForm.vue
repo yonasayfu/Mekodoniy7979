@@ -11,6 +11,11 @@ interface StaffOption {
     linked_to_current_user: boolean;
 }
 
+interface BranchOption {
+    id: number;
+    name: string;
+}
+
 const props = defineProps<{
     form: {
         name: string;
@@ -19,6 +24,7 @@ const props = defineProps<{
         password_confirmation?: string;
         account_status: string;
         account_type: string;
+        branch_id: number | null; // Add branch_id to form
         roles: string[];
         permissions: string[];
         staff_id: number | null;
@@ -26,6 +32,7 @@ const props = defineProps<{
     roles: string[];
     permissions: string[];
     staff: StaffOption[];
+    branches: BranchOption[]; // New prop for branches
     isEdit?: boolean;
 }>();
 
@@ -195,6 +202,22 @@ const hasPermission = (permission: string) =>
                     </p>
                     <InputError :message="$page.props.errors?.account_type" class="mt-2" />
                 </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Branch
+                </label>
+                <select
+                    v-model="form.branch_id"
+                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                >
+                    <option :value="null">No branch assigned</option>
+                    <option v-for="branch in branches" :key="branch.id" :value="branch.id">
+                        {{ branch.name }}
+                    </option>
+                </select>
+                <InputError :message="$page.props.errors?.branch_id" class="mt-2" />
             </div>
 
             <div>

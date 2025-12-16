@@ -18,7 +18,16 @@ class Visit extends Model
         'purpose',
         'notes',
         'status',
+        'approved_by', // Add approved_by to fillable
     ];
+
+    /**
+     * Get the user who approved the visit.
+     */
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
 
     /**
      * Get the user that made the visit request.

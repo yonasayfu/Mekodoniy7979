@@ -24,6 +24,11 @@ class RolePermissionSeeder extends Seeder
             'mailbox.process',
             'activity-logs.view',
             'users.impersonate',
+            'branches.manage',
+            'elders.manage',
+            'pledges.manage',
+            'visits.manage',
+            'reports.view',
         ])->map(function (string $name) {
             return Permission::firstOrCreate(
                 ['name' => $name, 'guard_name' => 'web'],

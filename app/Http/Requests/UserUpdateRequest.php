@@ -30,6 +30,13 @@ class UserUpdateRequest extends FormRequest
             'password' => ['nullable', 'string', 'min:8', 'max:255', 'confirmed'],
             'account_status' => ['required', Rule::in([User::STATUS_PENDING, User::STATUS_ACTIVE, User::STATUS_SUSPENDED])],
             'account_type' => ['required', Rule::in([User::TYPE_INTERNAL, User::TYPE_EXTERNAL])],
+            'branch_id' => [
+                'nullable',
+                'exists:branches,id',
+                Rule::requiredIf(function () {
+                    return in_array('Branch Admin', $this->input('roles', []));
+                }),
+            ],
             'roles' => ['sometimes', 'array'],
             'roles.*' => ['string', Rule::exists('roles', 'name')],
             'permissions' => ['sometimes', 'array'],

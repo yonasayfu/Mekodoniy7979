@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('branch_id')->nullable()->after('id')->constrained()->cascadeOnDelete();
+            $table->timestamp('kicked_at')->nullable()->after('approved_by');
+            $table->timestamp('kicked_until')->nullable()->after('kicked_at');
+            $table->text('kick_reason')->nullable()->after('kicked_until');
         });
     }
 
@@ -22,8 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['branch_id']);
-            $table->dropColumn('branch_id');
+            $table->dropColumn(['kicked_at', 'kicked_until', 'kick_reason']);
         });
     }
 };

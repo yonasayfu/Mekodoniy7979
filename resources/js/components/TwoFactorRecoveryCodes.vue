@@ -8,18 +8,27 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { useRoute } from '@/composables/useRoute';
 import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
 import { regenerateRecoveryCodes } from '@/routes/two-factor';
 import { Form } from '@inertiajs/vue3';
-import { Eye, EyeOff, LockKeyhole, RefreshCw, Mail } from 'lucide-vue-next';
-import { nextTick, onMounted, ref } from 'vue';
 import axios from 'axios';
+import { Eye, EyeOff, LockKeyhole, Mail, RefreshCw } from 'lucide-vue-next';
+import { nextTick, onMounted, ref } from 'vue';
 
-const { recoveryCodesList, fetchRecoveryCodes, errors, emailRecoveryCodesList, fetchEmailRecoveryCodes } = useTwoFactorAuth();
+const {
+    recoveryCodesList,
+    fetchRecoveryCodes,
+    errors,
+    emailRecoveryCodesList,
+    fetchEmailRecoveryCodes,
+} = useTwoFactorAuth();
 const isRecoveryCodesVisible = ref<boolean>(false);
 const isEmailRecoveryCodesVisible = ref<boolean>(false);
 const recoveryCodeSectionRef = ref<HTMLDivElement | null>(null);
 const emailRecoveryCodeSectionRef = ref<HTMLDivElement | null>(null);
+
+const route = useRoute();
 
 const toggleRecoveryCodesVisibility = async () => {
     if (!isRecoveryCodesVisible.value && !recoveryCodesList.value.length) {
@@ -35,7 +44,10 @@ const toggleRecoveryCodesVisibility = async () => {
 };
 
 const toggleEmailRecoveryCodesVisibility = async () => {
-    if (!isEmailRecoveryCodesVisible.value && !emailRecoveryCodesList.value.length) {
+    if (
+        !isEmailRecoveryCodesVisible.value &&
+        !emailRecoveryCodesList.value.length
+    ) {
         await fetchEmailRecoveryCodes();
     }
 
@@ -43,7 +55,9 @@ const toggleEmailRecoveryCodesVisibility = async () => {
 
     if (isEmailRecoveryCodesVisible.value) {
         await nextTick();
-        emailRecoveryCodeSectionRef.value?.scrollIntoView({ behavior: 'smooth' });
+        emailRecoveryCodeSectionRef.value?.scrollIntoView({
+            behavior: 'smooth',
+        });
     }
 };
 
@@ -142,25 +156,32 @@ onMounted(async () => {
                         Each app recovery code can be used once to access your
                         account and will be removed after use. If you need more,
                         click
-                        <span class="font-bold">Regenerate App Codes</span> above.
+                        <span class="font-bold">Regenerate App Codes</span>
+                        above.
                     </p>
                 </div>
             </div>
 
             <div
-                class="flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between mt-6"
+                class="mt-6 flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between"
             >
-                <Button @click="toggleEmailRecoveryCodesVisibility" class="w-fit">
+                <Button
+                    @click="toggleEmailRecoveryCodesVisibility"
+                    class="w-fit"
+                >
                     <component
                         :is="isEmailRecoveryCodesVisible ? EyeOff : Eye"
                         class="size-4"
                     />
-                    {{ isEmailRecoveryCodesVisible ? 'Hide' : 'View' }} Email Recovery
-                    Codes
+                    {{ isEmailRecoveryCodesVisible ? 'Hide' : 'View' }} Email
+                    Recovery Codes
                 </Button>
 
                 <Button
-                    v-if="isEmailRecoveryCodesVisible && emailRecoveryCodesList.length"
+                    v-if="
+                        isEmailRecoveryCodesVisible &&
+                        emailRecoveryCodesList.length
+                    "
                     variant="secondary"
                     @click="sendEmailRecoveryCodes"
                 >
@@ -183,7 +204,10 @@ onMounted(async () => {
                         ref="emailRecoveryCodeSectionRef"
                         class="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
                     >
-                        <div v-if="!emailRecoveryCodesList.length" class="space-y-2">
+                        <div
+                            v-if="!emailRecoveryCodesList.length"
+                            class="space-y-2"
+                        >
                             <div
                                 v-for="n in 8"
                                 :key="n"

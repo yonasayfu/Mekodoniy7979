@@ -14,6 +14,7 @@ class Pledge extends Model
         'user_id',
         'elder_id',
         'amount',
+        'currency', // Add currency here
         'frequency',
         'start_date',
         'end_date',

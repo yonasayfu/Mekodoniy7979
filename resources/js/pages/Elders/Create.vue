@@ -31,7 +31,7 @@ const form = useForm({
     health_status: '',
     special_needs: '',
     monthly_expenses: null as number | null,
-    video_url: '',
+    video: null as File | null, // Changed from video_url to video (File | null)
 });
 
 const submit = () => {
@@ -40,6 +40,10 @@ const submit = () => {
 
 const updateProfilePicture = (file: File | null) => {
     form.profile_picture = file;
+};
+
+const updateVideo = (file: File | null) => {
+    form.video = file;
 };
 </script>
 
@@ -242,15 +246,15 @@ const updateProfilePicture = (file: File | null) => {
                     <InputError :message="form.errors.monthly_expenses" class="mt-2" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                        Video URL
-                    </label>
-                    <input
-                        v-model="form.video_url"
-                        type="url"
-                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                    <FileUploadField
+                        label="Video"
+                        hint="Upload a video for the elder."
+                        accept="video/*"
+                        variant="file"
+                        :model-value="form.video"
+                        @update:modelValue="updateVideo"
                     />
-                    <InputError :message="form.errors.video_url" class="mt-2" />
+                    <InputError :message="form.errors.video" class="mt-2" />
                 </div>
 
                 <div class="flex items-center justify-end gap-2 pt-2">

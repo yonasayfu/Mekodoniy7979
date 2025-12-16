@@ -242,11 +242,11 @@ const printRecord = () => {
                                         <p class="font-medium text-slate-900 dark:text-slate-100">{{ props.elder.monthly_expenses ?? '-' }} ETB</p>
                                     </div>
                                     <div>
-                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Video URL</p>
-                                        <p class="font-medium text-slate-900 dark:text-slate-100">
-                                            <a v-if="props.elder.video_url" :href="props.elder.video_url" target="_blank" class="text-indigo-600 hover:underline">View Video</a>
-                                            <span v-else>-</span>
-                                        </p>
+                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Video</p>
+                                        <div v-if="props.elder.video_url" class="mt-1">
+                                            <video controls class="w-full rounded-lg" :src="`/storage/${props.elder.video_url}`"></video>
+                                        </div>
+                                        <p v-else class="font-medium text-slate-900 dark:text-slate-100">-</p>
                                     </div>
                                 </div>
                             </div>

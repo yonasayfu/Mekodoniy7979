@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import Pagination from '@/components/Pagination.vue';
 import ResourceToolbar from '@/components/ResourceToolbar.vue';
-import { confirmDialog } from '@/lib/confirm';
 import { useTableFilters } from '@/composables/useTableFilters';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { confirmDialog } from '@/lib/confirm';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Edit3, Eye, Search, Trash2, UserCog } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted } from 'vue';
@@ -13,6 +13,10 @@ interface UserSummary {
     id: number;
     name: string;
     email: string;
+    branch: {
+        id: number;
+        name: string;
+    } | null; // Include branch information
     account_status: string;
     account_type: string;
     approved_at: string | null;
@@ -64,6 +68,21 @@ const props = defineProps<{
     print?: boolean;
 }>();
 
+const can = computed(
+    () =>
+        props.can ?? {
+            create: false,
+            edit: false,
+            delete: false,
+            impersonate: false,
+        },
+);
+
+const canCreate = computed(() => canCreate);
+const canEdit = computed(() => canEdit);
+const canDelete = computed(() => canDelete);
+const canImpersonate = computed(() => canImpersonate);
+
 const statusLabels: Record<string, string> = {
     pending: 'Pending approval',
     active: 'Active',
@@ -76,13 +95,16 @@ const accountTypeLabels: Record<string, string> = {
 };
 
 const statusBadgeClasses: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-100',
+    pending:
+        'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-100',
     active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-100',
-    suspended: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-100',
+    suspended:
+        'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-100',
 };
 
 const formatStatus = (status: string): string => statusLabels[status] ?? status;
-const formatAccountType = (type: string): string => accountTypeLabels[type] ?? type;
+const formatAccountType = (type: string): string =>
+    accountTypeLabels[type] ?? type;
 const statusBadgeClass = (status: string): string =>
     `inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClasses[status] ?? 'bg-slate-200 text-slate-700 dark:bg-slate-800/50 dark:text-slate-200'}`;
 
@@ -223,244 +245,374 @@ const statTone = (tone?: string) => {
     <Head title="Users" />
 
     <AppLayout :breadcrumbs="[{ title: 'Users', href: '/users' }]">
-    <div class="space-y-6">
-        <ResourceToolbar
-            title="User management"
-            description="Manage access controls, roles, and permissions for your team."
-            :create-route="can.create ? '/users/create' : undefined"
-            :show-create="can.create"
-            @export="exportCsv"
-            @print="printCurrent"
-        />
+        <div class="space-y-6">
+            <ResourceToolbar
+                title="User management"
+                description="Manage access controls, roles, and permissions for your team."
+                :create-route="canCreate ? '/users/create' : undefined"
+                :show-create="canCreate"
+                @export="exportCsv"
+                @print="printCurrent"
+            />
 
-        <div class="hidden print:block text-center text-slate-800">
-
-
-            <img src="/images/logo.svg" alt="Logo" class="mx-auto mb-3 h-12 w-auto print-logo" />
-            <h1 class="text-xl font-semibold">{{ $page.props.name }}</h1>
-            <img src="/images/logo.svg" alt="Logo" class="mx-auto mb-3 h-12 w-auto print-logo" />
-            <h1 class="text-xl font-semibold">{{ $page.props.name }}</h1>
-            <p class="text-sm">User Directory</p>
-            <p class="text-xs text-slate-500">Printed {{ printTimestamp }}</p>
-            <hr class="print-divider" />
-        </div>
-
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:hidden">
-            <GlassCard
-                v-for="metric in stats"
-                :key="metric.label"
-                variant="lite"
-                padding="px-5 py-6"
-                content-class="space-y-1"
-            >
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    {{ metric.label }}
-                </p>
-                <p class="text-3xl font-semibold" :class="statTone(metric.tone)">
-                    {{ metric.value }}
-                </p>
-            </GlassCard>
-        </div>
-
-        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between print:hidden">
-            <div class="search-glass relative w-full max-w-sm">
-                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
-                    <Search class="size-4" />
-                </span>
-                <input
-                    v-model="search"
-                    type="text"
-                    placeholder="Search users"
-                    class="w-full rounded-lg border border-transparent bg-white/80 py-2 pl-10 pr-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-indigo-300 focus:ring-0 dark:bg-slate-900/70 dark:text-slate-200"
+            <div class="hidden text-center text-slate-800 print:block">
+                <img
+                    src="/images/logo.svg"
+                    alt="Logo"
+                    class="print-logo mx-auto mb-3 h-12 w-auto"
                 />
+                <h1 class="text-xl font-semibold">{{ $page.props.name }}</h1>
+                <img
+                    src="/images/logo.svg"
+                    alt="Logo"
+                    class="print-logo mx-auto mb-3 h-12 w-auto"
+                />
+                <h1 class="text-xl font-semibold">{{ $page.props.name }}</h1>
+                <p class="text-sm">User Directory</p>
+                <p class="text-xs text-slate-500">
+                    Printed {{ printTimestamp }}
+                </p>
+                <hr class="print-divider" />
             </div>
 
-            <div class="flex items-center gap-2">
-                <label for="perPage" class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Per Page</label>
-                <select
-                    id="perPage"
-                    v-model.number="perPage"
-                    class="rounded-lg border border-transparent bg-white/80 px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-300 focus:ring-0 dark:bg-slate-900/70 dark:text-slate-200"
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:hidden">
+                <GlassCard
+                    v-for="metric in stats"
+                    :key="metric.label"
+                    variant="lite"
+                    padding="px-5 py-6"
+                    content-class="space-y-1"
                 >
-                    <option :value="5">5</option>
-                    <option :value="10">10</option>
-                    <option :value="25">25</option>
-                    <option :value="50">50</option>
-                    <option :value="100">100</option>
-                </select>
+                    <p
+                        class="text-xs font-medium tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                    >
+                        {{ metric.label }}
+                    </p>
+                    <p
+                        class="text-3xl font-semibold"
+                        :class="statTone(metric.tone)"
+                    >
+                        {{ metric.value }}
+                    </p>
+                </GlassCard>
             </div>
-        </div>
 
-        <div class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/50 print:border print:bg-white print:shadow-none">
-            <table class="min-w-full divide-y divide-slate-200 print-table dark:divide-slate-800">
-                <thead class="bg-slate-50/80 dark:bg-slate-900/80">
-                    <tr>
-                        <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            User
-                        </th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            Status
-                        </th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            Roles
-                        </th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            Direct permissions
-                        </th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            Staff
-                        </th>
-                        <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 print:hidden">
-                            Actions
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 bg-white/90 print:bg-white dark:divide-slate-800 dark:bg-slate-950/40">
-                    <tr v-if="!hasResults">
-                        <td colspan="6" class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-300">
-                            No users found. Create your first account to get started.
-                        </td>
-                    </tr>
-                    <tr v-for="user in users" v-else :key="user.id" class="hover:bg-slate-50/70 dark:hover:bg-slate-900/50">
-                        <td class="px-5 py-4 text-sm text-slate-700 dark:text-slate-200">
-                            <div class="font-medium text-slate-900 dark:text-slate-100">
-                                <Link
-                                    :href="`/users/${user.id}`"
-                                    class="transition hover:text-indigo-600 dark:hover:text-indigo-300"
+            <div
+                class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between print:hidden"
+            >
+                <div class="search-glass relative w-full max-w-sm">
+                    <span
+                        class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400"
+                    >
+                        <Search class="size-4" />
+                    </span>
+                    <input
+                        v-model="search"
+                        type="text"
+                        placeholder="Search users"
+                        class="w-full rounded-lg border border-transparent bg-white/80 py-2 pr-3 pl-10 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-indigo-300 focus:ring-0 dark:bg-slate-900/70 dark:text-slate-200"
+                    />
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <label
+                        for="perPage"
+                        class="text-xs tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                        >Per Page</label
+                    >
+                    <select
+                        id="perPage"
+                        v-model.number="perPage"
+                        class="rounded-lg border border-transparent bg-white/80 px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-300 focus:ring-0 dark:bg-slate-900/70 dark:text-slate-200"
+                    >
+                        <option :value="5">5</option>
+                        <option :value="10">10</option>
+                        <option :value="25">25</option>
+                        <option :value="50">50</option>
+                        <option :value="100">100</option>
+                    </select>
+                </div>
+            </div>
+
+            <div
+                class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/50 print:border print:bg-white print:shadow-none"
+            >
+                <table
+                    class="print-table min-w-full divide-y divide-slate-200 dark:divide-slate-800"
+                >
+                    <thead class="bg-slate-50/80 dark:bg-slate-900/80">
+                        <tr>
+                            <th
+                                class="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                            >
+                                User
+                            </th>
+                            <th
+                                class="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                            >
+                                Branch
+                            </th>
+                            <th
+                                class="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                            >
+                                Status
+                            </th>
+                            <th
+                                class="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                            >
+                                Roles
+                            </th>
+                            <th
+                                class="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                            >
+                                Direct permissions
+                            </th>
+                            <th
+                                class="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                            >
+                                Staff
+                            </th>
+                            <th
+                                class="px-5 py-3 text-right text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400 print:hidden"
+                            >
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody
+                        class="divide-y divide-slate-200 bg-white/90 dark:divide-slate-800 dark:bg-slate-950/40 print:bg-white"
+                    >
+                        <tr v-if="!hasResults">
+                            <td
+                                colspan="6"
+                                class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-300"
+                            >
+                                No users found. Create your first account to get
+                                started.
+                            </td>
+                        </tr>
+                        <tr
+                            v-for="user in users"
+                            v-else
+                            :key="user.id"
+                            class="hover:bg-slate-50/70 dark:hover:bg-slate-900/50"
+                        >
+                            <td
+                                class="px-5 py-4 text-sm text-slate-700 dark:text-slate-200"
+                            >
+                                <div
+                                    class="font-medium text-slate-900 dark:text-slate-100"
                                 >
-                                    {{ user.name }}
-                                </Link>
-                            </div>
-                            <div class="text-xs text-slate-500 dark:text-slate-400">
-                                {{ user.email }}
-                            </div>
-                            <div v-if="user.has_two_factor" class="mt-1 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200">
-                                2FA enabled
-                            </div>
-                        </td>
-                        <td class="px-5 py-4 text-sm text-slate-700 dark:text-slate-200">
-                            <div class="flex flex-col gap-1">
-                                <span :class="statusBadgeClass(user.account_status)">
-                                    {{ formatStatus(user.account_status) }}
-                                </span>
-                                <span class="text-xs text-slate-500 dark:text-slate-400">
-                                    {{ formatAccountType(user.account_type) }}
-                                </span>
-                                <span
-                                    v-if="user.approved_at"
+                                    <Link
+                                        :href="`/users/${user.id}`"
+                                        class="transition hover:text-indigo-600 dark:hover:text-indigo-300"
+                                    >
+                                        {{ user.name }}
+                                    </Link>
+                                </div>
+                                <div
+                                    class="text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{ user.email }}
+                                </div>
+                                <div
+                                    v-if="user.has_two_factor"
+                                    class="mt-1 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200"
+                                >
+                                    2FA enabled
+                                </div>
+                            </td>
+                            <td
+                                class="px-5 py-4 text-sm text-slate-700 dark:text-slate-200"
+                            >
+                                <div v-if="user.branch">
+                                    <Link
+                                        :href="
+                                            route(
+                                                'branches.show',
+                                                user.branch.id,
+                                            )
+                                        "
+                                        class="transition hover:text-indigo-600 dark:hover:text-indigo-300"
+                                    >
+                                        {{ user.branch.name }}
+                                    </Link>
+                                </div>
+                                <div
+                                    v-else
                                     class="text-xs text-slate-400 dark:text-slate-500"
                                 >
-                                    Approved {{ formatApprovedAt(user.approved_at) }}
-                                    <template v-if="user.approved_by">
-                                        - {{ user.approved_by }}
-                                    </template>
-                                </span>
-                                <span
-                                    v-else-if="user.account_status === 'suspended'"
-                                    class="text-xs italic text-rose-500 dark:text-rose-300"
-                                >
-                                    Suspended - contact an administrator
-                                </span>
-                                <span
-                                    v-else-if="user.is_pending"
-                                    class="text-xs italic text-slate-400 dark:text-slate-500"
-                                >
-                                    Awaiting staff assignment
-                                </span>
-                            </div>
-                        </td>
+                                    No branch assigned
+                                </div>
+                            </td>
+                            <td
+                                class="px-5 py-4 text-sm text-slate-700 dark:text-slate-200"
+                            >
+                                <div class="flex flex-col gap-1">
+                                    <span
+                                        :class="
+                                            statusBadgeClass(
+                                                user.account_status,
+                                            )
+                                        "
+                                    >
+                                        {{ formatStatus(user.account_status) }}
+                                    </span>
+                                    <span
+                                        class="text-xs text-slate-500 dark:text-slate-400"
+                                    >
+                                        {{
+                                            formatAccountType(user.account_type)
+                                        }}
+                                    </span>
+                                    <span
+                                        v-if="user.approved_at"
+                                        class="text-xs text-slate-400 dark:text-slate-500"
+                                    >
+                                        Approved
+                                        {{ formatApprovedAt(user.approved_at) }}
+                                        <template v-if="user.approved_by">
+                                            - {{ user.approved_by }}
+                                        </template>
+                                    </span>
+                                    <span
+                                        v-else-if="
+                                            user.account_status === 'suspended'
+                                        "
+                                        class="text-xs text-rose-500 italic dark:text-rose-300"
+                                    >
+                                        Suspended - contact an administrator
+                                    </span>
+                                    <span
+                                        v-else-if="user.is_pending"
+                                        class="text-xs text-slate-400 italic dark:text-slate-500"
+                                    >
+                                        Awaiting staff assignment
+                                    </span>
+                                </div>
+                            </td>
 
-                        <td class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300">
-                            <div v-if="user.roles.length" class="flex flex-wrap gap-2">
+                            <td
+                                class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300"
+                            >
+                                <div
+                                    v-if="user.roles.length"
+                                    class="flex flex-wrap gap-2"
+                                >
+                                    <span
+                                        v-for="role in user.roles"
+                                        :key="`${user.id}-${role}`"
+                                        class="inline-flex items-center rounded-full bg-slate-200/70 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800/60 dark:text-slate-200"
+                                    >
+                                        {{ role }}
+                                    </span>
+                                </div>
                                 <span
-                                    v-for="role in user.roles"
-                                    :key="`${user.id}-${role}`"
-                                    class="inline-flex items-center rounded-full bg-slate-200/70 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800/60 dark:text-slate-200"
+                                    v-else
+                                    class="text-xs text-slate-400 dark:text-slate-500"
+                                    >No roles</span
                                 >
-                                    {{ role }}
-                                </span>
-                            </div>
-                            <span v-else class="text-xs text-slate-400 dark:text-slate-500">No roles</span>
-                        </td>
+                            </td>
 
-                        <td class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300">
-                            <div v-if="user.permissions.length" class="flex flex-wrap gap-2">
+                            <td
+                                class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300"
+                            >
+                                <div
+                                    v-if="user.permissions.length"
+                                    class="flex flex-wrap gap-2"
+                                >
+                                    <span
+                                        v-for="permission in user.permissions"
+                                        :key="`${user.id}-${permission}`"
+                                        class="inline-flex items-center rounded-full bg-emerald-100/80 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200"
+                                    >
+                                        {{ permission }}
+                                    </span>
+                                </div>
                                 <span
-                                    v-for="permission in user.permissions"
-                                    :key="`${user.id}-${permission}`"
-                                    class="inline-flex items-center rounded-full bg-emerald-100/80 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200"
+                                    v-else
+                                    class="text-xs text-slate-400 dark:text-slate-500"
+                                    >Inherited from roles</span
                                 >
-                                    {{ permission }}
-                                </span>
-                            </div>
-                            <span v-else class="text-xs text-slate-400 dark:text-slate-500">Inherited from roles</span>
-                        </td>
+                            </td>
 
-                        <td class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300">
-                            <div v-if="user.staff">
-                                <span class="font-medium text-slate-700 dark:text-slate-200">
-                                    {{ user.staff.full_name }}
-                                </span>
+                            <td
+                                class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300"
+                            >
+                                <div v-if="user.staff">
+                                    <span
+                                        class="font-medium text-slate-700 dark:text-slate-200"
+                                    >
+                                        {{ user.staff.full_name }}
+                                    </span>
+                                    <span
+                                        class="ml-2 rounded-full bg-slate-200/70 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800/60 dark:text-slate-300"
+                                    >
+                                        {{ user.staff.status }}
+                                    </span>
+                                </div>
                                 <span
-                                    class="ml-2 rounded-full bg-slate-200/70 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800/60 dark:text-slate-300"
+                                    v-else
+                                    class="text-xs text-slate-400 dark:text-slate-500"
                                 >
-                                    {{ user.staff.status }}
+                                    Not linked
                                 </span>
-                            </div>
-                            <span v-else class="text-xs text-slate-400 dark:text-slate-500">
-                                Not linked
-                            </span>
-                        </td>
+                            </td>
 
-                        <td class="px-5 py-4 text-right text-sm print:hidden">
-                            <div class="flex justify-end gap-2">
-                                <Link
-                                    :href="`/users/${user.id}`"
-                                    class="inline-flex items-center rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-indigo-300"
-                                    title="View user"
-                                >
-                                    <Eye class="size-4" />
-                                    <span class="sr-only">View</span>
-                                </Link>
-                                <Link
-                                    v-if="can.edit"
-                                    :href="`/users/${user.id}/edit`"
-                                    class="inline-flex items-center rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-indigo-300"
-                                    title="Edit user"
-                                >
-                                    <Edit3 class="size-4" />
-                                    <span class="sr-only">Edit</span>
-                                </Link>
-                                <Link
-                                    v-if="can.impersonate && currentUserId !== user.id"
-                                    :href="`/impersonate/take/${user.id}`"
-                                    class="inline-flex items-center rounded-md p-2 text-blue-500 transition hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10"
-                                    title="Impersonate user"
-                                >
-                                    <UserCog class="size-4" />
-                                    <span class="sr-only">Impersonate</span>
-                                </Link>
-                                <button
-                                    v-if="can.delete"
-                                    type="button"
-                                    class="inline-flex items-center rounded-md p-2 text-red-500 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
-                                    title="Delete user"
-                                    @click="destroy(user)"
-                                >
-                                    <Trash2 class="size-4" />
-                                    <span class="sr-only">Delete</span>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                            <td
+                                class="px-5 py-4 text-right text-sm print:hidden"
+                            >
+                                <div class="flex justify-end gap-2">
+                                    <Link
+                                        :href="`/users/${user.id}`"
+                                        class="inline-flex items-center rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-indigo-300"
+                                        title="View user"
+                                    >
+                                        <Eye class="size-4" />
+                                        <span class="sr-only">View</span>
+                                    </Link>
+                                    <Link
+                                        v-if="canEdit"
+                                        :href="`/users/${user.id}/edit`"
+                                        class="inline-flex items-center rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-indigo-300"
+                                        title="Edit user"
+                                    >
+                                        <Edit3 class="size-4" />
+                                        <span class="sr-only">Edit</span>
+                                    </Link>
+                                    <Link
+                                        v-if="
+                                            canImpersonate &&
+                                            currentUserId !== user.id
+                                        "
+                                        :href="`/impersonate/take/${user.id}`"
+                                        class="inline-flex items-center rounded-md p-2 text-blue-500 transition hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10"
+                                        title="Impersonate user"
+                                    >
+                                        <UserCog class="size-4" />
+                                        <span class="sr-only">Impersonate</span>
+                                    </Link>
+                                    <button
+                                        v-if="canDelete"
+                                        type="button"
+                                        class="inline-flex items-center rounded-md p-2 text-red-500 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                                        title="Delete user"
+                                        @click="destroy(user)"
+                                    >
+                                        <Trash2 class="size-4" />
+                                        <span class="sr-only">Delete</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex items-center justify-end print:hidden">
+                <Pagination :links="paginationLinks" />
+            </div>
         </div>
-
-        <div class="flex items-center justify-end print:hidden">
-            <Pagination :links="paginationLinks" />
-        </div>
-    </div>
     </AppLayout>
 </template>
 

@@ -47,7 +47,7 @@ const props = defineProps<{
         health_status: string | null;
         special_needs: string | null;
         monthly_expenses: number | null;
-        video_url: string | null;
+        video_url: string | null; // Keep video_url for existing value
     };
     activity: ActivityEntry[];
     branches: BranchOption[];
@@ -70,10 +70,12 @@ const form = useForm({
     health_status: props.elder.health_status ?? '',
     special_needs: props.elder.special_needs ?? '',
     monthly_expenses: props.elder.monthly_expenses,
-    video_url: props.elder.video_url ?? '',
+    video: null as File | null, // Changed from video_url to video (File | null)
+    remove_video: false, // Add remove_video for explicit video removal
 });
 
 const existingProfilePictureUrl = ref<string | null>(props.elder.profile_picture_path ? `/storage/${props.elder.profile_picture_path}` : null);
+const existingVideoUrl = ref<string | null>(props.elder.video_url ? `/storage/${props.elder.video_url}` : null); // Add existingVideoUrl
 
 const updateProfilePicture = (file: File | null) => {
     form.profile_picture = file;
@@ -89,8 +91,18 @@ const clearExistingProfilePicture = () => {
     form.remove_profile_picture = true;
 };
 
-const submit = () => {
-    form.put(route('elders.update', props.elder.id), { forceFormData: true });
+const updateVideo = (file: File | null) => { // Add updateVideo method
+    form.video = file;
+
+    if (file) {
+        form.remove_video = false;
+    }
+};
+
+const clearExistingVideo = () => { // Add clearExistingVideo method
+    existingVideoUrl.value = null;
+    form.video = null;
+    form.remove_video = true;
 };
 </script>
 
@@ -295,15 +307,17 @@ const submit = () => {
                     <InputError :message="form.errors.monthly_expenses" class="mt-2" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                        Video URL
-                    </label>
-                    <input
-                        v-model="form.video_url"
-                        type="url"
-                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                    <FileUploadField
+                        label="Video"
+                        hint="Upload a video for the elder."
+                        accept="video/*"
+                        variant="file"
+                        :model-value="form.video"
+                        :existing-url="existingVideoUrl"
+                        @update:modelValue="updateVideo"
+                        @clear-existing="clearExistingVideo"
                     />
-                    <InputError :message="form.errors.video_url" class="mt-2" />
+                    <InputError :message="form.errors.video" class="mt-2" />
                 </div>
 
                 <div class="flex items-center justify-end gap-2 pt-2">

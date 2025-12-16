@@ -130,5 +130,61 @@ class DatabaseSeeder extends Seeder
 
 
         }
+
+        // Create sample branches
+        $branches = \App\Models\Branch::factory()->count(5)->create();
+
+        // Create sample elders
+        $elders = \App\Models\Elder::factory()->count(50)->create();
+
+        // Create sample pledges (wall of love)
+        $users = User::all();
+        foreach ($elders as $elder) {
+            // Each elder gets 1-3 pledges
+            $pledgeCount = rand(1, 3);
+            for ($i = 0; $i < $pledgeCount; $i++) {
+                \App\Models\Pledge::factory()->create([
+                    'user_id' => $users->random()->id,
+                    'elder_id' => $elder->id,
+                ]);
+            }
+        }
+
+        // Create sample visits
+        foreach ($elders as $elder) {
+            // Each elder gets 0-5 visits
+            $visitCount = rand(0, 5);
+            for ($i = 0; $i < $visitCount; $i++) {
+                \App\Models\Visit::factory()->create([
+                    'user_id' => $users->random()->id,
+                    'elder_id' => $elder->id,
+                    'branch_id' => $branches->random()->id,
+                ]);
+            }
+        }
+
+        // Create some additional regular users for pledges
+        $regularUsers = User::factory()->count(20)->create([
+            'account_status' => User::STATUS_ACTIVE,
+            'account_type' => User::TYPE_EXTERNAL,
+            'approved_at' => $approvalTimestamp,
+            'approved_by' => $admin->id,
+        ]);
+
+        // Assign basic role to regular users
+        foreach ($regularUsers as $user) {
+            $user->assignRole('External');
+        }
+
+        // Create more pledges from regular users
+        foreach ($regularUsers as $user) {
+            $pledgeCount = rand(0, 2);
+            for ($i = 0; $i < $pledgeCount; $i++) {
+                \App\Models\Pledge::factory()->create([
+                    'user_id' => $user->id,
+                    'elder_id' => $elders->random()->id,
+                ]);
+            }
+        }
     }
 }

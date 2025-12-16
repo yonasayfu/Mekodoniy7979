@@ -15,10 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->string('location');
-            $table->string('contact_person');
-            $table->string('contact_email')->unique();
-            $table->string('contact_phone');
-            $table->text('notes')->nullable();
+            $table->string('contact_person')->nullable();
+            $table->string('contact_phone', 20)->nullable();
+            $table->string('contact_email')->nullable();
             $table->timestamps();
         });
     }

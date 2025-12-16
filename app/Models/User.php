@@ -17,6 +17,9 @@ use Spatie\Permission\Traits\HasRoles;
 use Lab404\Impersonate\Models\Impersonate;
 use Lab404\Impersonate\Services\ImpersonateManager;
 use App\Scopes\BranchScope; // Import BranchScope
+use App\Models\Warning; // Import Warning model
+
+use Illuminate\Support\Carbon; // Import Carbon for date manipulation
 
 class User extends Authenticatable
 {
@@ -43,7 +46,8 @@ class User extends Authenticatable
      */
     protected static function booted()
     {
-        static::addGlobalScope(new BranchScope);
+        // Removed BranchScope to avoid recursion during authentication
+        // static::addGlobalScope(new BranchScope);
     }
 
     /**
@@ -67,6 +71,15 @@ class User extends Authenticatable
         'country',
         'date_of_birth',
         'gender',
+        'kicked_at', // Added for kick system
+        'kicked_until', // Added for kick system
+        'kick_reason', // Added for kick system
+        'banned_at', // Added for ban system
+        'banned_until', // Added for ban system
+        'ban_reason', // Added for ban system
+        'muted_at', // Added for mute system
+        'muted_until', // Added for mute system
+        'mute_reason', // Added for mute system
     ];
 
     /**
@@ -92,6 +105,16 @@ class User extends Authenticatable
     {
         return $this->hasMany(Pledge::class);
     }
+
+    /**
+     * Get the warnings issued to the user.
+     */
+    public function warnings(): HasMany
+    {
+        return $this->hasMany(Warning::class);
+    }
+
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -135,6 +158,12 @@ class User extends Authenticatable
             'approved_at' => 'datetime',
             'date_of_birth' => 'date',
             'gender' => 'string',
+            'kicked_at' => 'datetime', // Cast for kick system
+            'kicked_until' => 'datetime', // Cast for kick system
+            'banned_at' => 'datetime', // Cast for ban system
+            'banned_until' => 'datetime', // Cast for ban system
+            'muted_at' => 'datetime', // Cast for mute system
+            'muted_until' => 'datetime', // Cast for mute system
         ];
     }
 
@@ -243,4 +272,101 @@ class User extends Authenticatable
 
         $this->attributes['two_factor_email_recovery_codes'] = encrypt($encoded);
     }
+
+    /**
+     * Check if the user is currently kicked.
+     */
+    public function isKicked(): bool
+    {
+        return $this->kicked_at !== null && ($this->kicked_until === null || $this->kicked_until->isFuture());
+    }
+
+    /**
+     * Kick the user for a specified reason and duration.
+     */
+    public function kick(string $reason, ?Carbon $until = null): void
+    {
+        $this->update([
+            'kicked_at' => now(),
+            'kicked_until' => $until,
+            'kick_reason' => $reason,
+        ]);
+    }
+
+    /**
+     * Unkick the user.
+     */
+    public function unkick(): void
+    {
+        $this->update([
+            'kicked_at' => null,
+            'kicked_until' => null,
+            'kick_reason' => null,
+        ]);
+    }
+
+    /**
+     * Check if the user is currently banned.
+     */
+    public function isBanned(): bool
+    {
+        return $this->banned_at !== null && ($this->banned_until === null || $this->banned_until->isFuture());
+    }
+
+    /**
+     * Ban the user for a specified reason and duration.
+     */
+    public function ban(string $reason, ?Carbon $until = null): void
+    {
+        $this->update([
+            'banned_at' => now(),
+            'banned_until' => $until,
+            'ban_reason' => $reason,
+        ]);
+    }
+
+    /**
+     * Unban the user.
+     */
+    public function unban(): void
+    {
+        $this->update([
+            'banned_at' => null,
+            'banned_until' => null,
+            'ban_reason' => null,
+        ]);
+    }
+
+    /**
+     * Check if the user is currently muted.
+     */
+    public function isMuted(): bool
+    {
+        return $this->muted_at !== null && ($this->muted_until === null || $this->muted_until->isFuture());
+    }
+
+    /**
+     * Mute the user for a specified reason and duration.
+     */
+    public function mute(string $reason, ?Carbon $until = null): void
+    {
+        $this->update([
+            'muted_at' => now(),
+            'muted_until' => $until,
+            'mute_reason' => $reason,
+        ]);
+    }
+
+    /**
+     * Unmute the user.
+     */
+    public function unmute(): void
+    {
+        $this->update([
+            'muted_at' => null,
+            'muted_until' => null,
+            'mute_reason' => null,
+        ]);
+    }
 }
+

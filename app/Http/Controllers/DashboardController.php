@@ -105,6 +105,7 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard', [
             'metrics' => $metrics,
             'staffTrend' => $staffTrend,
+            'maintenance' => [], // TODO: Implement maintenance data
             'recentExports' => $recentExports,
             'recentActivity' => $recentActivity,
         ]);

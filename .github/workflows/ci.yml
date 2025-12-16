@@ -67,9 +67,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure Deployment (Placeholder)
-        run: echo "Deployment script to DigitalOcean goes here."
-        # In a real-world scenario, this would involve:
-        # - Setting up SSH agent
-        # - Copying files to DigitalOcean droplet
-        # - Running remote commands (e.g., php artisan migrate, php artisan config:cache)
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Make deploy script executable
+        run: chmod +x ./deploy.sh # Adjust path if needed
+
+      - name: Run deployment script
+        run: ./deploy.sh
+        env:
+          SSH_HOST: ${{ secrets.DIGITALOCEAN_SSH_HOST }} # Store your host in GitHub Secrets
+          SSH_USER: ${{ secrets.DIGITALOCEAN_SSH_USER }} # Store your user in GitHub Secrets
+          DEPLOY_PATH: /var/www/your_app_name # Replace with actual path
+          GIT_BRANCH: main # Or your deployment branch

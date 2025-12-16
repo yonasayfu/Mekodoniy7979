@@ -13,10 +13,16 @@ interface StaffOption {
     linked_to_current_user: boolean;
 }
 
+interface BranchOption {
+    id: number;
+    name: string;
+}
+
 const props = defineProps<{
     roles: string[];
     permissions: string[];
     staff: StaffOption[];
+    branches: BranchOption[]; // New prop for branches
 }>();
 
 const form = useForm({
@@ -29,6 +35,7 @@ const form = useForm({
     roles: [] as string[],
     permissions: [] as string[],
     staff_id: null as number | null,
+    branch_id: null as number | null, // Add branch_id to form
 });
 
 const canSubmit = computed(() => !form.processing);
@@ -66,6 +73,7 @@ const submit = () => {
                 :roles="roles"
                 :permissions="permissions"
                 :staff="staff"
+                :branches="branches"
             />
 
             <div class="flex justify-end">

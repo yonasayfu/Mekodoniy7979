@@ -6,8 +6,10 @@ use App\Http\Requests\UserStoreRequest;
 use App\Http\Requests\UserUpdateRequest;
 use App\Http\Resources\ActivityLogResource;
 use App\Models\ActivityLog;
+use App\Models\Branch; // Import Branch model
 use App\Models\Staff;
 use App\Models\User;
+use App\Models\Warning;
 use App\Support\Exports\ExportConfig;
 use App\Support\Exports\HandlesDataExport;
 use App\Support\Users\SyncsStaffAssignment;
@@ -43,6 +45,7 @@ class UserManagementController extends Controller
             'permissions:id,name',
             'staff:id,first_name,last_name,email,status,user_id',
             'approver:id,name',
+            'branch:id,name', // Eager load branch
         ]);
 
         $this->applySearch($query, $search);
@@ -56,6 +59,7 @@ class UserManagementController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'branch' => $user->branch ? ['id' => $user->branch->id, 'name' => $user->branch->name] : null, // Include branch
                     'account_status' => $user->account_status,
                     'account_type' => $user->account_type,
                     'approved_at' => optional($user->approved_at)->toIso8601String(),
@@ -132,10 +136,13 @@ class UserManagementController extends Controller
     {
         $this->ensureCanManageUsers();
 
+        $branches = Branch::all(['id', 'name']); // Fetch branches
+
         return Inertia::render('Users/Create', [
             'roles' => $this->availableRoles(),
             'permissions' => $this->availablePermissions(),
             'staff' => $this->availableStaff(),
+            'branches' => $branches, // Pass branches to the view
             'breadcrumbs' => [
                 ['title' => 'Users', 'href' => route('users.index')],
                 ['title' => 'Create', 'href' => route('users.create')],
@@ -152,6 +159,7 @@ class UserManagementController extends Controller
             'permissions:id,name',
             'staff:id,first_name,last_name,status,user_id',
             'approver:id,name',
+            'branch:id,name', // Eager load branch
         ]);
 
         $activity = $user->activityLogs()
@@ -165,6 +173,7 @@ class UserManagementController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'branch' => $user->branch ? ['id' => $user->branch->id, 'name' => $user->branch->name] : null, // Include branch
                 'account_status' => $user->account_status,
                 'account_type' => $user->account_type,
                 'approved_at' => optional($user->approved_at)->toIso8601String(),
@@ -177,8 +186,18 @@ class UserManagementController extends Controller
                     'full_name' => $user->staff->full_name,
                     'status' => $user->staff->status,
                 ] : null,
-                'created_at' => optional($user->created_at)->toDateTimeString(),
-                'updated_at' => optional($user->updated_at)->toDateTimeString(),
+                'is_kicked' => $user->isKicked(), // Include kick status
+                'kicked_at' => optional($user->kicked_at)->toIso8601String(),
+                'kicked_until' => optional($user->kicked_until)->toIso8601String(),
+                'kick_reason' => $user->kick_reason,
+                'is_banned' => $user->isBanned(), // Include ban status
+                'banned_at' => optional($user->banned_at)->toIso8601String(),
+                'banned_until' => optional($user->banned_until)->toIso8601String(),
+                'ban_reason' => $user->ban_reason,
+                'is_muted' => $user->isMuted(), // Include mute status
+                'muted_at' => optional($user->muted_at)->toIso8601String(),
+                'muted_until' => optional($user->muted_until)->toIso8601String(),
+                'mute_reason' => $user->mute_reason,
             ],
             'activity' => ActivityLogResource::collection($activity),
             'breadcrumbs' => [
@@ -206,8 +225,9 @@ class UserManagementController extends Controller
                 'email_verified_at' => now(),
                 'account_status' => $status,
                 'account_type' => $accountType,
+                'branch_id' => $data['branch_id'], // Save branch_id
                 'approved_at' => $isActive ? now() : null,
-                'approved_by' => $isActive ? $request->user()->id : null,
+                'approved_by' => $request->user()->id,
             ]);
 
             $user->syncRoles($data['roles'] ?? []);
@@ -226,7 +246,7 @@ class UserManagementController extends Controller
     {
         $this->ensureCanManageUsers();
 
-        $user->load(['roles:id,name', 'permissions:id,name', 'staff:id', 'approver:id,name']);
+        $user->load(['roles:id,name', 'permissions:id,name', 'staff:id', 'approver:id,name', 'branch:id,name']); // Eager load branch
 
         $activity = $user->activityLogs()
             ->with('causer')
@@ -234,11 +254,15 @@ class UserManagementController extends Controller
             ->take(20)
             ->get();
 
+        $branches = Branch::all(['id', 'name']); // Fetch branches
+
         return Inertia::render('Users/Edit', [
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'branch_id' => $user->branch_id, // Include branch_id
+                'branch' => $user->branch ? ['id' => $user->branch->id, 'name' => $user->branch->name] : null, // Include branch
                 'account_status' => $user->account_status,
                 'account_type' => $user->account_type,
                 'approved_at' => optional($user->approved_at)->toIso8601String(),
@@ -246,6 +270,18 @@ class UserManagementController extends Controller
                 'roles' => $user->roles->pluck('name')->values(),
                 'permissions' => $user->getAllPermissions()->pluck('name')->values(),
                 'staff_id' => $user->staff?->id,
+                'is_kicked' => $user->isKicked(), // Include kick status
+                'kicked_at' => optional($user->kicked_at)->toIso8601String(),
+                'kicked_until' => optional($user->kicked_until)->toIso8601String(),
+                'kick_reason' => $user->kick_reason,
+                'is_banned' => $user->isBanned(), // Include ban status
+                'banned_at' => optional($user->banned_at)->toIso8601String(),
+                'banned_until' => optional($user->banned_until)->toIso8601String(),
+                'ban_reason' => $user->ban_reason,
+                'is_muted' => $user->isMuted(), // Include mute status
+                'muted_at' => optional($user->muted_at)->toIso8601String(),
+                'muted_until' => optional($user->muted_until)->toIso8601String(),
+                'mute_reason' => $user->mute_reason,
             ],
             'roles' => $this->availableRoles(),
             'permissions' => $this->availablePermissions(),
@@ -267,23 +303,27 @@ class UserManagementController extends Controller
         $oldStatus = $user->account_status;
         $oldType = $user->account_type;
         $oldApprovedAt = $user->approved_at;
+        $oldBranchId = $user->branch_id; // Get old branch_id
 
         $newRoles = $oldRoles;
         $newPermissions = $oldPermissions;
         $newStatus = $oldStatus;
         $newType = $oldType;
         $newApprovedAt = $oldApprovedAt;
+        $newBranchId = $oldBranchId; // Initialize new branch_id
 
-        DB::transaction(function () use ($request, $user, &$newRoles, &$newPermissions, &$newStatus, &$newType, &$newApprovedAt) {
+        DB::transaction(function () use ($request, $user, &$newRoles, &$newPermissions, &$newStatus, &$newType, &$newApprovedAt, &$newBranchId) {
             $data = $request->validated();
             $status = $data['account_status'];
             $accountType = $data['account_type'];
+            $branchId = $data['branch_id']; // Get new branch_id
 
             $payload = [
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'account_status' => $status,
                 'account_type' => $accountType,
+                'branch_id' => $branchId, // Update branch_id
             ];
 
             if (! empty($data['password'])) {
@@ -313,6 +353,7 @@ class UserManagementController extends Controller
             $newStatus = $user->account_status;
             $newType = $user->account_type;
             $newApprovedAt = $user->approved_at;
+            $newBranchId = $user->branch_id; // Get updated branch_id
         });
 
         if ($oldRoles !== $newRoles || $oldPermissions !== $newPermissions) {
@@ -334,7 +375,7 @@ class UserManagementController extends Controller
             );
         }
 
-        if ($oldStatus !== $newStatus || $oldType !== $newType) {
+        if ($oldStatus !== $newStatus || $oldType !== $newType || $oldBranchId !== $newBranchId) { // Check for branch_id change
             ActivityLog::record(
                 auth()->id(),
                 $user->fresh(),
@@ -345,11 +386,13 @@ class UserManagementController extends Controller
                         'status' => $oldStatus,
                         'type' => $oldType,
                         'approved_at' => optional($oldApprovedAt)->toDateTimeString(),
+                        'branch_id' => $oldBranchId, // Include old branch_id
                     ],
                     'after' => [
                         'status' => $newStatus,
                         'type' => $newType,
                         'approved_at' => optional($newApprovedAt)->toDateTimeString(),
+                        'branch_id' => $newBranchId, // Include new branch_id
                     ],
                 ]
             );
@@ -380,6 +423,163 @@ class UserManagementController extends Controller
             ->route('users.index')
             ->with('bannerStyle', 'info')
             ->with('banner', 'User removed.');
+    }
+
+    /**
+     * Kick a user from the system.
+     */
+    public function kickUser(Request $request, User $user): RedirectResponse
+    {
+        $this->ensureCanManageUsers();
+
+        $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+            'kicked_until' => ['nullable', 'date', 'after:now'],
+        ]);
+
+        $user->kick($request->input('reason'), $request->input('kicked_until'));
+
+        return back()
+            ->with('bannerStyle', 'warning')
+            ->with('banner', "User {$user->name} has been kicked.");
+    }
+
+    /**
+     * Unkick a user from the system.
+     */
+    public function unkickUser(User $user): RedirectResponse
+    {
+        $this->ensureCanManageUsers();
+
+        $user->unkick();
+
+        return back()
+            ->with('bannerStyle', 'success')
+            ->with('banner', "User {$user->name} has been unkicked.");
+    }
+
+    /**
+     * Ban a user from the system.
+     */
+    public function banUser(Request $request, User $user): RedirectResponse
+    {
+        $this->ensureCanManageUsers();
+
+        $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+            'banned_until' => ['nullable', 'date', 'after:now'],
+        ]);
+
+        $user->ban($request->input('reason'), $request->input('banned_until'));
+
+        return back()
+            ->with('bannerStyle', 'danger')
+            ->with('banner', "User {$user->name} has been banned.");
+    }
+
+    /**
+     * Unban a user from the system.
+     */
+    public function unbanUser(User $user): RedirectResponse
+    {
+        $this->ensureCanManageUsers();
+
+        $user->unban();
+
+        return back()
+            ->with('bannerStyle', 'success')
+            ->with('banner', "User {$user->name} has been unbanned.");
+    }
+
+    /**
+     * Mute a user in the system.
+     */
+    public function muteUser(Request $request, User $user): RedirectResponse
+    {
+        $this->ensureCanManageUsers();
+
+        $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+            'muted_until' => ['nullable', 'date', 'after:now'],
+        ]);
+
+        $user->mute($request->input('reason'), $request->input('muted_until'));
+
+        return back()
+            ->with('bannerStyle', 'warning')
+            ->with('banner', "User {$user->name} has been muted.");
+    }
+
+    /**
+     * Unmute a user in the system.
+     */
+    public function unmuteUser(User $user): RedirectResponse
+    {
+        $this->ensureCanManageUsers();
+
+        $user->unmute();
+
+        return back()
+            ->with('bannerStyle', 'success')
+            ->with('banner', "User {$user->name} has been unmuted.");
+    }
+
+    /**
+     * Issue a warning to a user.
+     */
+    public function issueWarning(Request $request, User $user): RedirectResponse
+    {
+        $this->ensureCanManageUsers(); // Or a more specific permission like 'warnings.issue'
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+            'expires_at' => ['nullable', 'date', 'after:now'],
+        ]);
+
+        $user->warnings()->create([
+            'moderator_id' => $request->user()->id,
+            'reason' => $validated['reason'],
+            'expires_at' => $validated['expires_at'],
+        ]);
+
+        return back()
+            ->with('bannerStyle', 'warning')
+            ->with('banner', "Warning issued to user {$user->name}.");
+    }
+
+    /**
+     * Display a paginated list of warnings for a specific user.
+     */
+    public function showWarnings(Request $request, User $user): Response
+    {
+        $this->ensureCanManageUsers(); // Or a more specific permission like 'warnings.view'
+
+        $warnings = $user->warnings()
+            ->with('moderator:id,name') // Eager load the moderator who issued the warning
+            ->latest()
+            ->paginate(10); // Paginate with 10 warnings per page
+
+        return Inertia::render('Users/WarningsIndex', [ // Assuming a new Vue component for warnings
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+            ],
+            'warnings' => $warnings->through(fn ($warning) => [
+                'id' => $warning->id,
+                'reason' => $warning->reason,
+                'issued_at' => optional($warning->issued_at)->toIso8601String(),
+                'expires_at' => optional($warning->expires_at)->toIso8601String(),
+                'moderator' => $warning->moderator ? [
+                    'id' => $warning->moderator->id,
+                    'name' => $warning->moderator->name,
+                ] : null,
+            ]),
+            'breadcrumbs' => [
+                ['title' => 'Users', 'href' => route('users.index')],
+                ['title' => $user->name, 'href' => route('users.show', $user)],
+                ['title' => 'Warnings', 'href' => route('users.warnings.index', $user)],
+            ],
+        ]);
     }
 
     protected function applySearch(Builder $query, ?string $search): void

@@ -13,8 +13,7 @@ class TimelineEvent extends Model
     protected $fillable = [
         'user_id',
         'elder_id',
-        'donation_id',
-        'type',
+        'event_type', // Changed from 'type' to 'event_type'
         'description',
         'occurred_at',
     ];
@@ -33,13 +32,5 @@ class TimelineEvent extends Model
     public function elder(): BelongsTo
     {
         return $this->belongsTo(Elder::class);
-    }
-
-    /**
-     * Get the donation that is associated with the timeline event.
-     */
-    public function donation(): BelongsTo
-    {
-        return $this->belongsTo(Donation::class);
     }
 }

@@ -20,6 +20,7 @@ interface EditableUser {
     id: number;
     name: string;
     email: string;
+    branch_id: number | null; // Add branch_id to user prop
     account_status: string;
     account_type: string;
     approved_at: string | null;
@@ -27,6 +28,11 @@ interface EditableUser {
     roles: string[];
     permissions: string[];
     staff_id: number | null;
+}
+
+interface BranchOption {
+    id: number;
+    name: string;
 }
 
 type ActivityEntry = {
@@ -50,6 +56,7 @@ const props = defineProps<{
     roles: string[];
     permissions: string[];
     staff: StaffOption[];
+    branches: BranchOption[]; // New prop for branches
     activity: ActivityEntry[];
 }>();
 
@@ -78,6 +85,7 @@ const form = useForm({
     password_confirmation: '',
     account_status: props.user.account_status,
     account_type: props.user.account_type,
+    branch_id: props.user.branch_id, // Add branch_id to form
     roles: [...props.user.roles],
     permissions: [...props.user.permissions],
     staff_id: props.user.staff_id,
@@ -172,6 +180,7 @@ const destroyUser = async () => {
                 :roles="roles"
                 :permissions="permissions"
                 :staff="staff"
+                :branches="branches"
                 is-edit
             />
 

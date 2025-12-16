@@ -23,6 +23,53 @@ return [
                     'icon' => 'ScrollText',
                     'permission' => 'activity-logs.view',
                 ],
+                [
+                    'title' => 'Notifications',
+                    'href' => '/notifications',
+                    'icon' => 'MessageCircle',
+                    'permission' => null,
+                ],
+                [
+                    'title' => 'Mailbox',
+                    'href' => '/mailbox',
+                    'icon' => 'Settings',
+                    'permission' => 'mailbox.view',
+                ],
+            ],
+        ],
+        [
+            'label' => 'Management',
+            'items' => [
+                [
+                    'title' => 'Branches',
+                    'href' => '/branches',
+                    'icon' => 'Globe2',
+                    'permission' => 'branches.manage',
+                ],
+                [
+                    'title' => 'Elders',
+                    'href' => '/elders',
+                    'icon' => 'Users',
+                    'permission' => 'elders.manage',
+                ],
+                [
+                    'title' => 'Pledges',
+                    'href' => '/pledges',
+                    'icon' => 'ClipboardList',
+                    'permission' => 'pledges.manage',
+                ],
+                [
+                    'title' => 'Visits',
+                    'href' => '/visits',
+                    'icon' => 'BookOpen',
+                    'permission' => 'visits.manage',
+                ],
+                [
+                    'title' => 'Reports',
+                    'href' => '/reports',
+                    'icon' => 'Folder',
+                    'permission' => 'reports.view',
+                ],
             ],
         ],
         [

@@ -12,7 +12,22 @@ export default defineConfig({
             ssr: 'resources/js/ssr.ts',
             refresh: true,
         }),
-        tailwindcss(),
+        tailwindcss({
+            theme: {
+                extend: {
+                    keyframes: {
+                        'marquee-vertical': {
+                            '0%': { transform: 'translateY(0%)' },
+                            '100%': { transform: 'translateY(-50%)' },
+                        },
+                        'marquee-vertical-stop': {
+                            '0%': { transform: 'translateY(0%)' },
+                            '100%': { transform: 'translateY(-100%)' },
+                        },
+                    },
+                },
+            },
+        }),
         wayfinder({
             formVariants: true,
         }),

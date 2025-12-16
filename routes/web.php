@@ -19,15 +19,14 @@ use App\Http\Controllers\ElderController;
 use App\Http\Controllers\PledgeController;
 use App\Http\Controllers\VisitController;
 use App\Http\Controllers\DonorDashboardController;
-use App\Http\Controllers\ReportController; // Import ReportController
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome');
-})->name('home');
+Route::get('/', [WelcomeController::class, 'index'])->name('home');
 
 if (! app()->runningInConsole()) {
     Route::impersonate();
@@ -57,7 +56,7 @@ Route::middleware('auth')->group(function () {
             if (Auth::user()->hasRole('External')) {
                 return redirect()->route('donors.dashboard');
             }
-            return Inertia::render('Dashboard');
+            return app(DashboardController::class)->__invoke(request());
         })->name('dashboard');
 
         // Donor Dashboard Route
@@ -82,6 +81,10 @@ Route::middleware('auth')->group(function () {
         Route::get('reports', [ReportController::class, 'index'])
             ->name('reports.index')
             ->middleware('permission:reports.view');
+        // New route for Impact Book generation
+        Route::get('reports/impact-book', [ReportController::class, 'generateImpactBook'])
+            ->name('reports.impact-book')
+            ->middleware('role:External'); // Only donors can generate their own impact book
 
         Route::get('/user/two-factor-authentication', function () {
             return Inertia::render('Profile/TwoFactorAuthentication');
@@ -161,6 +164,14 @@ Route::middleware('auth')->group(function () {
             Route::get('users/{user}/edit', [UserManagementController::class, 'edit'])->name('users.edit');
             Route::put('users/{user}', [UserManagementController::class, 'update'])->name('users.update');
             Route::delete('users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
+            Route::post('users/{user}/kick', [UserManagementController::class, 'kickUser'])->name('users.kick');
+            Route::post('users/{user}/unkick', [UserManagementController::class, 'unkickUser'])->name('users.unkick');
+            Route::post('users/{user}/ban', [UserManagementController::class, 'banUser'])->name('users.ban');
+            Route::post('users/{user}/unban', [UserManagementController::class, 'unbanUser'])->name('users.unban');
+            Route::post('users/{user}/mute', [UserManagementController::class, 'muteUser'])->name('users.mute');
+            Route::post('users/{user}/unmute', [UserManagementController::class, 'unmuteUser'])->name('users.unmute');
+            Route::post('users/{user}/warn', [UserManagementController::class, 'issueWarning'])->name('users.warn');
+            Route::get('users/{user}/warnings', [UserManagementController::class, 'showWarnings'])->name('users.warnings.index');
         });
 
         Route::middleware('permission:roles.manage|users.manage')->group(function () {

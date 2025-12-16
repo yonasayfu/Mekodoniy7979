@@ -5,6 +5,7 @@ import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useRoute } from '@/composables/useRoute';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
 import { Form, Head } from '@inertiajs/vue3';
@@ -18,6 +19,8 @@ interface BranchOption {
 const props = defineProps<{
     branches: BranchOption[];
 }>();
+
+const route = useRoute();
 
 const form = RegisteredUserController.store.form();
 
@@ -63,10 +66,14 @@ const submit = () => {
                         required
                         :tabindex="2"
                         v-model="form.branch_id"
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <option value="" disabled>Select your branch</option>
-                        <option v-for="branch in branches" :key="branch.id" :value="branch.id">
+                        <option
+                            v-for="branch in branches"
+                            :key="branch.id"
+                            :value="branch.id"
+                        >
                             {{ branch.name }}
                         </option>
                     </select>
@@ -185,7 +192,7 @@ const submit = () => {
                             id="gender"
                             :tabindex="11"
                             v-model="form.gender"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <option value="">Select Gender</option>
                             <option value="male">Male</option>
@@ -217,29 +224,6 @@ const submit = () => {
                     :href="login()"
                     class="underline underline-offset-4"
                     :tabindex="13"
-                    >Log in</TextLink
-                >
-            </div>
-        </Form>
-    </AuthBase>
-</template>
-                    :disabled="processing"
-                    data-test="register-user-button"
-                >
-                    <LoaderCircle
-                        v-if="processing"
-                        class="h-4 w-4 animate-spin"
-                    />
-                    Create account
-                </Button>
-            </div>
-
-            <div class="text-center text-sm text-muted-foreground">
-                Already have an account?
-                <TextLink
-                    :href="login()"
-                    class="underline underline-offset-4"
-                    :tabindex="6"
                     >Log in</TextLink
                 >
             </div>

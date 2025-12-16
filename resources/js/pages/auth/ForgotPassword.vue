@@ -5,6 +5,7 @@ import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useRoute } from '@/composables/useRoute';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
 import { Head, useForm } from '@inertiajs/vue3';
@@ -13,6 +14,8 @@ import { LoaderCircle } from 'lucide-vue-next';
 defineProps<{
     status?: string;
 }>();
+
+const route = useRoute();
 
 const form = useForm({
     email: '',

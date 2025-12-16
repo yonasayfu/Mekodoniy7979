@@ -18,6 +18,11 @@ class BranchScope implements Scope
      */
     public function apply(Builder $builder, Model $model)
     {
+        // Skip applying scope to User model to avoid recursion during authentication
+        if ($model instanceof \App\Models\User) {
+            return;
+        }
+
         if (Auth::check() && Auth::user()->hasRole('Branch Admin')) {
             $builder->where('branch_id', Auth::user()->branch_id);
         }

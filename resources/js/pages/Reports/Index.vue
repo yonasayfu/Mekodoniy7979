@@ -49,6 +49,7 @@ const hasReports = computed(() => props.reports.length > 0);
                         v-if="report.route"
                         :href="report.route"
                         class="inline-flex items-center rounded-md p-2 text-indigo-600 transition hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                        :target="report.name === 'Impact Book (Donor)' ? '_blank' : '_self'"
                     >
                         View Report
                     </Link>

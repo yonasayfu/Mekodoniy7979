@@ -1,12 +1,13 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useRoute } from '@/composables/useRoute';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import { Head, useForm } from '@inertiajs/vue3';
 import axios from 'axios';
+import { computed, ref } from 'vue';
 
 const challengeType = ref('app_code'); // 'app_code', 'recovery_code', 'email_recovery_code'
 const emailRecoveryCodeSent = ref(false);
@@ -16,6 +17,8 @@ const form = useForm({
     recovery_code: '',
     email_recovery_code: '',
 });
+
+const route = useRoute();
 
 const submit = () => {
     if (challengeType.value === 'email_recovery_code') {
@@ -39,18 +42,25 @@ const sendEmailRecoveryCode = async () => {
 };
 
 const showAppCodeInput = computed(() => challengeType.value === 'app_code');
-const showRecoveryCodeInput = computed(() => challengeType.value === 'recovery_code');
-const showEmailRecoveryCodeInput = computed(() => challengeType.value === 'email_recovery_code');
-</script>
+const showRecoveryCodeInput = computed(
+    () => challengeType.value === 'recovery_code',
+);
+const showEmailRecoveryCodeInput = computed(
+    () => challengeType.value === 'email_recovery_code',
+);
 </script>
 
 <template>
-    <AuthLayout title="Two Factor Challenge" description="Please confirm access to your account by entering the authentication code provided by your authenticator application.">
+    <AuthLayout
+        title="Two Factor Challenge"
+        description="Please confirm access to your account by entering the authentication code provided by your authenticator application."
+    >
         <Head title="Two Factor Challenge" />
 
         <div v-if="showAppCodeInput">
             <div class="mt-4 text-sm text-gray-600">
-                Please confirm access to your account by entering the authentication code provided by your authenticator application.
+                Please confirm access to your account by entering the
+                authentication code provided by your authenticator application.
             </div>
 
             <form @submit.prevent="submit">
@@ -63,16 +73,24 @@ const showEmailRecoveryCodeInput = computed(() => challengeType.value === 'email
                         inputmode="numeric"
                         autofocus
                         autocomplete="one-time-code"
-                        class="block mt-1 w-full"
+                        class="mt-1 block w-full"
                     />
                     <InputError :message="form.errors.code" class="mt-2" />
                 </div>
 
-                <div class="flex items-center justify-end mt-4">
-                    <button type="button" class="text-sm text-gray-600 hover:text-gray-900 underline cursor-pointer" @click.prevent="challengeType = 'recovery_code'">
+                <div class="mt-4 flex items-center justify-end">
+                    <button
+                        type="button"
+                        class="cursor-pointer text-sm text-gray-600 underline hover:text-gray-900"
+                        @click.prevent="challengeType = 'recovery_code'"
+                    >
                         Use a recovery code
                     </button>
-                    <button type="button" class="ml-4 text-sm text-gray-600 hover:text-gray-900 underline cursor-pointer" @click.prevent="challengeType = 'email_recovery_code'">
+                    <button
+                        type="button"
+                        class="ml-4 cursor-pointer text-sm text-gray-600 underline hover:text-gray-900"
+                        @click.prevent="challengeType = 'email_recovery_code'"
+                    >
                         Use email recovery
                     </button>
 
@@ -85,7 +103,8 @@ const showEmailRecoveryCodeInput = computed(() => challengeType.value === 'email
 
         <div v-if="showRecoveryCodeInput">
             <div class="mt-4 text-sm text-gray-600">
-                Please confirm access to your account by entering one of your emergency recovery codes.
+                Please confirm access to your account by entering one of your
+                emergency recovery codes.
             </div>
 
             <form @submit.prevent="submit">
@@ -96,16 +115,27 @@ const showEmailRecoveryCodeInput = computed(() => challengeType.value === 'email
                         v-model="form.recovery_code"
                         type="text"
                         autocomplete="one-time-code"
-                        class="block mt-1 w-full"
+                        class="mt-1 block w-full"
                     />
-                    <InputError :message="form.errors.recovery_code" class="mt-2" />
+                    <InputError
+                        :message="form.errors.recovery_code"
+                        class="mt-2"
+                    />
                 </div>
 
-                <div class="flex items-center justify-end mt-4">
-                    <button type="button" class="text-sm text-gray-600 hover:text-gray-900 underline cursor-pointer" @click.prevent="challengeType = 'app_code'">
+                <div class="mt-4 flex items-center justify-end">
+                    <button
+                        type="button"
+                        class="cursor-pointer text-sm text-gray-600 underline hover:text-gray-900"
+                        @click.prevent="challengeType = 'app_code'"
+                    >
                         Use an authentication code
                     </button>
-                    <button type="button" class="ml-4 text-sm text-gray-600 hover:text-gray-900 underline cursor-pointer" @click.prevent="challengeType = 'email_recovery_code'">
+                    <button
+                        type="button"
+                        class="ml-4 cursor-pointer text-sm text-gray-600 underline hover:text-gray-900"
+                        @click.prevent="challengeType = 'email_recovery_code'"
+                    >
                         Use email recovery
                     </button>
 
@@ -118,13 +148,21 @@ const showEmailRecoveryCodeInput = computed(() => challengeType.value === 'email
 
         <div v-if="showEmailRecoveryCodeInput">
             <div class="mt-4 text-sm text-gray-600">
-                Please confirm access to your account by entering one of your email recovery codes.
+                Please confirm access to your account by entering one of your
+                email recovery codes.
             </div>
 
             <form @submit.prevent="submit">
                 <div v-if="!emailRecoveryCodeSent">
-                    <p class="text-sm text-gray-600 mb-4">Click the button below to send recovery codes to your recovery email address.</p>
-                    <Button type="button" @click="sendEmailRecoveryCode" :disabled="form.processing">
+                    <p class="mb-4 text-sm text-gray-600">
+                        Click the button below to send recovery codes to your
+                        recovery email address.
+                    </p>
+                    <Button
+                        type="button"
+                        @click="sendEmailRecoveryCode"
+                        :disabled="form.processing"
+                    >
                         Send Email Recovery Codes
                     </Button>
                 </div>
@@ -135,20 +173,34 @@ const showEmailRecoveryCodeInput = computed(() => challengeType.value === 'email
                         v-model="form.email_recovery_code"
                         type="text"
                         autocomplete="one-time-code"
-                        class="block mt-1 w-full"
+                        class="mt-1 block w-full"
                     />
-                    <InputError :message="form.errors.email_recovery_code" class="mt-2" />
+                    <InputError
+                        :message="form.errors.email_recovery_code"
+                        class="mt-2"
+                    />
                 </div>
 
-                <div class="flex items-center justify-end mt-4">
-                    <button type="button" class="text-sm text-gray-600 hover:text-gray-900 underline cursor-pointer" @click.prevent="challengeType = 'app_code'">
+                <div class="mt-4 flex items-center justify-end">
+                    <button
+                        type="button"
+                        class="cursor-pointer text-sm text-gray-600 underline hover:text-gray-900"
+                        @click.prevent="challengeType = 'app_code'"
+                    >
                         Use an authentication code
                     </button>
-                    <button type="button" class="ml-4 text-sm text-gray-600 hover:text-gray-900 underline cursor-pointer" @click.prevent="challengeType = 'recovery_code'">
+                    <button
+                        type="button"
+                        class="ml-4 cursor-pointer text-sm text-gray-600 underline hover:text-gray-900"
+                        @click.prevent="challengeType = 'recovery_code'"
+                    >
                         Use a recovery code
                     </button>
 
-                    <Button class="ml-4" :disabled="form.processing || !emailRecoveryCodeSent">
+                    <Button
+                        class="ml-4"
+                        :disabled="form.processing || !emailRecoveryCodeSent"
+                    >
                         Log in
                     </Button>
                 </div>

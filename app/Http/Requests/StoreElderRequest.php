@@ -32,11 +32,11 @@ class StoreElderRequest extends FormRequest
             'country' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:255'],
             'bio' => ['nullable', 'string'],
-            'profile_picture_path' => ['nullable', 'image', 'max:2048'], // Max 2MB
+            'profile_picture' => ['nullable', 'image', 'max:2048'], // Max 2MB
             'priority_level' => ['required', 'string', 'in:low,medium,high'],
             'health_status' => ['nullable', 'string'],
             'special_needs' => ['nullable', 'string'],
             'monthly_expenses' => ['nullable', 'numeric'],
-            'video_url' => ['nullable', 'string', 'url', 'max:255'],
+            'video' => ['nullable', 'file', 'mimetypes:video/*', 'max:102400'], // Max 100MB video file
         ];
     }}
