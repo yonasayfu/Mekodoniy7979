@@ -14,13 +14,14 @@ class Donation extends Model
     protected $fillable = [
         'user_id',
         'elder_id',
+        'pledge_id',
         'guest_name',
         'guest_email',
         'guest_phone',
         'amount',
         'currency',
-        'payment_method',
-        'transaction_id',
+        'payment_gateway',
+        'payment_id',
         'status',
         'notes',
     ];
@@ -49,5 +50,13 @@ class Donation extends Model
     public function elder(): BelongsTo
     {
         return $this->belongsTo(Elder::class);
+    }
+
+    /**
+     * Get the pledge that the donation is for.
+     */
+    public function pledge(): BelongsTo
+    {
+        return $this->belongsTo(Pledge::class);
     }
 }

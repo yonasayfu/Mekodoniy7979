@@ -29,6 +29,7 @@ class RolePermissionSeeder extends Seeder
             'pledges.manage',
             'visits.manage',
             'reports.view',
+            'reports.generate_impact_book',
         ])->map(function (string $name) {
             return Permission::firstOrCreate(
                 ['name' => $name, 'guard_name' => 'web'],

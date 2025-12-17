@@ -36,6 +36,10 @@ class UserFactory extends Factory
             'account_type' => User::TYPE_INTERNAL,
             'approved_at' => now(),
             'approved_by' => null,
+            'phone_number' => fake()->phoneNumber(),
+            'address' => fake()->streetAddress(),
+            'city' => fake()->city(),
+            'country' => fake()->country(),
         ];
     }
 

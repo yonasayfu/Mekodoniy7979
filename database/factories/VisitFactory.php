@@ -46,6 +46,7 @@ class VisitFactory extends Factory
             ]),
             'notes' => $this->faker->optional(0.8)->paragraph(),
             'status' => $this->faker->randomElement(['pending', 'approved', 'rejected', 'completed']),
+            'approved_by' => User::factory(),
         ];
     }
 

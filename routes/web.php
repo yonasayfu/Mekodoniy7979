@@ -74,9 +74,13 @@ Route::middleware('auth')->group(function () {
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
             ->middleware('permission:elders.manage');
 
+        Route::get('pledges/export', [PledgeController::class, 'export'])->name('pledges.export');
+
         Route::resource('pledges', PledgeController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
             ->middleware('permission:pledges.manage');
+
+        Route::get('visits/export', [VisitController::class, 'export'])->name('visits.export');
 
         Route::resource('visits', VisitController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
@@ -85,6 +89,24 @@ Route::middleware('auth')->group(function () {
         Route::get('reports', [ReportController::class, 'index'])
             ->name('reports.index')
             ->middleware('permission:reports.view');
+
+        Route::get('reports/donations', [ReportController::class, 'donationsReport'])
+            ->name('reports.donations')
+            ->middleware('permission:reports.view');
+
+        // Detailed report routes for dashboard drill-down
+        Route::get('reports/detailed', [ReportController::class, 'detailedReport'])
+            ->name('reports.detailed')
+            ->middleware('permission:reports.view');
+
+        Route::get('reports/activity', [ReportController::class, 'activityReport'])
+            ->name('reports.activity')
+            ->middleware('permission:reports.view');
+
+        Route::get('reports/export', [ReportController::class, 'exportReport'])
+            ->name('reports.export')
+            ->middleware('permission:reports.view');
+
         // New route for Impact Book generation
         Route::get('reports/impact-book', [ReportController::class, 'generateImpactBook'])
             ->name('reports.impact-book')

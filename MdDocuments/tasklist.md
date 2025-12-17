@@ -97,6 +97,7 @@ These features are either completely new or represent significant expansions not
 - [ ] **Elder Detail Page**: Full story, videos, photos, expense breakdown, "Adopt me" button logic.
 - [ ] **Guest Donation Receipt**: PDF + SMS notification for immediate receipt.
 - [ ] **User Authentication**:
+    - [ ] **Report Module**: Implement `ReportService`, `AdminReportDashboard`, and `DonorImpactPage` based on the Blueprint.
     - 2FA for staff.
     - Laravel Sanctum SPA auth, optional Socialite.
 - [ ] **Security**:

@@ -30,11 +30,14 @@ class PledgeFactory extends Factory
             'user_id' => User::factory(),
             'elder_id' => Elder::factory(),
             'amount' => $this->faker->numberBetween(50, 500),
+            'currency' => 'ETB',
             'frequency' => $this->faker->randomElement(['monthly', 'quarterly', 'annually', 'one-time']),
             'start_date' => $this->faker->dateTimeBetween('-1 year', 'now'),
             'end_date' => $this->faker->optional(0.3)->dateTimeBetween('now', '+2 years'),
             'status' => $this->faker->randomElement(['pending', 'active', 'completed', 'cancelled']),
             'notes' => $this->faker->optional(0.5)->paragraph(),
+            'subscription_id' => 'sub_' . $this->faker->unique()->lexify('??????????????'),
+            'next_billing_date' => $this->faker->dateTimeBetween('now', '+1 month'),
         ];
     }
 

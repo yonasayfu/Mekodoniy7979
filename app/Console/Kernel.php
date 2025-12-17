@@ -13,6 +13,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('reminders:send')->daily();
+        $schedule->command('reports:generate-daily-stats')->daily();
+        $schedule->command('promises:check-monthly')->monthlyOn(1, '00:00'); // First day of each month
+        $schedule->command('reports:generate-annual')->yearlyOn(12, 31, '23:59'); // End of each year
     }
 
     /**

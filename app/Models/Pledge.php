@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Pledge extends Model
 {
     use HasFactory;
+    use RecordsActivity;
 
     protected $fillable = [
         'user_id',
@@ -38,5 +41,10 @@ class Pledge extends Model
     public function elder(): BelongsTo
     {
         return $this->belongsTo(Elder::class);
+    }
+
+    public function activityLogs(): MorphMany
+    {
+        return $this->morphMany(ActivityLog::class, 'subject');
     }
 }

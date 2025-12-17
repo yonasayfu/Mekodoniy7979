@@ -90,4 +90,10 @@ class Elder extends Model
     {
         return $this->morphMany(ActivityLog::class, 'subject');
     }
+
+    // Accessor for full name
+    public function getNameAttribute(): string
+    {
+        return $this->first_name . ' ' . $this->last_name;
+    }
 }

@@ -284,4 +284,85 @@ class ExportConfig
             ],
         ];
     }
+
+    public static function pledges(): array
+    {
+        return [
+            'label' => 'Pledges Directory',
+            'type' => 'pledges',
+            'filename_prefix' => 'pledges',
+
+            'csv' => [
+                'headers' => [
+                    'ID',
+                    'Donor',
+                    'Elder',
+                    'Amount',
+                    'Frequency',
+                    'Start Date',
+                    'End Date',
+                    'Status',
+                ],
+                'fields' => [
+                    'id',
+                    [
+                        'field' => 'user.name',
+                        'default' => '—',
+                    ],
+                    [
+                        'field' => 'elder.name',
+                        'default' => '—',
+                    ],
+                    'amount',
+                    'frequency',
+                    'start_date',
+                    'end_date',
+                    'status',
+                ],
+                'with_relations' => ['user:id,name', 'elder:id,first_name,last_name'],
+            ],
+        ];
+    }
+
+    public static function visits(): array
+    {
+        return [
+            'label' => 'Visits Directory',
+            'type' => 'visits',
+            'filename_prefix' => 'visits',
+
+            'csv' => [
+                'headers' => [
+                    'ID',
+                    'Visitor',
+                    'Elder',
+                    'Branch',
+                    'Visit Date',
+                    'Purpose',
+                    'Notes',
+                    'Status',
+                ],
+                'fields' => [
+                    'id',
+                    [
+                        'field' => 'user.name',
+                        'default' => '—',
+                    ],
+                    [
+                        'field' => 'elder.name',
+                        'default' => '—',
+                    ],
+                    [
+                        'field' => 'branch.name',
+                        'default' => '—',
+                    ],
+                    'visit_date',
+                    'purpose',
+                    'notes',
+                    'status',
+                ],
+                'with_relations' => ['user:id,name', 'elder:id,first_name,last_name', 'branch:id,name'],
+            ],
+        ];
+    }
 }

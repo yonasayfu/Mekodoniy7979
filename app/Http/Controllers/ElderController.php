@@ -21,17 +21,17 @@ class ElderController extends Controller
      */
     public function index()
     {
-        $elders = Elder::with('branch')->paginate(10);
-        $elders->through(fn ($elder) => [
-            'id' => $elder->id,
-            'first_name' => $elder->first_name,
-            'last_name' => $elder->last_name,
-            'date_of_birth' => $elder->date_of_birth,
-            'gender' => $elder->gender,
-            'priority_level' => $elder->priority_level,
-            'monthly_expenses' => $elder->monthly_expenses,
-            'branch_name' => $elder->branch->name,
-        ]);
+        $elders = Elder::with('branch')->paginate(10)
+            ->through(fn ($elder) => [
+                'id' => $elder->id,
+                'first_name' => $elder->first_name,
+                'last_name' => $elder->last_name,
+                'date_of_birth' => $elder->date_of_birth,
+                'gender' => $elder->gender,
+                'priority_level' => $elder->priority_level,
+                'monthly_expenses' => $elder->monthly_expenses,
+                'branch_name' => $elder->branch->name,
+            ]);
 
         return Inertia::render('Elders/Index', [
             'elders' => $elders,
@@ -78,10 +78,10 @@ class ElderController extends Controller
      */
     public function show(Elder $elder)
     {
-        $elder->load('activityLogs.causer');
+        $elder->load('branch', 'activityLogs.causer');
 
         return Inertia::render('Elders/Show', [
-            'elder' => $elder->load('branch'),
+            'elder' => $elder,
             'activity' => $elder->activityLogs,
             'breadcrumbs' => [
                 [
@@ -100,9 +100,10 @@ class ElderController extends Controller
      */
     public function edit(Elder $elder)
     {
+        $elder->load('branch', 'activityLogs.causer');
         $branches = Branch::all(['id', 'name']); // Get all branches for dropdown
         return Inertia::render('Elders/Edit', [
-            'elder' => $elder->load('branch'),
+            'elder' => $elder,
             'branches' => $branches,
             'activity' => $elder->activityLogs,
             'breadcrumbs' => [

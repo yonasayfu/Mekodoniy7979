@@ -20,6 +20,9 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
         ]);
 
+        // Create sample branches first
+        $branches = \App\Models\Branch::factory()->count(5)->create();
+
         $approvalTimestamp = Carbon::now();
 
         $admin = User::factory()
@@ -32,6 +35,7 @@ class DatabaseSeeder extends Seeder
                 'account_type' => User::TYPE_INTERNAL,
                 'approved_at' => $approvalTimestamp,
                 'approved_by' => null,
+                'branch_id' => $branches->first()->id,
             ]);
 
         $admin->assignRole('Admin');
@@ -114,6 +118,7 @@ class DatabaseSeeder extends Seeder
                     'account_type' => $sample['account_type'],
                     'approved_at' => $approvalTimestamp,
                     'approved_by' => $admin->id,
+                    'branch_id' => $branches->random()->id,
                 ]);
 
             $user->assignRole($sample['role']);
@@ -130,9 +135,6 @@ class DatabaseSeeder extends Seeder
 
 
         }
-
-        // Create sample branches
-        $branches = \App\Models\Branch::factory()->count(5)->create();
 
         // Create sample elders
         $elders = \App\Models\Elder::factory()->count(50)->create();
@@ -180,9 +182,25 @@ class DatabaseSeeder extends Seeder
         foreach ($regularUsers as $user) {
             $pledgeCount = rand(0, 2);
             for ($i = 0; $i < $pledgeCount; $i++) {
-                \App\Models\Pledge::factory()->create([
+                $pledge = \App\Models\Pledge::factory()->create([
                     'user_id' => $user->id,
                     'elder_id' => $elders->random()->id,
+                ]);
+
+                \App\Models\Donation::factory()->create([
+                    'user_id' => $pledge->user_id,
+                    'pledge_id' => $pledge->id,
+                    'elder_id' => $pledge->elder_id,
+                    'amount' => $pledge->amount,
+                ]);
+
+                \App\Models\TimelineEvent::factory()->create([
+                    'user_id' => $pledge->user_id,
+                    'elder_id' => $pledge->elder_id,
+                    'donation_id' => null,
+                    'type' => 'Pledge Started',
+                    'description' => 'Pledge started for ' . $pledge->elder->name,
+                    'occurred_at' => $pledge->start_date,
                 ]);
             }
         }

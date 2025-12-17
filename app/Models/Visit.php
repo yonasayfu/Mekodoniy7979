@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Visit extends Model
 {
     use HasFactory;
+    use RecordsActivity;
 
     protected $fillable = [
         'user_id',
@@ -51,5 +54,10 @@ class Visit extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function activityLogs(): MorphMany
+    {
+        return $this->morphMany(ActivityLog::class, 'subject');
     }
 }
