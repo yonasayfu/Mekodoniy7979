@@ -53,10 +53,10 @@ return [
                     'permission' => 'elders.manage',
                 ],
                 [
-                    'title' => 'Pledges',
-                    'href' => '/pledges',
+                    'title' => 'Sponsorships',
+                    'href' => '/sponsorships',
                     'icon' => 'ClipboardList',
-                    'permission' => 'pledges.manage',
+                    'permission' => 'sponsorships.manage',
                 ],
                 [
                     'title' => 'Visits',

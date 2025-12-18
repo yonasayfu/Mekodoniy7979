@@ -35,16 +35,16 @@ const exportActivities = () => {
 
 const getEventTypeColor = (type: string) => {
     switch (type?.toLowerCase()) {
-        case 'pledge_created':
+        case 'sponsorship_created':
         case 'donation':
             return 'bg-green-100 text-green-800';
         case 'visit':
         case 'check_in':
             return 'bg-blue-100 text-blue-800';
-        case 'pledge_updated':
+        case 'sponsorship_updated':
         case 'profile_updated':
             return 'bg-yellow-100 text-yellow-800';
-        case 'pledge_cancelled':
+        case 'sponsorship_cancelled':
         case 'issue':
             return 'bg-red-100 text-red-800';
         default:

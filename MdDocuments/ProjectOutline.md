@@ -1,75 +1,71 @@
-# Mekodonia Home Connect - Project Outline & Requirements
+# Project Mekodonia: Connecting Donors with Elders
 
-This document outlines the features, database schema, and next steps for the Mekodonia Home Connect project.
+## 1. Project Vision
 
-## 1. Core Features
+To create a web application that connects donors with elders at the Mekodonia charity organization. The platform will facilitate sponsorships, manage donations, and provide a comprehensive database for the organization's staff. It aims to build personal relationships between donors and elders, fostering a sense of family and community.
 
-### For Donors (End Users)
+## 2. User Roles
 
-*   **Guest Experience:**
-    *   Landing page with a "Wall of Love" showing recent donor-elder pairings.
-    *   Guest donation option for one-time contributions (e.g., "buy a meal") with easy mobile/bank transfer, no registration required.
-    *   Elder gallery with profiles of elders who need support.
-*   **Donor Authentication & Profile:**
-    *   Simple registration and login.
-    *   Donor profile management (contact details, payment methods, etc.).
-*   **Pledging (Adopting an Elder):**
-    *   Donors can browse the elder gallery and select an elder to "adopt".
-    *   A pledge form to commit to monthly support.
-    *   The system tracks the pledge and sends reminders for payment.
-*   **Donor Dashboard:**
-    *   A personalized dashboard showing the donor's impact: total donations, supported elders, and a timeline of their contributions.
-    *   A section to manage their active pledges.
-*   **Visit Scheduling:**
-    *   A feature to schedule visits with their supported elders.
-*   **Impact Reporting:**
-    *   An annual "Impact Book" PDF report summarizing their contributions.
-    *   "Thank You" certificates for long-term supporters.
+The system will have the following user roles:
 
-### For Mekodonia Admins
+*   **Guest/Public User:** Can view the landing page, see general information about the organization, view a list of elders available for sponsorship, and make one-time donations.
+*   **Donor:** A registered user who has sponsored one or more elders. They can view their sponsored elders, see their history, receive notifications, manage their payment methods, and generate reports of their contributions.
+*   **Elder:** Managed by the organization's staff. Their profiles, including history, photos, videos, and needs, are displayed on the platform.
+*   **Staff/Admin:** Employees of the Mekodonia organization. They can manage elders, donors, sponsorships, and donations. They can also generate reports and manage the content of the website.
+*   **Super Admin:** Has full control over the system, including managing user roles and permissions.
 
-*   **Admin Dashboard:**
-    *   A global overview of the organization's performance: total pledges, total collections, number of active donors, etc.
-    *   Ability to filter stats by branch.
-*   **Branch Management:**
-    *   CRUD (Create, Read, Update, Delete) for branches.
-*   **Elder Management:**
-    *   CRUD for elders, including their bio, photos, videos, and monthly expense needs.
-    *   Ability to set a priority for elders who need urgent support.
-*   **Donor Management:**
-    *   View all donors and their pledge history.
-*   **Pledge Management:**
-    *   Track the status of all pledges.
-    *   Mark pledges as active, paused, or ended.
-*   **Financial Management:**
-    *   Track all donations and reconcile them with bank/mobile money statements.
-*   **Communication Hub:**
-    *   Send bulk SMS/email notifications to donors (e.g., payment reminders).
-*   **User Management:**
-    *   Manage admin users and their roles/permissions.
+## 3. Core Features
 
-## 2. High-Level Database Schema
+### 3.1. Landing Page
 
-*   **`users`**: Stores both donors and admins.
-    *   `id`, `name`, `email`, `password`, `role` (donor, admin, super-admin), `branch_id` (for admins), etc.
-*   **`branches`**:
-    *   `id`, `name`, `location`, etc.
-*   **`elders`**:
-    *   `id`, `name`, `bio`, `profile_picture_path`, `video_url`, `monthly_expense_amount`, `priority` (high, medium, low), `status` (available, supported), `branch_id`, etc.
-*   **`pledges`**: The link between a donor and an elder.
-    *   `id`, `user_id` (donor), `elder_id`, `amount`, `status` (active, paused, ended), `next_billing_date`, etc.
-*   **`donations`**:
-    *   `id`, `user_id` (nullable for guest donations), `amount`, `payment_method`, `status` (pending, successful, failed), `pledge_id` (if applicable), `transaction_id`, etc.
-*   **`visits`**:
-    *   `id`, `user_id` (donor), `elder_id`, `scheduled_at`, `status` (pending, approved, completed), etc.
-*   **`timeline_events`**: A log of significant events.
-    *   `id`, `user_id`, `elder_id`, `event_type` (e.g., "Pledge Started", "Donation Received"), `description`, `occurred_at`, etc.
+*   Simple and intuitive design.
+*   Information about the Mekodonia organization.
+*   A gallery of elders available for sponsorship, with search and filter options (by branch, gender, age, etc.).
+*   A section for one-time donations (for guests).
+*   A sliding report showing recent sponsorships (e.g., "John Doe is now sponsoring Elder Abebe").
+*   User registration and login for donors.
 
-## 3. Next Steps
+### 3.2. Donor Features
 
-1.  **Review & Refine:** Please review this outline and let me know if it aligns with your vision. We can add, remove, or change features as needed.
-2.  **Detailed Schema Design:** Once the feature set is confirmed, we can create a detailed database schema with all columns, data types, and relationships.
-3.  **Project Scaffolding:** Set up the Laravel project with the necessary dependencies, authentication, and basic structure.
-4.  **Iterative Development:** We will build the features one by one, starting with the core functionality (admin dashboards, elder management) and then moving on to the donor-facing features.
+*   **Dashboard:** An overview of their sponsorships, recent activities, and notifications.
+*   **My Elders:** A list of the elders they are sponsoring, with links to their detailed profiles.
+*   **Elder Profile:** Detailed information about the elder, including their history, photos, videos, and monthly needs.
+*   **Communication:** A feature to send messages or updates to the elder (moderated by the staff).
+*   **Payment Management:** Donors can add and update their payment methods (bank transfer details, etc.).
+*   **Donation History:** A record of all their donations.
+*   **Notifications:** Receive email, SMS, or in-app notifications for payment reminders, updates from the organization, etc.
+*   **Annual Reports:** "Thank You" reports summarizing their impact.
 
-I believe this outline provides a solid foundation for the Mekodonia Home Connect project. I'm ready to proceed with the next steps when you are.
+### 3.3. Staff/Admin Features
+
+*   **Dashboard:** An overview of the organization's key metrics (number of donors, elders, sponsorships, total donations, etc.).
+*   **Elder Management:** Create, update, and manage elder profiles. Set their priority and needs.
+*   **Donor Management:** View and manage donor information.
+*   **Sponsorship Management:** View and manage all sponsorships.
+*   **Donation Management:** Track and verify all donations.
+*   **Branch Management:** Manage the different branches of the organization.
+*   **Reporting:** Generate various reports (e.g., financial reports, donor reports, elder reports).
+*   **Content Management:** Manage the content of the landing page and other informational pages.
+
+### 3.4. One-Time Donations
+
+*   A simple form on the landing page for guests to make a one-time donation.
+*   Integration with popular Ethiopian payment gateways (e.g., Telebirr, CBE Birr) for easy mobile transfers.
+*   Option to donate for a specific purpose (e.g., "a meal for an elder").
+
+## 4. Technology Stack
+
+*   **Backend:** Laravel 12
+*   **Frontend:** Vue.js 3
+*   **Database:** MySQL
+*   **Other:** Inertia.js to connect the backend and frontend.
+
+## 5. High-Level Architecture
+
+The application will be a monolithic application built with Laravel. The frontend will be built with Vue.js and integrated into the Laravel application using Inertia.js. This architecture is simple, easy to develop and maintain, and well-suited for this type of application.
+
+## 6. Next Steps
+
+1.  **Database Schema Design:** Create a detailed database schema based on the features outlined above.
+2.  **Development Plan:** Break down the development into smaller, manageable tasks.
+3.  **Implementation:** Start the implementation of the features.

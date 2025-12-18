@@ -14,13 +14,13 @@ import * as mailpitRoutes from '../routes/mailpit';
 import * as notificationsRoutes from '../routes/notifications';
 import * as onboardingRoutes from '../routes/onboarding';
 import * as passwordRoutes from '../routes/password';
-import * as pledgesRoutes from '../routes/pledges';
 import * as profileRoutes from '../routes/profile';
 import * as registerRoutes from '../routes/register';
 import * as reportsRoutes from '../routes/reports';
 import * as rolesRoutes from '../routes/roles';
 import * as samplesRoutes from '../routes/samples';
 import * as sanctumRoutes from '../routes/sanctum';
+import * as sponsorshipsRoutes from '../routes/sponsorships';
 import * as staffRoutes from '../routes/staff';
 import * as storageRoutes from '../routes/storage';
 import * as twoFactorRoutes from '../routes/two-factor';
@@ -49,7 +49,7 @@ export function useRoute() {
             notifications: notificationsRoutes,
             onboarding: onboardingRoutes,
             password: passwordRoutes,
-            pledges: pledgesRoutes,
+            sponsorships: sponsorshipsRoutes,
             profile: profileRoutes,
             register: registerRoutes,
             reports: reportsRoutes,

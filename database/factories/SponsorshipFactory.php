@@ -3,21 +3,21 @@
 namespace Database\Factories;
 
 use App\Models\Elder;
-use App\Models\Pledge;
+use App\Models\Sponsorship;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Pledge>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Sponsorship>
  */
-class PledgeFactory extends Factory
+class SponsorshipFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
      * @var string
      */
-    protected $model = Pledge::class;
+    protected $model = Sponsorship::class;
 
     /**
      * Define the model's default state.
@@ -45,7 +45,7 @@ class PledgeFactory extends Factory
     }
 
     /**
-     * Indicate that the pledge is active.
+     * Indicate that the sponsorship is active.
      */
     public function active(): static
     {
@@ -55,7 +55,7 @@ class PledgeFactory extends Factory
     }
 
     /**
-     * Indicate that the pledge is monthly.
+     * Indicate that the sponsorship is monthly.
      */
     public function monthly(): static
     {

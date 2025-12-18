@@ -27,12 +27,12 @@ These features have been implemented to a basic or foundational level.
 #### Phase 3: Donor Experience
 - [x] **Donor Registration**: Registration form updated with donor-specific fields; `User` model and `RegisteredUserController` updated.
 - [x] **Donor Dashboard**: `DonorDashboard.vue` component created with mock data for metrics, supported elders, and timeline events; `DonorDashboardController` fetches and passes data.
-- [x] **Pledging (Adopting an Elder)**: `Pledge` model, migration, CRUD controller, and Vue components (`Index`, `Create`, `Show`, `Edit`). Mock `RecurringPaymentService` created.
-- [x] **Auto-Payment**: `subscription_id` and `next_billing_date` added to `pledges` table and `Pledge` model. Mock `RecurringPaymentService` for subscriptions.
+- [x] **Pledging (Adopting an Elder)**: `Sponsorship` model, migration, CRUD controller, and Vue components (`Index`, `Create`, `Show`, `Edit`). Mock `RecurringPaymentService` created.
+- [x] **Auto-Payment**: `subscription_id` and `next_billing_date` added to `pledges` table and `Sponsorship` model. Mock `RecurringPaymentService` for subscriptions.
 
 #### Phase 4: Advanced Features
 - [x] **Visit Scheduler**: `Visit` model, migration, CRUD controller, and Vue components (`Index`, `Create`, `Show`, `Edit`).
-- [x] **Impact Timeline**: `TimelineEvent` model, migration, and `TimelineEventService` created. Integrated into `DonationController` and `PledgeController`. Displayed on `DonorDashboard.vue`.
+- [x] **Impact Timeline**: `TimelineEvent` model, migration, and `TimelineEventService` created. Integrated into `DonationController` and `SponsorshipController`. Displayed on `DonorDashboard.vue`.
 - [x] **Offline Support (PWA)**: `VitePWA` configured in `vite.config.ts`; placeholder SVG icons added.
 - [x] **Reporting**: `ReportController` with `index` method listing reports. `Reports/Index.vue` created.
 - [x] **Automation**: `app/Console/Kernel.php` created; `SendRemindersCommand` created and scheduled.
@@ -57,7 +57,7 @@ These features have been implemented to a basic or foundational level.
     - [x] `Branch` model updated with `users` and `elders` relationships.
     - [x] `Elder` model updated with `pledges`, `visits`, `timelineEvents` relationships.
     - [x] `Donation` model relationships (`user`, `elder`) and `$fillable` fields adjusted.
-    - [x] `Pledge` model `$fillable` fields adjusted (added `currency`).
+    - [x] `Sponsorship` model `$fillable` fields adjusted (added `currency`).
     - [x] `Visit` model `$fillable` and `approver` relationship added.
     - [x] `TimelineEvent` model `$fillable` adjusted (removed `donation_id`, changed `type` to `event_type`, removed `donation` relationship).
 - [x] **Existing CRUD Integration**: `UserManagementController` and associated Vue components updated to handle `branch_id`.

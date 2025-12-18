@@ -2,21 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StorePledgeRequest;
-use App\Http\Requests\UpdatePledgeRequest;
-use App\Models\Pledge;
+use App\Http\Requests\StoreSponsorshipRequest;
+use App\Http\Requests\UpdateSponsorshipRequest;
+use App\Models\Sponsorship;
 use App\Models\User;
 use App\Models\Elder;
-use App\Support\Services\TimelineEventService; // Import TimelineEventService
+use App\Support\Services\TimelineEventService;
 use Inertia\Inertia;
 use Inertia\Response;
-use Carbon\Carbon; // Import Carbon for occurred_at
+use Carbon\Carbon;
 use App\Support\Exports\ExportConfig;
 use App\Support\Exports\HandlesDataExport;
 use Illuminate\Http\Request;
 
-
-class PledgeController extends Controller
+class SponsorshipController extends Controller
 {
     use HandlesDataExport;
 
@@ -25,22 +24,22 @@ class PledgeController extends Controller
      */
     public function index(): Response
     {
-        $pledges = Pledge::with(['user:id,name', 'elder:id,first_name,last_name'])->paginate(10)
-            ->through(fn ($pledge) => [
-                'id' => $pledge->id,
-                'user_id' => $pledge->user_id,
-                'user_name' => $pledge->user->name,
-                'elder_id' => $pledge->elder_id,
-                'elder_full_name' => $pledge->elder->name,
-                'amount' => $pledge->amount,
-                'frequency' => $pledge->frequency,
-                'start_date' => $pledge->start_date,
-                'end_date' => $pledge->end_date,
-                'status' => $pledge->status,
-                'notes' => $pledge->notes,
+        $sponsorships = Sponsorship::with(['user:id,name', 'elder:id,first_name,last_name'])->paginate(10)
+            ->through(fn ($sponsorship) => [
+                'id' => $sponsorship->id,
+                'user_id' => $sponsorship->user_id,
+                'user_name' => $sponsorship->user->name,
+                'elder_id' => $sponsorship->elder_id,
+                'elder_full_name' => $sponsorship->elder->name,
+                'amount' => $sponsorship->amount,
+                'frequency' => $sponsorship->frequency,
+                'start_date' => $sponsorship->start_date,
+                'end_date' => $sponsorship->end_date,
+                'status' => $sponsorship->status,
+                'notes' => $sponsorship->notes,
             ]);
-        return Inertia::render('Pledges/Index', [
-            'sponsorships' => $pledges,
+        return Inertia::render('Sponsorships/Index', [
+            'sponsorships' => $sponsorships,
             'can' => [
                 'create' => true,
                 'edit' => true,
@@ -56,7 +55,7 @@ class PledgeController extends Controller
     {
         $users = User::all(['id', 'name']);
         $elders = Elder::all(['id', 'first_name', 'last_name']);
-        return Inertia::render('Pledges/Create', [
+        return Inertia::render('Sponsorships/Create', [
             'users' => $users,
             'elders' => $elders,
         ]);
@@ -65,36 +64,36 @@ class PledgeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StorePledgeRequest $request, TimelineEventService $timelineEventService)
+    public function store(StoreSponsorshipRequest $request, TimelineEventService $timelineEventService)
     {
-        $pledge = Pledge::create($request->validated());
+        $sponsorship = Sponsorship::create($request->validated());
 
         $timelineEventService->create(
-            $pledge,
-            'Pledge created',
-            'A new pledge has been created.',
-            $pledge->user,
-            $pledge->elder,
+            $sponsorship,
+            'Sponsorship created',
+            'A new sponsorship has been created.',
+            $sponsorship->user,
+            $sponsorship->elder,
             [
-                'amount' => $pledge->amount,
-                'frequency' => $pledge->frequency,
-                'start_date' => $pledge->start_date,
-                'end_date' => $pledge->end_date,
+                'amount' => $sponsorship->amount,
+                'frequency' => $sponsorship->frequency,
+                'start_date' => $sponsorship->start_date,
+                'end_date' => $sponsorship->end_date,
             ]
         );
 
-        return redirect()->route('sponsorships.index')->with('success', 'Pledge created successfully.');
+        return redirect()->route('sponsorships.index')->with('success', 'Sponsorship created successfully.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Pledge $sponsorship): Response
+    public function show(Sponsorship $sponsorship): Response
     {
-        $sponsorship->load('user', 'elder', 'activityLogs.causer');
+        $sponsorship->load(['user', 'elder' => fn ($query) => $query->withoutGlobalScope(\App\Scopes\BranchScope::class), 'activityLogs.causer']);
         $sponsorship->refresh();
 
-        return Inertia::render('Pledges/Show', [
+        return Inertia::render('Sponsorships/Show', [
             'sponsorship' => $sponsorship,
             'activity' => $sponsorship->activityLogs,
             'breadcrumbs' => [
@@ -112,20 +111,20 @@ class PledgeController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Pledge $sponsorship): Response
+    public function edit(Sponsorship $sponsorship): Response
     {
         $sponsorship->load('user', 'elder', 'activityLogs.causer');
 
         $users = User::all(['id', 'name']);
         $elders = Elder::all(['id', 'first_name', 'last_name']);
-        return Inertia::render('Pledges/Edit', [
+        return Inertia::render('Sponsorships/Edit', [
             'sponsorship' => $sponsorship,
             'users' => $users,
             'elders' => $elders,
             'activity' => $sponsorship->activityLogs,
             'breadcrumbs' => [
                 [
-                    'label' => 'Pledges',
+                    'label' => 'Sponsorships',
                     'url' => route('sponsorships.index'),
                 ],
                 [
@@ -142,36 +141,36 @@ class PledgeController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdatePledgeRequest $request, Pledge $sponsorship, TimelineEventService $timelineEventService)
+    public function update(UpdateSponsorshipRequest $request, Sponsorship $sponsorship, TimelineEventService $timelineEventService)
     {
         $sponsorship->update($request->validated());
 
         $timelineEventService->create(
             $sponsorship,
-            'Pledge updated',
-            'The pledge has been updated.',
+            'Sponsorship updated',
+            'The sponsorship has been updated.',
             $sponsorship->user,
             $sponsorship->elder,
             $request->validated()
         );
 
-        return redirect()->route('sponsorships.index')->with('success', 'Pledge updated successfully.');
+        return redirect()->route('sponsorships.index')->with('success', 'Sponsorship updated successfully.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Pledge $sponsorship)
+    public function destroy(Sponsorship $sponsorship)
     {
         $sponsorship->delete();
-        return redirect()->route('sponsorships.index')->with('success', 'Pledge deleted successfully.');
+        return redirect()->route('sponsorships.index')->with('success', 'Sponsorship deleted successfully.');
     }
 
     public function export(Request $request)
     {
-        return $this->handleExport($request, Pledge::class, ExportConfig::pledges(), [
-            'label' => 'Pledges Directory',
-            'type' => 'pledges',
+        return $this->handleExport($request, Sponsorship::class, ExportConfig::sponsorships(), [
+            'label' => 'Sponsorships Directory',
+            'type' => 'sponsorships',
         ]);
     }
 }

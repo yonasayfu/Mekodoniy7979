@@ -59,14 +59,14 @@ const exportData = () => {
 
     if (props.metric === 'promise_fulfillment') {
         csv = 'Donor Name,Elder Name,Amount,Relationship,Months Supported\n';
-        data.fulfilled_pledges.forEach((pledge: any) => {
-            csv += `${pledge.donor_name},${pledge.elder_name},${pledge.amount},${pledge.relationship},${pledge.months_supported}\n`;
+        data.fulfilled_sponsorships.forEach((sponsorship: any) => {
+            csv += `${sponsorship.donor_name},${sponsorship.elder_name},${sponsorship.amount},${sponsorship.relationship},${sponsorship.months_supported}\n`;
         });
     } else if (props.metric === 'missed_payments') {
         csv =
             'Donor Name,Elder Name,Amount,Relationship,Last Payment,Days Overdue\n';
-        data.missed_pledges.forEach((pledge: any) => {
-            csv += `${pledge.donor_name},${pledge.elder_name},${pledge.amount},${pledge.relationship},${pledge.last_payment || 'N/A'},${pledge.days_overdue || 'N/A'}\n`;
+        data.missed_sponsorships.forEach((sponsorship: any) => {
+            csv += `${sponsorship.donor_name},${sponsorship.elder_name},${sponsorship.amount},${sponsorship.relationship},${sponsorship.last_payment || 'N/A'},${sponsorship.days_overdue || 'N/A'}\n`;
         });
     } else if (props.metric === 'guest_donations') {
         csv = 'Amount,Type,Date,Notes\n';
@@ -136,12 +136,12 @@ const exportData = () => {
                                 <p
                                     class="text-sm font-medium text-slate-600 dark:text-slate-400"
                                 >
-                                    Total Pledges
+                                    Total Sponsorships
                                 </p>
                                 <p
                                     class="mt-1 text-3xl font-bold text-slate-900 dark:text-slate-100"
                                 >
-                                    {{ data.total_pledges }}
+                                    {{ data.total_sponsorships }}
                                 </p>
                             </div>
                             <Users class="h-8 w-8 text-blue-500" />
@@ -214,26 +214,26 @@ const exportData = () => {
                     <h3
                         class="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100"
                     >
-                        Fulfilled Pledges
+                        Fulfilled Sponsorships
                     </h3>
                     <div class="space-y-3">
                         <div
-                            v-for="pledge in data.fulfilled_pledges"
-                            :key="pledge.id"
+                            v-for="sponsorship in data.fulfilled_sponsorships"
+                            :key="sponsorship.id"
                             class="flex items-center justify-between rounded-lg bg-green-50 p-4 dark:bg-green-900/20"
                         >
                             <div>
                                 <p class="font-medium">
-                                    {{ pledge.donor_name }} →
-                                    {{ pledge.elder_name }}
+                                    {{ sponsorship.donor_name }} →
+                                    {{ sponsorship.elder_name }}
                                 </p>
                                 <p
                                     class="text-sm text-slate-600 dark:text-slate-400"
                                 >
-                                    {{ pledge.relationship }} • ${{
-                                        pledge.amount
+                                    {{ sponsorship.relationship }} • ${{
+                                        sponsorship.amount
                                     }}/month •
-                                    {{ pledge.months_supported }} months
+                                    {{ sponsorship.months_supported }} months
                                 </p>
                             </div>
                             <Badge
@@ -255,25 +255,25 @@ const exportData = () => {
                     </h3>
                     <div class="space-y-3">
                         <div
-                            v-for="pledge in data.missed_pledges"
-                            :key="pledge.id"
+                            v-for="sponsorship in data.missed_sponsorships"
+                            :key="sponsorship.id"
                             class="flex items-center justify-between rounded-lg bg-red-50 p-4 dark:bg-red-900/20"
                         >
                             <div>
                                 <p class="font-medium">
-                                    {{ pledge.donor_name }} →
-                                    {{ pledge.elder_name }}
+                                    {{ sponsorship.donor_name }} →
+                                    {{ sponsorship.elder_name }}
                                 </p>
                                 <p
                                     class="text-sm text-slate-600 dark:text-slate-400"
                                 >
-                                    ${{ pledge.amount }}/month • Last payment:
-                                    {{ pledge.last_payment || 'Never' }}
+                                    ${{ sponsorship.amount }}/month • Last payment:
+                                    {{ sponsorship.last_payment || 'Never' }}
                                     <span
-                                        v-if="pledge.days_overdue"
+                                        v-if="sponsorship.days_overdue"
                                         class="font-medium text-red-600"
                                     >
-                                        • {{ pledge.days_overdue }} days overdue
+                                        • {{ sponsorship.days_overdue }} days overdue
                                     </span>
                                 </p>
                             </div>
@@ -367,12 +367,12 @@ const exportData = () => {
                             <p
                                 class="text-2xl font-bold text-slate-900 dark:text-slate-100"
                             >
-                                {{ data.total_pledges }}
+                                {{ data.total_sponsorships }}
                             </p>
                             <p
                                 class="text-sm text-slate-600 dark:text-slate-400"
                             >
-                                Active Pledges
+                                Active Sponsorships
                             </p>
                         </div>
                         <div class="text-center">
@@ -387,12 +387,12 @@ const exportData = () => {
                         </div>
                         <div class="text-center">
                             <p class="text-2xl font-bold text-blue-600">
-                                ${{ Math.round(data.average_pledge_amount) }}
+                                ${{ Math.round(data.average_sponsorship_amount) }}
                             </p>
                             <p
                                 class="text-sm text-slate-600 dark:text-slate-400"
                             >
-                                Average Pledge
+                                Average Sponsorship
                             </p>
                         </div>
                     </div>
@@ -408,7 +408,7 @@ const exportData = () => {
                                 <span class="capitalize">{{ type }}</span>
                                 <div class="text-right">
                                     <span class="font-medium"
-                                        >{{ stats.count }} pledges</span
+                                        >{{ stats.count }} sponsorships</span
                                     >
                                     <span
                                         class="ml-2 text-sm text-slate-600 dark:text-slate-400"
@@ -436,7 +436,7 @@ const exportData = () => {
                                     <span
                                         class="ml-2 text-sm text-slate-600 dark:text-slate-400"
                                     >
-                                        {{ donor.pledge_count }} pledges
+                                        {{ donor.sponsorship_count }} sponsorships
                                     </span>
                                 </div>
                             </div>

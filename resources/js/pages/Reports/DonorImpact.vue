@@ -21,8 +21,8 @@ const props = defineProps<{
     filters: {
         range: string;
     };
-    pledges: any[];
     annual_reports: any[];
+    sponsorships: any[];
 }>();
 
 const form = useForm({
@@ -125,7 +125,7 @@ const downloadReport = (pdfPath: string) => {
             </div>
 
             <!-- Promise Status -->
-            <GlassCard v-if="pledges && pledges.length > 0">
+            <GlassCard v-if="sponsorships && sponsorships.length > 0">
                 <div class="p-6">
                     <h3
                         class="text-lg font-semibold text-slate-900 dark:text-slate-100"
@@ -134,34 +134,34 @@ const downloadReport = (pdfPath: string) => {
                     </h3>
                     <div class="mt-4 space-y-4">
                         <div
-                            v-for="pledge in pledges"
-                            :key="pledge.id"
+                            v-for="sponsorship in sponsorships"
+                            :key="sponsorship.id"
                             class="flex items-center justify-between rounded-lg border p-4"
                         >
                             <div>
                                 <p class="font-medium capitalize">
-                                    {{ pledge.elder.first_name }}
-                                    {{ pledge.elder.last_name }} ({{
-                                        pledge.relationship_type
+                                    {{ sponsorship.elder.first_name }}
+                                    {{ sponsorship.elder.last_name }} ({{
+                                        sponsorship.relationship_type
                                     }})
                                 </p>
                                 <p
                                     class="text-sm text-slate-600 dark:text-slate-400"
                                 >
-                                    Monthly commitment: ${{ pledge.amount }}
+                                    Monthly commitment: ${{ sponsorship.amount }}
                                 </p>
                             </div>
                             <div class="text-right">
                                 <div class="text-sm">
                                     <span
                                         :class="
-                                            pledge.promise_kept_last_month
+                                            sponsorship.promise_kept_last_month
                                                 ? 'text-green-600'
                                                 : 'text-red-600'
                                         "
                                     >
                                         {{
-                                            pledge.promise_kept_last_month
+                                            sponsorship.promise_kept_last_month
                                                 ? '✓ Promise Kept'
                                                 : '✗ Payment Missed'
                                         }}
@@ -170,7 +170,7 @@ const downloadReport = (pdfPath: string) => {
                                 <div
                                     class="text-xs text-slate-500 dark:text-slate-400"
                                 >
-                                    {{ pledge.consecutive_months_kept }}
+                                    {{ sponsorship.consecutive_months_kept }}
                                     consecutive months
                                 </div>
                             </div>

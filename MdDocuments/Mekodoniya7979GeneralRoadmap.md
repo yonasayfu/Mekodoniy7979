@@ -111,7 +111,7 @@ Tables to include:
 Users (donors, staff, admins)
 Branches
 Elders (profile, priority, expenses, media)
-Donations / Pledges
+Donations / Sponsorships
 Payments / Transactions
 Visits (donor → elder)
 Receipts (PDF storage & serial number)
@@ -129,7 +129,7 @@ Sample anonymized CSV of 20 elders for testing import
 Product Backlog (GitHub Issues)
 Epics: Guest Meal Checkout, Elder CRUD, Match Engine, Payment Sync, Offline PWA, Reports
 Database Model / Laravel Migrations
-Users, Elders, Donors, Pledges, Payments, Visits, Receipts, Branches, Audit logs
+Users, Elders, Donors, Sponsorships, Payments, Visits, Receipts, Branches, Audit logs
 Wireframes (Figma)
 Landing page, elder gallery, donor dashboard, branch editor forms
 Architecture Decision Record (ADR)

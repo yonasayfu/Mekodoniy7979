@@ -15,6 +15,8 @@ import {
     ShieldCheck,
     Users,
     UserCheck,
+    DollarSign, // Added for Sponsorships
+    CheckCircle, // Added for Active Sponsorships
 } from 'lucide-vue-next';
 
 type Metric = {
@@ -27,6 +29,7 @@ type Metric = {
         label?: string;
     } | null;
     icon?: string;
+    href?: string; // Added href prop
 };
 
 const props = defineProps<{
@@ -81,6 +84,8 @@ const resolvedMetrics = computed(() =>
     })),
 );
 
+
+
 const maintenanceTone = (priority: string) => {
     switch (priority) {
         case 'High':
@@ -107,6 +112,7 @@ const maintenanceTone = (priority: string) => {
                     :description="metric.description"
                     :change="metric.change"
                     :icon="metric.icon ?? undefined"
+                    :href="metric.href ?? undefined"
                 />
             </div>
 

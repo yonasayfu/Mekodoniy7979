@@ -44,13 +44,13 @@ I've fully grasped your vision for "Mekodonia Home Connect," including all outli
        * Branch-specific details.
 
    3. Donor Management (Registered):
-       * Comprehensive donor profiles (Personal/Company details, Pledge/Visit history).
+       * Comprehensive donor profiles (Personal/Company details, Sponsorship/Visit history).
        * CRUD interface for Admins.
 
    4. Multi-Tenancy:
        * Branch-level data isolation for Branch Admins.
 
-   5. Pledge Management:
+   5. Sponsorship Management:
        * Record donor pledges to specific elders.
        * "Match/Unmatch" functionality for Branch Admins.
        * Track pledge status.

@@ -1,7 +1,24 @@
 <script setup lang="ts">
 import GlassCard from '@/components/GlassCard.vue';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
+import {
+    DollarSign,
+    Download,
+    Filter,
+    Heart,
+    TrendingUp,
+    Users,
+} from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
@@ -12,7 +29,7 @@ const props = defineProps<{
         featured_matches: any[];
         guest_donations_today: number;
         monthly_expenses_covered: number;
-        total_pledges: number;
+        total_sponsorships: number;
         total_elders: number;
         total_donors: number;
         recent_activity: any[];
@@ -25,7 +42,7 @@ const props = defineProps<{
 }>();
 
 const currentSlide = ref(0);
-const selectedBranch = ref(props.filters.branch_id || '');
+const selectedBranch = ref(props.filters.branch_id || 'all');
 const selectedRange = ref(props.filters.date_range || '30');
 
 const nextSlide = () => {
@@ -37,7 +54,8 @@ const applyFilters = () => {
     router.get(
         '/reports',
         {
-            branch_id: selectedBranch.value,
+            branch_id:
+                selectedBranch.value === 'all' ? '' : selectedBranch.value,
             date_range: selectedRange.value,
         },
         {
@@ -49,7 +67,7 @@ const applyFilters = () => {
 
 const exportReport = (format: string) => {
     window.open(
-        `/reports/export?format=${format}&branch_id=${selectedBranch.value}&date_range=${selectedRange.value}`,
+        `/reports/export?format=${format}&branch_id=${selectedBranch.value === 'all' ? '' : selectedBranch.value}&date_range=${selectedRange.value}`,
         '_blank',
     );
 };
@@ -130,7 +148,9 @@ onMounted(() => {
                                 <SelectValue placeholder="All Branches" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All Branches</SelectItem>
+                                <SelectItem value="all"
+                                    >All Branches</SelectItem
+                                >
                                 <SelectItem
                                     v-for="branch in branches"
                                     :key="branch.id"
@@ -269,7 +289,7 @@ onMounted(() => {
                                 <Users class="h-8 w-8 text-purple-500" />
                             </div>
                             <p class="mt-2 text-xs text-slate-500">
-                                Total pledged monthly
+                                Total sponsored monthly
                             </p>
                         </div>
                     </GlassCard>
@@ -482,7 +502,7 @@ onMounted(() => {
                     </GlassCard>
                 </Link>
 
-                <Link href="/pledges">
+                <Link href="/sponsorships">
                     <GlassCard
                         class="cursor-pointer transition-shadow hover:shadow-lg"
                     >
@@ -490,11 +510,13 @@ onMounted(() => {
                             <Heart
                                 class="mx-auto mb-4 h-12 w-12 text-red-500"
                             />
-                            <h3 class="mb-2 font-semibold">Manage Pledges</h3>
+                            <h3 class="mb-2 font-semibold">
+                                Manage Sponsorships
+                            </h3>
                             <p
                                 class="text-sm text-slate-600 dark:text-slate-400"
                             >
-                                Track donor commitments and relationship
+                                Track donor sponsorships and relationship
                                 assignments
                             </p>
                         </div>

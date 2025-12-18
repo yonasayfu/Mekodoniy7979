@@ -16,7 +16,7 @@ use App\Http\Controllers\PendingApprovalController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ElderController;
-use App\Http\Controllers\PledgeController;
+use App\Http\Controllers\SponsorshipController;
 use App\Http\Controllers\VisitController;
 use App\Http\Controllers\DonorDashboardController;
 use App\Http\Controllers\ReportController;
@@ -43,7 +43,7 @@ Route::get('/guest-donation', function () {
     return Inertia::render('GuestDonation');
 })->name('guest.donation');
 
-Route::post('/donations/guest', [DonationController::class, 'store'])->name('donations.guest.store');
+Route::post('/donations/guest', [DonationController::class, 'storeGuest'])->name('donations.guest.store');
 
 Route::middleware('auth')->group(function () {
     Route::get('onboarding/pending-approval', PendingApprovalController::class)->name('onboarding.pending');
@@ -74,11 +74,11 @@ Route::middleware('auth')->group(function () {
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
             ->middleware('permission:elders.manage');
 
-        Route::get('pledges/export', [PledgeController::class, 'export'])->name('pledges.export');
+        Route::get('sponsorships/export', [SponsorshipController::class, 'export'])->name('sponsorships.export');
 
-        Route::resource('pledges', PledgeController::class)
+        Route::resource('sponsorships', SponsorshipController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
-            ->middleware('permission:pledges.manage');
+            ->middleware('permission:sponsorships.manage');
 
         Route::get('visits/export', [VisitController::class, 'export'])->name('visits.export');
 

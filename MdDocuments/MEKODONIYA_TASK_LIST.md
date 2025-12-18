@@ -66,7 +66,7 @@ This document breaks down the project roadmap into a detailed, phased task list.
 
 *   [x] **Pledging (Adopting an Elder)**:
     *   [x] Implement the functionality for donors to "adopt" an elder.
-    *   [x] Create a `Pledge` model to store the relationship between a donor and an elder.
+    *   [x] Create a `Sponsorship` model to store the relationship between a donor and an elder.
     *   [x] Implement the "Match/Unmatch" functionality for Branch Admins.
 
 *   [x] **Auto-Payment**:

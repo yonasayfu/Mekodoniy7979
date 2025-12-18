@@ -9,67 +9,271 @@ use Spatie\Permission\PermissionRegistrar;
 
 class RolePermissionSeeder extends Seeder
 {
+    /**
+     * Run the database seeds for roles and permissions.
+     */
     public function run(): void
     {
+        // Reset cached roles and permissions
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $permissions = collect([
+        // Define comprehensive permissions for Mekodonia charity system
+        $permissions = [
+            // User Management
+            'users.view',
+            'users.create',
+            'users.update',
+            'users.delete',
+            'users.impersonate',
+            'users.manage',
+
+            // Staff Management
             'staff.view',
             'staff.create',
             'staff.update',
             'staff.delete',
-            'users.manage',
+            'staff.manage',
+
+            // Role & Permission Management
+            'roles.view',
+            'roles.create',
+            'roles.update',
+            'roles.delete',
             'roles.manage',
-            'mailbox.view',
-            'mailbox.process',
-            'activity-logs.view',
-            'users.impersonate',
+            'permissions.view',
+            'permissions.manage',
+
+            // Branch Management
+            'branches.view',
+            'branches.create',
+            'branches.update',
+            'branches.delete',
             'branches.manage',
+
+            // Elder Management
+            'elders.view',
+            'elders.create',
+            'elders.update',
+            'elders.delete',
             'elders.manage',
+
+            // Sponsorship & Pledges
+            'pledges.view',
+            'pledges.create',
+            'pledges.update',
+            'pledges.delete',
             'pledges.manage',
+            'sponsorships.view',
+            'sponsorships.manage',
+
+            // Donations
+            'donations.view',
+            'donations.create',
+            'donations.update',
+            'donations.delete',
+            'donations.manage',
+            'donations.approve',
+
+            // Visits & Follow-ups
+            'visits.view',
+            'visits.create',
+            'visits.update',
+            'visits.delete',
             'visits.manage',
+            'visits.approve',
+
+            // Reports & Analytics
             'reports.view',
-            'reports.generate_impact_book',
-        ])->map(function (string $name) {
-            return Permission::firstOrCreate(
-                ['name' => $name, 'guard_name' => 'web'],
-            );
-        });
+            'reports.generate',
+            'reports.export',
+            'reports.impact_book',
+            'reports.financial',
+            'reports.operational',
+            'reports.view_all',
 
-        $adminRole = Role::firstOrCreate(
-            ['name' => 'Admin', 'guard_name' => 'web'],
-        );
-        $adminRole->syncPermissions($permissions->pluck('name')->all());
+            // Mailbox & Communication
+            'mailbox.view',
+            'mailbox.send',
+            'mailbox.process',
+            'mailbox.manage',
 
-        $roles = [
-            'Manager' => [
-                'staff.view',
-                'staff.create',
-                'staff.update',
-            ],
-            'Technician' => [
-                'staff.view',
-            ],
-            'Staff' => [
-                'staff.view',
-            ],
-            'Auditor' => [
-                'staff.view',
-            ],
-            'ReadOnly' => [
-                'staff.view',
-            ],
-            'External' => [],
+            // Activity Logs & Audit
+            'activity_logs.view',
+            'activity_logs.manage',
+
+            // Data Export
+            'data_exports.view',
+            'data_exports.create',
+            'data_exports.manage',
+
+            // System Administration
+            'system.settings',
+            'system.backup',
+            'system.maintenance',
+            'system.logs',
+
+            // Timeline & Success Stories
+            'timeline.view',
+            'timeline.create',
+            'timeline.update',
+            'timeline.delete',
+            'timeline.manage',
         ];
 
-        foreach ($roles as $roleName => $rolePermissions) {
-            $role = Role::firstOrCreate(
-                ['name' => $roleName, 'guard_name' => 'web'],
-            );
-
-            $role->syncPermissions($rolePermissions);
+        // Create permissions
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web'
+            ]);
         }
 
+        // Define roles with their permissions
+        $roles = [
+            'Super Admin' => [
+                // All permissions
+                '*'
+            ],
+            'Admin' => [
+                'users.*',
+                'staff.*',
+                'roles.view',
+                'roles.update',
+                'permissions.view',
+                'branches.*',
+                'elders.*',
+                'pledges.*',
+                'sponsorships.*',
+                'donations.*',
+                'visits.*',
+                'reports.*',
+                'mailbox.*',
+                'activity_logs.*',
+                'data_exports.*',
+                'system.*',
+                'timeline.*',
+            ],
+            'Manager' => [
+                'users.view',
+                'staff.*',
+                'branches.view',
+                'elders.*',
+                'pledges.*',
+                'sponsorships.*',
+                'donations.*',
+                'visits.*',
+                'reports.view',
+                'reports.generate',
+                'reports.export',
+                'reports.operational',
+                'mailbox.view',
+                'mailbox.send',
+                'activity_logs.view',
+                'timeline.view',
+                'timeline.create',
+                'timeline.update',
+            ],
+            'Branch Coordinator' => [
+                'users.view',
+                'staff.view',
+                'staff.update',
+                'branches.view',
+                'elders.view',
+                'elders.update',
+                'pledges.view',
+                'pledges.update',
+                'donations.view',
+                'donations.create',
+                'visits.*',
+                'reports.view',
+                'reports.generate',
+                'timeline.view',
+                'timeline.create',
+            ],
+            'Field Officer' => [
+                'users.view',
+                'staff.view',
+                'elders.view',
+                'pledges.view',
+                'donations.view',
+                'visits.view',
+                'visits.create',
+                'visits.update',
+                'timeline.view',
+                'timeline.create',
+            ],
+            'Finance Officer' => [
+                'users.view',
+                'donations.*',
+                'pledges.view',
+                'reports.view',
+                'reports.financial',
+                'reports.generate',
+                'reports.export',
+                'data_exports.view',
+                'data_exports.create',
+            ],
+            'Auditor' => [
+                'users.view',
+                'staff.view',
+                'elders.view',
+                'pledges.view',
+                'donations.view',
+                'visits.view',
+                'reports.view',
+                'reports.generate',
+                'activity_logs.view',
+                'data_exports.view',
+            ],
+            'Reporting Analyst' => [
+                'users.view',
+                'staff.view',
+                'elders.view',
+                'pledges.view',
+                'donations.view',
+                'visits.view',
+                'reports.view',
+                'reports.generate',
+                'reports.export',
+                'data_exports.view',
+            ],
+            'External' => [
+                'users.view', // Can view their own profile
+                'pledges.view', // Can view their own pledges
+                'donations.view', // Can view their own donations
+                'reports.view', // Can view public reports
+            ],
+        ];
+
+        // Create roles and assign permissions
+        foreach ($roles as $roleName => $rolePermissions) {
+            $role = Role::firstOrCreate([
+                'name' => $roleName,
+                'guard_name' => 'web'
+            ]);
+
+            if (in_array('*', $rolePermissions)) {
+                // Super Admin gets all permissions
+                $role->syncPermissions(Permission::all());
+            } else {
+                // Expand wildcard permissions
+                $expandedPermissions = [];
+                foreach ($rolePermissions as $permission) {
+                    if (str_contains($permission, '*')) {
+                        $prefix = str_replace('*', '', $permission);
+                        $matchingPermissions = Permission::where('name', 'like', $prefix . '%')
+                            ->pluck('name')
+                            ->toArray();
+                        $expandedPermissions = array_merge($expandedPermissions, $matchingPermissions);
+                    } else {
+                        $expandedPermissions[] = $permission;
+                    }
+                }
+                $role->syncPermissions(array_unique($expandedPermissions));
+            }
+        }
+
+        // Clear cache again
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

@@ -2,7 +2,7 @@
 import Pagination from '@/components/Pagination.vue'; // Import Pagination component
 import { useRoute } from '@/composables/useRoute';
 import { dashboard, login, register } from '@/routes';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { User } from 'lucide-vue-next'; // Import User icon
 import { ref } from 'vue';
 
@@ -13,7 +13,7 @@ interface WallOfLoveEntry {
     elder_name: string;
     elder_id: number;
     elder_profile_picture: string | null;
-    pledge_date: string;
+    sponsorship_date: string;
 }
 
 interface LiveCounters {
@@ -49,6 +49,18 @@ const props = defineProps<{
         gender?: string;
     };
 }>();
+
+const form = useForm({
+    name: '',
+    email: '',
+    amount: null,
+});
+
+const submit = () => {
+    form.post(route('donations.guest.store'), {
+        onFinish: () => form.reset('name', 'email', 'amount'),
+    });
+};
 
 const currentPriority = ref(props.filters.priority || '');
 const currentGender = ref(props.filters.gender || '');
@@ -139,12 +151,12 @@ const applyFilters = () => {
                     >
                         Long-term support
                     </Link>
-                    <Link
-                        :href="route('guest.donation')"
+                    <a
+                        href="#guest-donation-form"
                         class="rounded-md bg-indigo-600 px-6 py-3 text-lg font-semibold text-white shadow-lg hover:bg-indigo-500"
                     >
                         Donate a Meal
-                    </Link>
+                    </a>
                 </div>
             </div>
 
@@ -191,6 +203,41 @@ const applyFilters = () => {
                             }}</span>
                         </div>
                     </div>
+                </section>
+                
+                <section
+                    id="guest-donation-form"
+                    class="rounded-lg bg-white/70 p-8 shadow-xl dark:bg-slate-800/70"
+                >
+                    <h2 class="text-3xl font-bold">One-Time Donation</h2>
+                    <p class="mt-2 text-slate-600 dark:text-slate-400">
+                        Support an elder today with a one-time donation.
+                    </p>
+                    <div v-if="$page.props.flash.success" class="mt-4 rounded-md bg-green-100 p-4 text-green-800 dark:bg-green-900 dark:text-green-100">
+                        {{ $page.props.flash.success }}
+                    </div>
+                    <form @submit.prevent="submit" class="mt-6 space-y-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Full Name</label>
+                            <input v-model="form.name" type="text" id="name" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-600" />
+                            <div v-if="form.errors.name" class="mt-2 text-sm text-red-600">{{ form.errors.name }}</div>
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
+                            <input v-model="form.email" type="email" id="email" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-600" />
+                            <div v-if="form.errors.email" class="mt-2 text-sm text-red-600">{{ form.errors.email }}</div>
+                        </div>
+                        <div>
+                            <label for="amount" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Amount (ETB)</label>
+                            <input v-model="form.amount" type="number" id="amount" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-600" />
+                            <div v-if="form.errors.amount" class="mt-2 text-sm text-red-600">{{ form.errors.amount }}</div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" :disabled="form.processing" class="rounded-md bg-indigo-600 px-6 py-2 text-white hover:bg-indigo-500 disabled:opacity-50">
+                                Donate
+                            </button>
+                        </div>
+                    </form>
                 </section>
 
                 <section

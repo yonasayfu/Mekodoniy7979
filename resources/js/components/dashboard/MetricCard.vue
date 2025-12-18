@@ -1,5 +1,6 @@
 ++ resources/js/components/dashboard/MetricCard.vue
 <script setup lang="ts">
+import { Link } from '@inertiajs/vue3'; // Import Link
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-vue-next';
 import { computed, type Component } from 'vue';
 
@@ -15,6 +16,7 @@ const props = defineProps<{
         percentage: number;
         label?: string;
     } | null;
+    href?: string; // Added href prop
 }>();
 
 const iconComponent = computed<Component | null>(() => {
@@ -58,7 +60,9 @@ const changeTone = computed(() => {
 </script>
 
 <template>
-    <div
+    <component
+        :is="href ? Link : 'div'"
+        :href="href"
         class="relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-slate-800/60 dark:bg-slate-900/60"
     >
         <div class="flex items-start justify-between gap-3">
@@ -92,5 +96,5 @@ const changeTone = computed(() => {
                 </span>
             </div>
         </div>
-    </div>
+    </component>
 </template>

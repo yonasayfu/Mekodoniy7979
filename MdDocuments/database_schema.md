@@ -98,30 +98,55 @@ This document outlines the current status of the Mekodonia Home Connect project,
 | `created_at`            | `TIMESTAMP`           | `NULLABLE`                                   |                                          |
 | `updated_at`            | `TIMESTAMP`           | `NULLABLE`                                   |                                          |
 
-### 5. `pledges` Table
+### 5. `sponsorships` Table
 
-*   **Purpose:** Records recurring pledges made by registered users to specific elders.
+
+
+*   **Purpose:** Records recurring sponsorships made by registered users to specific elders.
+
 *   **Relationships:**
-    *   `user_id` -> `users.id` (Many-to-One: A pledge is made by one registered user)
-    *   `elder_id` -> `elders.id` (Many-to-One: A pledge is for one specific elder)
+
+    *   `user_id` -> `users.id` (Many-to-One: A sponsorship is made by one registered user)
+
+    *   `elder_id` -> `elders.id` (Many-to-One: A sponsorship is for one specific elder)
+
+
 
 | Column Name             | Data Type             | Constraints                                  | Notes                                    |
+
 | :---------------------- | :-------------------- | :------------------------------------------- | :--------------------------------------- |
+
 | `id`                    | `BIGINT UNSIGNED`     | `PRIMARY KEY`, `AUTO_INCREMENT`              |                                          |
-| `user_id`               | `BIGINT UNSIGNED`     | `NOT NULL`, `FOREIGN KEY`                    | Registered user making the pledge        |
-| `elder_id`              | `BIGINT UNSIGNED`     | `NOT NULL`, `FOREIGN KEY`                    | Elder receiving the pledge               |
-| `amount`                | `DECIMAL(10, 2)`      | `NOT NULL`                                   | Pledged amount                           |
-| `currency`              | `VARCHAR(10)`         | `NOT NULL`, `DEFAULT 'ETB'`                  | Currency of pledge                       |
+
+| `user_id`               | `BIGINT UNSIGNED`     | `NOT NULL`, `FOREIGN KEY`                    | Registered user making the sponsorship        |
+
+| `elder_id`              | `BIGINT UNSIGNED`     | `NOT NULL`, `FOREIGN KEY`                    | Elder receiving the sponsorship               |
+
+| `amount`                | `DECIMAL(10, 2)`      | `NOT NULL`                                   | Sponsored amount                           |
+
+| `currency`              | `VARCHAR(10)`         | `NOT NULL`, `DEFAULT 'ETB'`                  | Currency of sponsorship                       |
+
 | `frequency`             | `ENUM`                | `NOT NULL`, `DEFAULT 'monthly'`              | 'once', 'monthly', 'quarterly', 'annually' |
-| `start_date`            | `DATE`                | `NOT NULL`                                   | When the pledge starts                   |
-| `end_date`              | `DATE`                | `NULLABLE`                                   | When the pledge ends (if applicable)     |
+
+| `start_date`            | `DATE`                | `NOT NULL`                                   | When the sponsorship starts                   |
+
+| `end_date`            | `DATE`                | `NULLABLE`                                   | When the sponsorship ends (if applicable)     |
+
 | `next_payment_date`     | `DATE`                | `NULLABLE`                                   | For recurring payments                   |
+
 | `status`                | `ENUM`                | `NOT NULL`, `DEFAULT 'pending'`              | 'pending', 'active', 'completed', 'cancelled', 'overdue' |
+
 | `subscription_id`       | `VARCHAR(255)`        | `NULLABLE`, `UNIQUE`                         | ID from payment gateway for recurring     |
+
 | `notes`                 | `TEXT`                | `NULLABLE`                                   | Any additional notes                     |
+
 | `created_at`            | `TIMESTAMP`           | `NULLABLE`                                   |                                          |
+
 | `updated_at`            | `TIMESTAMP`           | `NULLABLE`                                   |                                          |
+
 | `deleted_at`            | `TIMESTAMP`           | `NULLABLE`                                   | Soft deletes                             |
+
+
 
 ### 6. `visits` Table
 
@@ -158,7 +183,7 @@ This document outlines the current status of the Mekodonia Home Connect project,
 | `id`                    | `BIGINT UNSIGNED`     | `PRIMARY KEY`, `AUTO_INCREMENT`              |                                          |
 | `user_id`               | `BIGINT UNSIGNED`     | `NULLABLE`, `FOREIGN KEY`                    | User (donor/staff) involved in the event |
 | `elder_id`              | `BIGINT UNSIGNED`     | `NULLABLE`, `FOREIGN KEY`                    | Elder involved in the event              |
-| `event_type`            | `VARCHAR(255)`        | `NOT NULL`                                   | Type of event (e.g., 'Donation', 'Visit', 'Pledge', 'Milestone') |
+| `event_type`            | `VARCHAR(255)`        | `NOT NULL`                                   | Type of event (e.g., 'Donation', 'Visit', 'Sponsorship', 'Milestone') |
 | `description`           | `TEXT`                | `NOT NULL`                                   | Detailed description of the event        |
 | `occurred_at`           | `DATETIME`            | `NOT NULL`                                   | When the event happened                  |
 | `created_at`            | `TIMESTAMP`           | `NULLABLE`                                   |                                          |

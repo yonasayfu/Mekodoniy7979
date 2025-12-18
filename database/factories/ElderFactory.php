@@ -44,6 +44,15 @@ class ElderFactory extends Factory
             'video_url' => $this->faker->optional(0.2)->url(),
             'health_conditions' => implode(', ', $this->faker->randomElements(['Hypertension', 'Diabetes', 'Arthritis', 'Dementia', 'Osteoporosis'], $this->faker->numberBetween(1, 3))),
             'sponsorship_status' => $this->faker->randomElement(['sponsored', 'not_sponsored', 'partially_sponsored']),
+            'relationship_type' => $this->faker->randomElement(['father', 'mother', 'brother', 'sister']),
+            'relationship_priority' => $this->faker->numberBetween(1, 4),
+            'is_featured' => $this->faker->boolean(15), // 15% of elders are featured
+            'monthly_expenses_breakdown' => json_encode([
+                'food' => $this->faker->numberBetween(200, 500),
+                'medical' => $this->faker->numberBetween(100, 400),
+                'housing' => $this->faker->numberBetween(150, 600),
+                'other' => $this->faker->numberBetween(50, 200),
+            ]),
         ];
     }
 

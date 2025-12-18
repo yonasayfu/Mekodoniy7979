@@ -5,12 +5,38 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreDonationRequest;
 use App\Models\Donation;
 use App\Support\Services\TelebirrService;
-use App\Support\Services\TimelineEventService; // Import TimelineEventService
-use Illuminate\Support\Facades\Auth; // Import Auth facade
-use Carbon\Carbon; // Import Carbon for occurred_at
+use App\Support\Services\TimelineEventService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class DonationController extends Controller
 {
+    /**
+     * Store a newly created guest donation in storage.
+     *
+     * @param StoreDonationRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function storeGuest(StoreDonationRequest $request)
+    {
+        $validatedData = $request->validated();
+
+        Donation::create([
+            'amount' => $validatedData['amount'],
+            'guest_name' => $validatedData['name'], // Assuming 'name' in request
+            'guest_email' => $validatedData['email'], // Assuming 'email' in request
+            'status' => 'pending',
+            'currency' => 'ETB', // Default currency
+        ]);
+
+        return redirect()->route('home')->with('success', 'Thank you! Your donation is pending confirmation.');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     * This method can be used for authenticated users and integrated payment gateways.
+     */
     public function store(StoreDonationRequest $request, TelebirrService $telebirrService, TimelineEventService $timelineEventService)
     {
         $validatedData = $request->validated();
@@ -26,19 +52,19 @@ class DonationController extends Controller
 
         if ($paymentResponse['status'] === 'success') {
             $donation = Donation::create([
+                'user_id' => Auth::id(),
                 'amount' => $validatedData['amount'],
-                'name' => $validatedData['name'],
-                'email' => $validatedData['email'],
-                'phone' => $validatedData['phone'],
+                'guest_name' => $validatedData['name'],
+                'guest_email' => $validatedData['email'],
                 'payment_gateway' => 'telebirr',
-                'payment_id' => $paymentResponse['transaction_id'],
+                'transaction_id' => $paymentResponse['transaction_id'],
                 'status' => 'completed',
             ]);
 
             // Create timeline event for successful donation
             $timelineEventService->createEvent(
                 'donation',
-                'Donation of ' . $donation->amount . ' ETB received from ' . ($donation->name ?? ($request->user() ? $request->user()->name : 'Guest')),
+                'Donation of ' . $donation->amount . ' ETB received from ' . ($donation->guest_name ?? 'Guest'),
                 Carbon::now(),
                 Auth::check() ? Auth::user() : null,
                 null, // No elder directly associated with guest donation yet

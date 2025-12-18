@@ -41,7 +41,7 @@ interface PaginationMeta {
 
 const props = defineProps<{
     sponsorships: {
-        data: PledgeSummary[];
+        data: SponsorshipSummary[];
         links: PaginationLink[];
         meta?: PaginationMeta;
     };
@@ -153,7 +153,7 @@ const buildQueryString = (extra: Record<string, unknown> = {}) => {
 
 const exportCsv = () => {
     const query = buildQueryString();
-    // Assuming a pledges export route exists
+    // Assuming a sponsorships export route exists
     window.open(`/sponsorships/export${query}`, '_blank', 'noopener=yes');
 };
 
