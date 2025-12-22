@@ -26,7 +26,9 @@ use App\Http\Controllers\DonorDashboardController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\Payments\TelebirrWebhookController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -40,15 +42,24 @@ if (! app()->runningInConsole()) {
 if (app()->environment('local')) {
     Route::post('mailpit/webhook', MailpitWebhookController::class)
         ->middleware(['mailpit.signature'])
-        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
+        ->withoutMiddleware([ValidateCsrfToken::class])
         ->name('mailpit.webhook');
 }
+
+Route::post('payments/telebirr/webhook', TelebirrWebhookController::class)
+    ->middleware(['telebirr.signature'])
+    ->withoutMiddleware([ValidateCsrfToken::class])
+    ->name('payments.telebirr.webhook');
 
 Route::get('/guest-donation', function () {
     return Inertia::render('GuestDonation');
 })->name('guest.donation');
 
 Route::post('/donations/guest', [DonationController::class, 'storeGuest'])->name('donations.guest.store');
+
+Route::post('/donations', [DonationController::class, 'store'])
+    ->middleware('auth')
+    ->name('donations.store');
 
 Route::middleware('auth')->group(function () {
     Route::get('onboarding/pending-approval', PendingApprovalController::class)->name('onboarding.pending');

@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Donation;
 use App\Models\Elder;
+use App\Services\CountersService;
+use App\Models\TimelineEvent;
 use App\Models\User;
-use App\Models\TimelineEvent; // Import TimelineEvent
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,30 +15,21 @@ class DonorDashboardController extends Controller
     /**
      * Display the donor dashboard.
      */
-    public function index(): Response
+    public function index(CountersService $countersService): Response
     {
         /** @var User $user */
         $user = Auth::user();
 
-        // Metrics
-        $totalDonations = Donation::where('user_id', $user->id)
-            ->where('status', 'completed')
-            ->sum('amount');
+        $donorCounters = $countersService->getDonorCounters($user);
 
-        $eldersSupported = Elder::whereHas('donations', function ($query) use ($user) {
-            $query->where('user_id', $user->id)
-                ->where('status', 'completed');
-        })->count();
-
-        $lastDonation = Donation::where('user_id', $user->id)
-            ->where('status', 'completed')
-            ->latest()
-            ->first();
+        $totalDonations = (float) ($donorCounters['total_donations'] ?? 0);
+        $eldersSupported = (int) ($donorCounters['elders_supported'] ?? 0);
+        $lastDonationHuman = $donorCounters['last_donation_human'] ?? null;
 
         $metrics = [
             ['label' => 'Total Donations', 'value' => number_format($totalDonations, 2) . ' ETB', 'icon' => 'Gift'],
             ['label' => 'Elders Supported', 'value' => $eldersSupported, 'icon' => 'HeartHandshake'],
-            ['label' => 'Last Donation', 'value' => $lastDonation ? $lastDonation->created_at->diffForHumans() : 'N/A', 'icon' => 'CalendarCheck'],
+            ['label' => 'Last Donation', 'value' => $lastDonationHuman ?: 'N/A', 'icon' => 'CalendarCheck'],
         ];
 
         // My Elders Section (simplified for now)

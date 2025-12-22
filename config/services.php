@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'telebirr' => [
+        'app_id' => env('TELEBIRR_APP_ID'),
+        'app_key' => env('TELEBIRR_APP_KEY'),
+        'public_key' => env('TELEBIRR_PUBLIC_KEY'),
+        'notify_url' => env('TELEBIRR_NOTIFY_URL'),
+        'return_url' => env('TELEBIRR_RETURN_URL'),
+        'base_url' => env('TELEBIRR_BASE_URL', 'https://app.telebirr.com/api/'),
+        'webhook_token' => env('TELEBIRR_WEBHOOK_TOKEN'),
+    ],
+
 ];

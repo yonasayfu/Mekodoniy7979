@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Elder;
 use App\Models\Sponsorship;
-use App\Models\Visit;
+use App\Services\CountersService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,7 +14,7 @@ class WelcomeController extends Controller
     /**
      * Display the welcome page with dynamic content.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, CountersService $countersService): Response
     {
         // Fetch data for "Wall of Love"
         $wallOfLove = Sponsorship::with(['user:id,name', 'elder:id,first_name,last_name,profile_picture_path'])
@@ -30,14 +30,7 @@ class WelcomeController extends Controller
                 'sponsorship_date' => $sponsorship->created_at->diffForHumans(),
             ]);
 
-        // Fetch data for "Live Counters"
-        $totalElders = Elder::count();
-        $matchedElders = Sponsorship::where('status', 'active')->distinct('elder_id')->count();
-        $eldersWaiting = $totalElders - $matchedElders; // Basic calculation for now
-        $visitsThisMonth = Visit::whereMonth('visit_date', now()->month)
-            ->whereYear('visit_date', now()->year)
-            ->where('status', 'completed')
-            ->count();
+        $liveCounters = $countersService->getWelcomeCounters();
 
         // Fetch data for "Elder Gallery"
         $eldersQuery = Elder::query();
@@ -94,9 +87,9 @@ class WelcomeController extends Controller
         return Inertia::render('Welcome', [
             'wallOfLove' => $wallOfLove,
             'liveCounters' => [
-                'eldersWaiting' => $eldersWaiting,
-                'matchedElders' => $matchedElders,
-                'visitsThisMonth' => $visitsThisMonth,
+                'eldersWaiting' => $liveCounters['eldersWaiting'] ?? 0,
+                'matchedElders' => $liveCounters['matchedElders'] ?? 0,
+                'visitsThisMonth' => $liveCounters['visitsThisMonth'] ?? 0,
             ],
             'eldersGallery' => $elders,
             'filters' => $request->only(['priority', 'gender']),

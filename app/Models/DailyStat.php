@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DailyStat extends Model
 {
@@ -27,8 +28,8 @@ class DailyStat extends Model
         'gap' => 'decimal:2',
     ];
 
-    public function branch()
+    public function branch(): BelongsTo
     {
-        return $table->belongsTo(Branch::class);
+        return $this->belongsTo(Branch::class);
     }
 }

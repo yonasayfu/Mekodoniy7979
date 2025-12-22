@@ -2,6 +2,7 @@
 
 namespace App\Support\Services;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -22,6 +23,25 @@ class TelebirrService
         $this->notifyUrl = config('services.telebirr.notify_url');
         $this->returnUrl = config('services.telebirr.return_url');
         $this->baseUrl = config('services.telebirr.base_url', 'https://app.telebirr.com/api/'); // Base URL for Telebirr API
+    }
+
+    /**
+     * Backwards-compatible wrapper for older controller code.
+     * Returns a similar shape to initiatePayment but also includes out_trade_no.
+     */
+    public function charge(array $payload): array
+    {
+        $orderId = (string) ($payload['order_id'] ?? $payload['out_trade_no'] ?? $payload['reference'] ?? 'ORDER_' . time());
+        $amount = (float) ($payload['amount'] ?? 0);
+        $nonce = (string) ($payload['nonce'] ?? uniqid('nonce_', true));
+        $subject = (string) ($payload['subject'] ?? 'Donation');
+
+        $response = $this->initiatePayment($orderId, $amount, $nonce, $subject);
+
+        return [
+            ...$response,
+            'out_trade_no' => $orderId,
+        ];
     }
 
     /**
