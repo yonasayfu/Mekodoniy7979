@@ -2,30 +2,30 @@ version: '3.9'
 
 services:
   app:
-    image: bitnami/laravel:10
+    image: bitnami/laravel:12
     ports:
       - '${APP_PORT:-8000}:8000'
     environment:
       - DB_HOST=db
-      - DB_PORT=3306
-      - DB_USERNAME=${DB_USERNAME:-sail}
+      - DB_PORT=5432
+      - DB_USERNAME=${DB_USERNAME:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_DATABASE=${DB_DATABASE:-mekodoniya7979}
     volumes:
       - .:/app
     depends_on:
       - db
 
   db:
-    image: mysql:8.0
+    image: postgres:16
     environment:
-      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD:-password}'
-      MYSQL_DATABASE: '${DB_DATABASE:-laravel_boilerplate}'
-      MYSQL_USER: '${DB_USERNAME:-sail}'
-      MYSQL_PASSWORD: '${DB_PASSWORD:-password}'
+      POSTGRES_DB: '${DB_DATABASE:-mekodoniya7979}'
+      POSTGRES_USER: '${DB_USERNAME:-postgres}'
+      POSTGRES_PASSWORD: '${DB_PASSWORD:-password}'
     ports:
-      - '33060:3306'
+      - '54320:5432'
     volumes:
-      - db-data:/var/lib/mysql
+      - db-data:/var/lib/postgresql/data
 
 volumes:
   db-data:
