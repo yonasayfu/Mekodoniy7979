@@ -1,1 +1,0 @@
-// This file has been moved to resources/js/pages/Sponsorships/Edit.vue

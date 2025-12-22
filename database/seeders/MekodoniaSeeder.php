@@ -24,7 +24,7 @@ class MekodoniaSeeder extends Seeder
         $this->createEthiopianElders();
         $this->createInternationalDonors();
         $this->createLocalEthiopianDonors();
-        $this->createRelationshipBasedPledges();
+        $this->createRelationshipBasedSponsorships();
         $this->createDonationHistory();
         $this->createVisitsAndFollowups();
         $this->createSuccessStories();
@@ -768,7 +768,7 @@ class MekodoniaSeeder extends Seeder
     /**
      * Create relationship-based sponsorships matching donors with elders.
      */
-    private function createRelationshipBasedPledges(): void
+    private function createRelationshipBasedSponsorships(): void
     {
         $elders = Elder::all();
                 $users = User::where('account_type', User::TYPE_EXTERNAL)->get();
