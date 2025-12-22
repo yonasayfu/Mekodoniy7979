@@ -2,7 +2,7 @@
 
 namespace App\Support\Services;
 
-use App\Models\Pledge;
+use App\Models\Sponsorship;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -28,19 +28,19 @@ class RecurringPaymentService
      * Simulate or initiate a recurring payment subscription.
      * In a real application, this would involve API calls to Telebirr/CBE for auto-debit setup.
      *
-     * @param User $user The user (donor) making the pledge
-     * @param Pledge $pledge The pledge details
+     * @param User $user The user (donor) making the sponsorship
+     * @param Sponsorship $sponsorship The sponsorship details
      * @return array
      */
-    public function createSubscription(User $user, Pledge $pledge): array
+    public function createSubscription(User $user, Sponsorship $sponsorship): array
     {
-        Log::info("RecurringPaymentService: Creating subscription for User ID: {$user->id}, Pledge ID: {$pledge->id}");
+        Log::info("RecurringPaymentService: Creating subscription for User ID: {$user->id}, Sponsorship ID: {$sponsorship->id}");
 
         try {
             // Determine which payment gateway to use based on user preference or system logic
             // For now, let's simulate a generic subscription creation
             $subscriptionId = 'REC_SUB_' . uniqid();
-            $nextPaymentDate = now()->add($pledge->frequency === 'monthly' ? '1 month' : '1 year')->toDateString();
+            $nextPaymentDate = now()->add($sponsorship->frequency === 'monthly' ? '1 month' : '1 year')->toDateString();
 
             // --- Real Integration Steps (Conceptual for Telebirr/CBE Auto-Debit) ---
             // 1. Prepare request payload for the chosen payment gateway.
@@ -58,7 +58,7 @@ class RecurringPaymentService
                 'next_payment_date' => $nextPaymentDate,
             ];
         } catch (\Exception $e) {
-            Log::error("RecurringPaymentService: Failed to create subscription for User ID: {$user->id}, Pledge ID: {$pledge->id}. Error: {$e->getMessage()}");
+            Log::error("RecurringPaymentService: Failed to create subscription for User ID: {$user->id}, Sponsorship ID: {$sponsorship->id}. Error: {$e->getMessage()}");
             return [
                 'status' => 'failed',
                 'message' => 'Failed to create subscription: ' . $e->getMessage(),
@@ -71,17 +71,17 @@ class RecurringPaymentService
     /**
      * Simulate updating an existing recurring payment subscription.
      *
-     * @param Pledge $pledge The pledge with updated details
+     * @param Sponsorship $sponsorship The sponsorship with updated details
      * @return array
      */
-    public function updateSubscription(Pledge $pledge): array
+    public function updateSubscription(Sponsorship $sponsorship): array
     {
-        Log::info("RecurringPaymentService: Updating subscription for Pledge ID: {$pledge->id}, Subscription ID: {$pledge->subscription_id}");
+        Log::info("RecurringPaymentService: Updating subscription for Sponsorship ID: {$sponsorship->id}, Subscription ID: {$sponsorship->subscription_id}");
 
-        if (!$pledge->subscription_id) {
+        if (!$sponsorship->subscription_id) {
             return [
                 'status' => 'failed',
-                'message' => 'Pledge does not have an active subscription to update.',
+                'message' => 'Sponsorship does not have an active subscription to update.',
             ];
         }
 
@@ -96,7 +96,7 @@ class RecurringPaymentService
                 'message' => 'Subscription updated successfully (simulated).',
             ];
         } catch (\Exception $e) {
-            Log::error("RecurringPaymentService: Failed to update subscription for Pledge ID: {$pledge->id}. Error: {$e->getMessage()}");
+            Log::error("RecurringPaymentService: Failed to update subscription for Sponsorship ID: {$sponsorship->id}. Error: {$e->getMessage()}");
             return [
                 'status' => 'failed',
                 'message' => 'Failed to update subscription: ' . $e->getMessage(),
@@ -107,17 +107,17 @@ class RecurringPaymentService
     /**
      * Simulate cancelling a recurring payment subscription.
      *
-     * @param Pledge $pledge The pledge whose subscription is to be cancelled
+     * @param Sponsorship $sponsorship The sponsorship whose subscription is to be cancelled
      * @return array
      */
-    public function cancelSubscription(Pledge $pledge): array
+    public function cancelSubscription(Sponsorship $sponsorship): array
     {
-        Log::info("RecurringPaymentService: Cancelling subscription for Pledge ID: {$pledge->id}, Subscription ID: {$pledge->subscription_id}");
+        Log::info("RecurringPaymentService: Cancelling subscription for Sponsorship ID: {$sponsorship->id}, Subscription ID: {$sponsorship->subscription_id}");
 
-        if (!$pledge->subscription_id) {
+        if (!$sponsorship->subscription_id) {
             return [
                 'status' => 'failed',
-                'message' => 'Pledge does not have an active subscription to cancel.',
+                'message' => 'Sponsorship does not have an active subscription to cancel.',
             ];
         }
 
@@ -128,10 +128,10 @@ class RecurringPaymentService
 
             return [
                 'status' => 'success',
-                'message' => "Subscription {$pledge->subscription_id} cancelled successfully (simulated).",
+                'message' => "Subscription {$sponsorship->subscription_id} cancelled successfully (simulated).",
             ];
         } catch (\Exception $e) {
-            Log::error("RecurringPaymentService: Failed to cancel subscription for Pledge ID: {$pledge->id}. Error: {$e->getMessage()}");
+            Log::error("RecurringPaymentService: Failed to cancel subscription for Sponsorship ID: {$sponsorship->id}. Error: {$e->getMessage()}");
             return [
                 'status' => 'failed',
                 'message' => 'Failed to cancel subscription: ' . $e->getMessage(),
@@ -143,17 +143,17 @@ class RecurringPaymentService
      * Simulate processing a scheduled recurring payment.
      * This method would typically be called by a cron job or webhook from the payment gateway.
      *
-     * @param Pledge $pledge The pledge for which to process payment
+     * @param Sponsorship $sponsorship The sponsorship for which to process payment
      * @return array
      */
-    public function processScheduledPayment(Pledge $pledge): array
+    public function processScheduledPayment(Sponsorship $sponsorship): array
     {
-        Log::info("RecurringPaymentService: Processing scheduled payment for Pledge ID: {$pledge->id}, Subscription ID: {$pledge->subscription_id}");
+        Log::info("RecurringPaymentService: Processing scheduled payment for Sponsorship ID: {$sponsorship->id}, Subscription ID: {$sponsorship->subscription_id}");
 
-        if (!$pledge->subscription_id) {
+        if (!$sponsorship->subscription_id) {
             return [
                 'status' => 'failed',
-                'message' => 'Pledge does not have an active subscription for scheduled payment.',
+                'message' => 'Sponsorship does not have an active subscription for scheduled payment.',
             ];
         }
 
@@ -163,7 +163,7 @@ class RecurringPaymentService
             //    or if the payment gateway pushes a webhook, processing that.
             //    If pulling, make an API call to verify the last payment.
             // 2. Record the successful payment as a new Donation record.
-            // 3. Update pledge's next_payment_date.
+            // 3. Update sponsorship's next_payment_date.
             // --- End Real Integration Steps ---
 
             // Simulate successful payment
@@ -172,16 +172,16 @@ class RecurringPaymentService
 
             // In a real scenario, you'd create a Donation record here
             // Donation::create([
-            //     'user_id' => $pledge->user_id,
-            //     'elder_id' => $pledge->elder_id,
-            //     'amount' => $pledge->amount,
-            //     'currency' => $pledge->currency,
+            //     'user_id' => $sponsorship->user_id,
+            //     'elder_id' => $sponsorship->elder_id,
+            //     'amount' => $sponsorship->amount,
+            //     'currency' => $sponsorship->currency,
             //     'payment_method' => 'Telebirr/CBE Auto-Debit',
             //     'transaction_id' => $transactionId,
             //     'status' => 'completed',
             // ]);
 
-            // $pledge->update(['next_payment_date' => $newNextPaymentDate]);
+            // $sponsorship->update(['next_payment_date' => $newNextPaymentDate]);
 
 
             return [
@@ -191,7 +191,7 @@ class RecurringPaymentService
                 'next_payment_date' => $newNextPaymentDate,
             ];
         } catch (\Exception $e) {
-            Log::error("RecurringPaymentService: Failed to process scheduled payment for Pledge ID: {$pledge->id}. Error: {$e->getMessage()}");
+            Log::error("RecurringPaymentService: Failed to process scheduled payment for Sponsorship ID: {$sponsorship->id}. Error: {$e->getMessage()}");
             return [
                 'status' => 'failed',
                 'message' => 'Failed to process scheduled payment: ' . $e->getMessage(),

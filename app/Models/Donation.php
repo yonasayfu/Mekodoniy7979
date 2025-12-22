@@ -14,7 +14,7 @@ class Donation extends Model
     protected $fillable = [
         'user_id',
         'elder_id',
-        'pledge_id',
+        'sponsorship_id',
         'guest_name',
         'guest_email',
         'guest_phone',
@@ -53,10 +53,10 @@ class Donation extends Model
     }
 
     /**
-     * Get the pledge that the donation is for.
+     * Get the sponsorship that the donation is for.
      */
-    public function pledge(): BelongsTo
+    public function sponsorship(): BelongsTo
     {
-        return $this->belongsTo(Pledge::class);
+        return $this->belongsTo(Sponsorship::class);
     }
 }

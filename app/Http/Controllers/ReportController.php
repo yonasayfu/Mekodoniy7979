@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Branch;
 use App\Models\Donation;
 use App\Models\Elder;
-use App\Models\Pledge;
+use App\Models\Sponsorship;
 use App\Models\AnnualReport;
 use App\Services\ReportService;
 use Illuminate\Http\Request;
@@ -62,7 +62,7 @@ class ReportController extends Controller
         $range = $request->input('range', '30');
         $data = $this->reportService->getDonorImpactData($user, $range);
 
-        $pledges = Pledge::where('user_id', $user->id)
+        $sponsorships = Sponsorship::where('user_id', $user->id)
             ->where('status', 'active')
             ->with('elder')
             ->get();
@@ -74,7 +74,7 @@ class ReportController extends Controller
         return Inertia::render('Reports/DonorImpact', [
             'impact' => $data,
             'filters' => ['range' => $range],
-            'pledges' => $pledges,
+            'sponsorships' => $sponsorships,
             'annual_reports' => $annualReports,
         ]);
     }

@@ -285,12 +285,12 @@ class ExportConfig
         ];
     }
 
-    public static function pledges(): array
+    public static function sponsorships(): array
     {
         return [
-            'label' => 'Pledges Directory',
-            'type' => 'pledges',
-            'filename_prefix' => 'pledges',
+            'label' => 'Sponsorships Directory',
+            'type' => 'sponsorships',
+            'filename_prefix' => 'sponsorships',
 
             'csv' => [
                 'headers' => [

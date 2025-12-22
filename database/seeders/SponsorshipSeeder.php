@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Elder;
-use App\Models\Pledge;
+use App\Models\Sponsorship;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -14,7 +14,7 @@ class SponsorshipSeeder extends Seeder
      */
     public function run(): void
     {
-        // Ensure there are enough users and elders to associate with pledges
+        // Ensure there are enough users and elders to associate with sponsorships
         if (User::count() < 10) {
             User::factory(10)->create();
         }
@@ -23,8 +23,8 @@ class SponsorshipSeeder extends Seeder
             Elder::factory(10)->create();
         }
 
-        // Create 50 pledges, associating them with existing users and elders
-        Pledge::factory(50)->create([
+        // Create 50 sponsorships, associating them with existing users and elders
+        Sponsorship::factory(50)->create([
             'user_id' => User::inRandomOrder()->first()->id,
             'elder_id' => Elder::inRandomOrder()->first()->id,
         ]);

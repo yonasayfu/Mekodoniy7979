@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\DailyStat;
 use App\Models\Donation;
 use App\Models\Elder;
-use App\Models\Pledge;
+use App\Models\Sponsorship;
 use App\Models\AnnualReport;
 use App\Models\User;
 use App\Models\TimelineEvent;
@@ -54,7 +54,7 @@ class ReportService
     {
         $data = $this->getCommonDonorData($user, 5, $range);
 
-        $supportedEldersCount = Pledge::where('user_id', $user->id)
+        $supportedEldersCount = Sponsorship::where('user_id', $user->id)
             ->where('status', 'active')
             ->distinct('elder_id')
             ->count();
@@ -75,7 +75,7 @@ class ReportService
     {
         $commonData = $this->getCommonDonorData($user, 10, 'all');
 
-        $supportedElders = Elder::whereHas('pledges', function ($query) use ($user) {
+        $supportedElders = Elder::whereHas('sponsorships', function ($query) use ($user) {
             $query->where('user_id', '=', $user->id)
                 ->where('status', 'active');
         })->get();
@@ -138,30 +138,30 @@ class ReportService
     public function checkMonthlyPromises(): array
     {
         $missedPayments = [];
-        $activePledges = Pledge::where('status', 'active')
+        $activeSponsorships = Sponsorship::where('status', 'active')
             ->where('start_date', '<=', now()->subMonth())
             ->get();
 
-        foreach ($activePledges as $pledge) {
-            $lastMonthDonations = Donation::where('user_id', $pledge->user_id)
-                ->where('elder_id', $pledge->elder_id)
+        foreach ($activeSponsorships as $sponsorship) {
+            $lastMonthDonations = Donation::where('user_id', $sponsorship->user_id)
+                ->where('elder_id', $sponsorship->elder_id)
                 ->where('created_at', '>=', now()->subMonth())
                 ->sum('amount');
 
-            $promiseKept = $lastMonthDonations >= $pledge->amount;
+            $promiseKept = $lastMonthDonations >= $sponsorship->amount;
 
-            $pledge->update([
+            $sponsorship->update([
                 'promise_kept_last_month' => $promiseKept,
                 'consecutive_months_kept' => $promiseKept ?
-                    $pledge->consecutive_months_kept + 1 : 0,
+                    $sponsorship->consecutive_months_kept + 1 : 0,
                 'missed_payment_count' => $promiseKept ?
-                    $pledge->missed_payment_count : $pledge->missed_payment_count + 1
+                    $sponsorship->missed_payment_count : $sponsorship->missed_payment_count + 1
             ]);
 
             if (!$promiseKept) {
-                $missedPayments[] = $pledge;
+                $missedPayments[] = $sponsorship;
                 // TODO: Send notification (SMS/Email)
-                // $this->sendPaymentReminder($pledge);
+                // $this->sendPaymentReminder($sponsorship);
             }
         }
 
@@ -173,7 +173,7 @@ class ReportService
      */
     public function generateAnnualReports(int $year): int
     {
-        $consistentDonors = User::whereHas('pledges', function($q) use ($year) {
+        $consistentDonors = User::whereHas('sponsorships', function($q) use ($year) {
             $q->where('status', 'active')
               ->where('consecutive_months_kept', '>=', 12);
         })->get();
@@ -205,7 +205,7 @@ class ReportService
             ->whereBetween('created_at', [$startDate, $endDate])
             ->sum('amount');
 
-        $supportedElders = Pledge::where('user_id', $user->id)
+        $supportedElders = Sponsorship::where('user_id', $user->id)
             ->where('status', 'active')
             ->with('elder')
             ->get();
@@ -218,11 +218,11 @@ class ReportService
             'total_donations' => $totalDonations,
             'supported_elders_count' => $supportedElders->count(),
             'timeline_events_count' => $timelineEvents,
-            'supported_elders' => $supportedElders->map(function($pledge) {
+            'supported_elders' => $supportedElders->map(function($sponsorship) {
                 return [
-                    'name' => $pledge->elder->first_name . ' ' . $pledge->elder->last_name,
-                    'relationship' => $pledge->relationship_type,
-                    'months_supported' => $pledge->consecutive_months_kept,
+                    'name' => $sponsorship->elder->first_name . ' ' . $sponsorship->elder->last_name,
+                    'relationship' => $sponsorship->relationship_type,
+                    'months_supported' => $sponsorship->consecutive_months_kept,
                 ];
             }),
         ];
@@ -242,19 +242,19 @@ class ReportService
      */
     public function getFeaturedMatches(): array
     {
-        return Pledge::where('status', 'active')
+        return Sponsorship::where('status', 'active')
             ->whereHas('elder', fn($q) => $q->where('is_featured', true))
             ->with(['user', 'elder'])
             ->inRandomOrder()
             ->take(10)
             ->get()
-            ->map(function($pledge) {
+            ->map(function($sponsorship) {
                 return [
-                    'donor_name' => $pledge->user->name,
-                    'elder_name' => $pledge->elder->first_name . ' ' . $pledge->elder->last_name,
-                    'relationship' => $pledge->relationship_type,
-                    'months_supported' => $pledge->consecutive_months_kept,
-                    'story' => "Supporting {$pledge->elder->first_name} as their {$pledge->relationship_type} for {$pledge->consecutive_months_kept} months"
+                    'donor_name' => $sponsorship->user->name,
+                    'elder_name' => $sponsorship->elder->first_name . ' ' . $sponsorship->elder->last_name,
+                    'relationship' => $sponsorship->relationship_type,
+                    'months_supported' => $sponsorship->consecutive_months_kept,
+                    'story' => "Supporting {$sponsorship->elder->first_name} as their {$sponsorship->relationship_type} for {$sponsorship->consecutive_months_kept} months"
                 ];
             })
             ->toArray();
@@ -265,21 +265,21 @@ class ReportService
      */
     public function getEnhancedAdminDashboard($branchId = null): array
     {
-        // Include pledges with relevant statuses (active, pending, etc.)
-        $query = Pledge::query()->whereIn('status', ['active', 'pending', 'fulfilled']);
+        // Include sponsorships with relevant statuses (active, pending, etc.)
+        $query = Sponsorship::query()->whereIn('status', ['active', 'pending', 'fulfilled']);
         if ($branchId) {
             $query->whereHas('elder', fn($q) => $q->where('branch_id', $branchId));
         }
 
-        $pledges = $query->with(['user', 'elder'])->get();
+        $sponsorships = $query->with(['user', 'elder'])->get();
 
         // Get total counts
-        $totalPledges = $pledges->count();
+        $totalSponsorships = $sponsorships->count();
         $totalElders = Elder::when($branchId, fn($q) => $q->where('branch_id', $branchId))->count();
-        $totalDonors = User::whereHas('pledges', function($q) {
+        $totalDonors = User::whereHas('sponsorships', function($q) {
             $q->whereIn('status', ['active', 'pending', 'fulfilled']);
         })->when($branchId, function($q) use ($branchId) {
-            $q->whereHas('pledges.elder', fn($sq) => $sq->where('branch_id', $branchId));
+            $q->whereHas('sponsorships.elder', fn($sq) => $sq->where('branch_id', $branchId));
         })->count();
 
         // Get recent activity (last 10 activities)
@@ -296,15 +296,15 @@ class ReportService
             });
 
         return [
-            'relationship_distribution' => $pledges->groupBy('relationship_type')->map->count(),
-            'promise_fulfillment_rate' => $pledges->where('promise_kept_last_month', true)->count() / max($pledges->count(), 1) * 100,
-            'missed_payments' => $pledges->where('promise_kept_last_month', false)->count(),
+            'relationship_distribution' => $sponsorships->groupBy('relationship_type')->map->count(),
+            'promise_fulfillment_rate' => $sponsorships->where('promise_kept_last_month', true)->count() / max($sponsorships->count(), 1) * 100,
+            'missed_payments' => $sponsorships->where('promise_kept_last_month', false)->count(),
             'featured_matches' => $this->getFeaturedMatches(),
             'guest_donations_today' => Donation::where('donation_type', '!=', 'pledge')
                 ->whereDate('created_at', today())
                 ->sum('amount'),
-            'monthly_expenses_covered' => $pledges->sum('amount'),
-            'total_pledges' => $totalPledges,
+            'monthly_expenses_covered' => $sponsorships->sum('amount'),
+            'total_sponsorships' => $totalSponsorships,
             'total_elders' => $totalElders,
             'total_donors' => $totalDonors,
             'recent_activity' => $recentActivity
@@ -316,7 +316,7 @@ class ReportService
      */
     public function getPromiseFulfillmentDetails($branchId = null, $dateRange = 30): array
     {
-        $query = Pledge::query()->whereIn('status', ['active', 'pending', 'fulfilled']);
+        $query = Sponsorship::query()->whereIn('status', ['active', 'pending', 'fulfilled']);
         if ($branchId) {
             $query->whereHas('elder', fn($q) => $q->where('branch_id', $branchId));
         }
@@ -324,34 +324,34 @@ class ReportService
         $startDate = Carbon::now()->subDays($dateRange);
         $query->where('created_at', '>=', $startDate);
 
-        $pledges = $query->with(['user', 'elder'])->get();
+        $sponsorships = $query->with(['user', 'elder'])->get();
 
-        $fulfilled = $pledges->where('promise_kept_last_month', true);
-        $missed = $pledges->where('promise_kept_last_month', false);
+        $fulfilled = $sponsorships->where('promise_kept_last_month', true);
+        $missed = $sponsorships->where('promise_kept_last_month', false);
 
         return [
-            'total_pledges' => $pledges->count(),
+            'total_sponsorships' => $sponsorships->count(),
             'fulfilled_count' => $fulfilled->count(),
             'missed_count' => $missed->count(),
-            'fulfillment_rate' => $pledges->count() > 0 ? ($fulfilled->count() / $pledges->count()) * 100 : 0,
-            'fulfilled_pledges' => $fulfilled->map(function($pledge) {
+            'fulfillment_rate' => $sponsorships->count() > 0 ? ($fulfilled->count() / $sponsorships->count()) * 100 : 0,
+            'fulfilled_sponsorships' => $fulfilled->map(function($sponsorship) {
                 return [
-                    'id' => $pledge->id,
-                    'donor_name' => $pledge->user->name,
-                    'elder_name' => $pledge->elder->name,
-                    'amount' => $pledge->amount,
-                    'relationship' => $pledge->relationship_type,
-                    'months_supported' => $pledge->created_at->diffInMonths(now()),
+                    'id' => $sponsorship->id,
+                    'donor_name' => $sponsorship->user->name,
+                    'elder_name' => $sponsorship->elder->name,
+                    'amount' => $sponsorship->amount,
+                    'relationship' => $sponsorship->relationship_type,
+                    'months_supported' => $sponsorship->created_at->diffInMonths(now()),
                 ];
             }),
-            'missed_pledges' => $missed->map(function($pledge) {
+            'missed_sponsorships' => $missed->map(function($sponsorship) {
                 return [
-                    'id' => $pledge->id,
-                    'donor_name' => $pledge->user->name,
-                    'elder_name' => $pledge->elder->name,
-                    'amount' => $pledge->amount,
-                    'relationship' => $pledge->relationship_type,
-                    'last_payment' => $pledge->last_payment_date?->format('Y-m-d'),
+                    'id' => $sponsorship->id,
+                    'donor_name' => $sponsorship->user->name,
+                    'elder_name' => $sponsorship->elder->name,
+                    'amount' => $sponsorship->amount,
+                    'relationship' => $sponsorship->relationship_type,
+                    'last_payment' => $sponsorship->last_payment_date?->format('Y-m-d'),
                 ];
             }),
         ];
@@ -362,8 +362,8 @@ class ReportService
      */
     public function getMissedPaymentsDetails($branchId = null, $dateRange = 30): array
     {
-        $query = Pledge::query()->whereIn('status', ['active', 'pending', 'fulfilled'])
-            ->where('promise_kept_last_month', false);
+                $query = Sponsorship::query()->whereIn('status', ['active', 'pending', 'fulfilled']);
+            // ->where('promise_kept_last_month', false);
         if ($branchId) {
             $query->whereHas('elder', fn($q) => $q->where('branch_id', $branchId));
         }
@@ -371,21 +371,21 @@ class ReportService
         $startDate = Carbon::now()->subDays($dateRange);
         $query->where('created_at', '>=', $startDate);
 
-        $missedPledges = $query->with(['user', 'elder'])->get();
+        $missedSponsorships = $query->with(['user', 'elder'])->get();
 
         return [
-            'total_missed' => $missedPledges->count(),
-            'total_amount' => $missedPledges->sum('amount'),
-            'missed_pledges' => $missedPledges->map(function($pledge) {
+            'total_missed' => $missedSponsorships->count(),
+            'total_amount' => $missedSponsorships->sum('amount'),
+            'missed_sponsorships' => $missedSponsorships->map(function($sponsorship) {
                 return [
-                    'id' => $pledge->id,
-                    'donor_name' => $pledge->user->name,
-                    'elder_name' => $pledge->elder->name,
-                    'amount' => $pledge->amount,
-                    'relationship' => $pledge->relationship_type,
-                    'last_payment' => $pledge->last_payment_date?->format('Y-m-d'),
-                    'days_overdue' => $pledge->last_payment_date
-                        ? now()->diffInDays($pledge->last_payment_date->addMonth())
+                    'id' => $sponsorship->id,
+                    'donor_name' => $sponsorship->user->name,
+                    'elder_name' => $sponsorship->elder->name,
+                    'amount' => $sponsorship->amount,
+                    'relationship' => $sponsorship->relationship_type,
+                    'last_payment' => $sponsorship->last_payment_date?->format('Y-m-d'),
+                    'days_overdue' => $sponsorship->last_payment_date
+                        ? now()->diffInDays($sponsorship->last_payment_date->addMonth())
                         : null,
                 ];
             }),
@@ -428,7 +428,7 @@ class ReportService
      */
     public function getMonthlyExpensesDetails($branchId = null, $dateRange = 30): array
     {
-        $query = Pledge::query()->whereIn('status', ['active', 'pending', 'fulfilled']);
+        $query = Sponsorship::query()->whereIn('status', ['active', 'pending', 'fulfilled']);
         if ($branchId) {
             $query->whereHas('elder', fn($q) => $q->where('branch_id', $branchId));
         }
@@ -436,9 +436,9 @@ class ReportService
         $startDate = Carbon::now()->subDays($dateRange);
         $query->where('created_at', '>=', $startDate);
 
-        $pledges = $query->with(['user', 'elder'])->get();
+        $sponsorships = $query->with(['user', 'elder'])->get();
 
-        $byRelationship = $pledges->groupBy('relationship_type')->map(function($group) {
+        $byRelationship = $sponsorships->groupBy('relationship_type')->map(function($group) {
             return [
                 'count' => $group->count(),
                 'total_amount' => $group->sum('amount'),
@@ -447,11 +447,11 @@ class ReportService
         });
 
         return [
-            'total_pledges' => $pledges->count(),
-            'total_monthly_amount' => $pledges->sum('amount'),
-            'average_pledge_amount' => $pledges->count() > 0 ? $pledges->avg('amount') : 0,
+            'total_sponsorships' => $sponsorships->count(),
+            'total_monthly_amount' => $sponsorships->sum('amount'),
+            'average_pledge_amount' => $sponsorships->count() > 0 ? $sponsorships->avg('amount') : 0,
             'by_relationship' => $byRelationship,
-            'top_donors' => $pledges->groupBy('user_id')->map(function($group) {
+            'top_donors' => $sponsorships->groupBy('user_id')->map(function($group) {
                 $user = $group->first()->user;
                 return [
                     'name' => $user->name,

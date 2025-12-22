@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\DataExport;
 use App\Models\Elder; // Added for Elders metrics
-use App\Models\Pledge; // Added for Sponsorships metrics
+use App\Models\Sponsorship; // Added for Sponsorships metrics
 use App\Models\Staff;
 use App\Models\User;
 use Carbon\Carbon;
@@ -45,10 +45,10 @@ class DashboardController extends Controller
         $eldersCreatedLastMonth = Elder::whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])->count();
 
         // Sponsorships Metrics
-        $totalSponsorships = Pledge::count();
-        $activeSponsorships = Pledge::where('status', 'active')->count();
-        $sponsorshipsCreatedThisMonth = Pledge::where('created_at', '>=', $startOfMonth)->count();
-        $sponsorshipsCreatedLastMonth = Pledge::whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])->count();
+        $totalSponsorships = Sponsorship::count();
+        $activeSponsorships = Sponsorship::where('status', 'active')->count();
+        $sponsorshipsCreatedThisMonth = Sponsorship::where('created_at', '>=', $startOfMonth)->count();
+        $sponsorshipsCreatedLastMonth = Sponsorship::whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])->count();
 
 
         $metrics = [

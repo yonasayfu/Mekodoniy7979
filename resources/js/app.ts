@@ -4,7 +4,6 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
-import { initializeTheme } from './composables/useAppearance';
 import * as routes from './routes';
 import * as activityLogsRoutes from './routes/activity-logs';
 import * as apiRoutes from './routes/api';
@@ -92,6 +91,15 @@ globalThis.route = (name: string, parameters?: any, options?: any) => {
 
     return routeObj.url(parameters);
 };
+
+function initializeTheme() {
+    const theme = localStorage.getItem('theme') || 'system';
+    if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+}
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

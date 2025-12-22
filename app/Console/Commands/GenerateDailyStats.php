@@ -6,7 +6,7 @@ use App\Models\Branch;
 use App\Models\DailyStat;
 use App\Models\Donation;
 use App\Models\Elder;
-use App\Models\Pledge;
+use App\Models\Sponsorship;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -53,14 +53,14 @@ class GenerateDailyStats extends Command
     {
         // Scopes
         $donationQuery = Donation::query()->where('status', 'approved');
-        $pledgeQuery = Pledge::query()->where('status', 'active');
+        $sponsorshipQuery = Sponsorship::query()->where('status', 'active');
         $elderQuery = Elder::query();
         $donorQuery = User::whereHas('roles', fn ($q) => $q->where('name', 'donor'));
 
         if ($branchId) {
             // Important: Use withoutGlobalScope to get accurate global stats
             $donationQuery->where('branch_id', $branchId);
-            $pledgeQuery->where('branch_id', $branchId);
+            $sponsorshipQuery->where('branch_id', $branchId);
             $elderQuery->where('branch_id', $branchId);
             $donorQuery->where('branch_id', $branchId);
         }
@@ -70,13 +70,13 @@ class GenerateDailyStats extends Command
         $totalCollected = $donationQuery->sum('amount');
 
         // 2. Total Pledged (Monthly value of all active pledges)
-        $totalPledged = $pledgeQuery->sum('amount');
+        $totalPledged = $sponsorshipQuery->sum('amount');
 
         // 3. Operational Stats
         $activeElders = $elderQuery->count();
         
         // Matched Elders: Elders who have at least one active pledge
-        $matchedElders = Elder::whereHas('pledges', function ($q) {
+        $matchedElders = Elder::whereHas('sponsorships', function ($q) {
             $q->where('status', 'active');
         });
         if ($branchId) {

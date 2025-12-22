@@ -19,6 +19,7 @@ class Sponsorship extends Model
         'amount',
         'currency', // Add currency here
         'frequency',
+        'relationship_type',
         'start_date',
         'end_date',
         'status',

@@ -178,6 +178,68 @@ onMounted(() => {
                 </div>
             </GlassCard>
 
+            <!-- Quick Actions -->
+            <div class="no-print grid grid-cols-1 gap-6 md:grid-cols-3">
+                <Link href="/elders">
+                    <GlassCard
+                        class="cursor-pointer transition-shadow hover:shadow-lg"
+                    >
+                        <div class="p-6 text-center">
+                            <Users
+                                class="mx-auto mb-4 h-12 w-12 text-blue-500"
+                            />
+                            <h3 class="mb-2 font-semibold">Manage Elders</h3>
+                            <p
+                                class="text-sm text-slate-600 dark:text-slate-400"
+                            >
+                                Add new elders, update profiles, assign
+                                relationships
+                            </p>
+                        </div>
+                    </GlassCard>
+                </Link>
+
+                <Link href="/sponsorships">
+                    <GlassCard
+                        class="cursor-pointer transition-shadow hover:shadow-lg"
+                    >
+                        <div class="p-6 text-center">
+                            <Heart
+                                class="mx-auto mb-4 h-12 w-12 text-red-500"
+                            />
+                            <h3 class="mb-2 font-semibold">
+                                Manage Sponsorships
+                            </h3>
+                            <p
+                                class="text-sm text-slate-600 dark:text-slate-400"
+                            >
+                                Track donor sponsorships and relationship
+                                assignments
+                            </p>
+                        </div>
+                    </GlassCard>
+                </Link>
+
+                <Link href="/reports/donations">
+                    <GlassCard
+                        class="cursor-pointer transition-shadow hover:shadow-lg"
+                    >
+                        <div class="p-6 text-center">
+                            <DollarSign
+                                class="mx-auto mb-4 h-12 w-12 text-green-500"
+                            />
+                            <h3 class="mb-2 font-semibold">Donation Reports</h3>
+                            <p
+                                class="text-sm text-slate-600 dark:text-slate-400"
+                            >
+                                Detailed financial reports and transaction
+                                history
+                            </p>
+                        </div>
+                    </GlassCard>
+                </Link>
+            </div>
+
             <!-- Key Metrics -->
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Link href="/reports/detailed?metric=promise_fulfillment">
@@ -457,19 +519,25 @@ onMounted(() => {
                     </div>
                     <div
                         v-if="props.stats.recent_activity.length > 0"
-                        class="space-y-3"
+                        class="space-y-4"
                     >
                         <div
                             v-for="activity in props.stats.recent_activity"
                             :key="activity.id"
-                            class="flex items-center gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800"
+                            class="flex items-start gap-4 rounded-lg bg-slate-50 p-4 shadow-sm transition-all hover:shadow-md dark:bg-slate-800"
                         >
-                            <div class="h-2 w-2 rounded-full bg-blue-500"></div>
+                            <div
+                                class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900"
+                            >
+                                <TrendingUp
+                                    class="h-5 w-5 text-blue-600 dark:text-blue-400"
+                                />
+                            </div>
                             <div class="flex-1">
-                                <p class="text-sm font-medium">
+                                <p class="font-medium text-slate-800 dark:text-slate-200">
                                     {{ activity.description }}
                                 </p>
-                                <p class="text-xs text-slate-500">
+                                <p class="text-xs text-slate-500 dark:text-slate-400">
                                     {{ activity.time_ago }}
                                 </p>
                             </div>
@@ -480,68 +548,6 @@ onMounted(() => {
                     </div>
                 </div>
             </GlassCard>
-
-            <!-- Quick Actions -->
-            <div class="no-print grid grid-cols-1 gap-6 md:grid-cols-3">
-                <Link href="/elders">
-                    <GlassCard
-                        class="cursor-pointer transition-shadow hover:shadow-lg"
-                    >
-                        <div class="p-6 text-center">
-                            <Users
-                                class="mx-auto mb-4 h-12 w-12 text-blue-500"
-                            />
-                            <h3 class="mb-2 font-semibold">Manage Elders</h3>
-                            <p
-                                class="text-sm text-slate-600 dark:text-slate-400"
-                            >
-                                Add new elders, update profiles, assign
-                                relationships
-                            </p>
-                        </div>
-                    </GlassCard>
-                </Link>
-
-                <Link href="/sponsorships">
-                    <GlassCard
-                        class="cursor-pointer transition-shadow hover:shadow-lg"
-                    >
-                        <div class="p-6 text-center">
-                            <Heart
-                                class="mx-auto mb-4 h-12 w-12 text-red-500"
-                            />
-                            <h3 class="mb-2 font-semibold">
-                                Manage Sponsorships
-                            </h3>
-                            <p
-                                class="text-sm text-slate-600 dark:text-slate-400"
-                            >
-                                Track donor sponsorships and relationship
-                                assignments
-                            </p>
-                        </div>
-                    </GlassCard>
-                </Link>
-
-                <Link href="/reports/donations">
-                    <GlassCard
-                        class="cursor-pointer transition-shadow hover:shadow-lg"
-                    >
-                        <div class="p-6 text-center">
-                            <DollarSign
-                                class="mx-auto mb-4 h-12 w-12 text-green-500"
-                            />
-                            <h3 class="mb-2 font-semibold">Donation Reports</h3>
-                            <p
-                                class="text-sm text-slate-600 dark:text-slate-400"
-                            >
-                                Detailed financial reports and transaction
-                                history
-                            </p>
-                        </div>
-                    </GlassCard>
-                </Link>
-            </div>
         </div>
     </AppLayout>
 </template>

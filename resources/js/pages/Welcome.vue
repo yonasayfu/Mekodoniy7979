@@ -1,12 +1,9 @@
-<script setup lang="ts">
-import Pagination from '@/components/Pagination.vue'; // Import Pagination component
-import { useRoute } from '@/composables/useRoute';
-import { dashboard, login, register } from '@/routes';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { User } from 'lucide-vue-next'; // Import User icon
-import { ref } from 'vue';
 
-const route = useRoute();
+<script setup lang="ts">
+import { Head, Link, router } from '@inertiajs/vue3';
+import { User, Users, UserCheck, CalendarHeart } from 'lucide-vue-next'; // Import User icon
+import { ref, toRefs, watch, onMounted, onUnmounted } from 'vue';
+import { route } from 'ziggy-js';
 
 interface WallOfLoveEntry {
     donor_name: string;
@@ -48,19 +45,14 @@ const props = defineProps<{
         priority?: string;
         gender?: string;
     };
+    heroSlides: {
+        title: string;
+        description: string;
+        image: string;
+        cta_text: string;
+        cta_link: string;
+    }[];
 }>();
-
-const form = useForm({
-    name: '',
-    email: '',
-    amount: null,
-});
-
-const submit = () => {
-    form.post(route('donations.guest.store'), {
-        onFinish: () => form.reset('name', 'email', 'amount'),
-    });
-};
 
 const currentPriority = ref(props.filters.priority || '');
 const currentGender = ref(props.filters.gender || '');
@@ -92,18 +84,108 @@ const applyFilters = () => {
         },
     );
 };
-</script>
 
+// Hero Slider Logic
+const currentSlide = ref(0);
+let slideInterval: number;
+
+const nextSlide = () => {
+    currentSlide.value = (currentSlide.value + 1) % props.heroSlides.length;
+};
+
+const prevSlide = () => {
+    currentSlide.value = (currentSlide.value - 1 + props.heroSlides.length) % props.heroSlides.length;
+};
+
+const goToSlide = (index: number) => {
+    currentSlide.value = index;
+};
+
+onMounted(() => {
+    slideInterval = setInterval(nextSlide, 7000); // Change slide every 7 seconds
+});
+
+onUnmounted(() => {
+    clearInterval(slideInterval);
+});
+
+// Live Counters Animation
+function useCountUp(target: ref<number>, duration = 2000) {
+    const count = ref(0);
+    const frameRate = 1000 / 60;
+    const totalFrames = Math.round(duration / frameRate);
+    let frame = 0;
+    let rafId: number;
+
+    const easeOutQuad = (t: number) => t * (2 - t);
+
+    const animate = () => {
+        frame++;
+        const progress = easeOutQuad(frame / totalFrames);
+        count.value = Math.round(target.value * progress);
+
+        if (frame < totalFrames) {
+            rafId = requestAnimationFrame(animate);
+        } else {
+            count.value = target.value;
+        }
+    };
+
+    const observer = new IntersectionObserver(
+        ([entry]) => {
+            if (entry.isIntersecting) {
+                animate();
+                observer.disconnect();
+            }
+        },
+        {
+            threshold: 0.1,
+        }
+    );
+
+    const element = ref<HTMLElement | null>(null);
+
+    onMounted(() => {
+        if (element.value) {
+            observer.observe(element.value);
+        }
+    });
+
+    onUnmounted(() => {
+        if (rafId) {
+            cancelAnimationFrame(rafId);
+        }
+        observer.disconnect();
+    });
+
+    watch(target, () => {
+        frame = 0;
+        count.value = 0;
+        if (element.value) {
+            observer.observe(element.value);
+        }
+    });
+
+    return { count, element };
+}
+
+const { eldersWaiting, matchedElders, visitsThisMonth } = toRefs(props.liveCounters);
+
+const { count: eldersWaitingCount, element: eldersWaitingRef } = useCountUp(eldersWaiting);
+const { count: matchedEldersCount, element: matchedEldersRef } = useCountUp(matchedElders);
+const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(visitsThisMonth);
+
+</script>
 <template>
     <Head title="Welcome">
         <link rel="preconnect" href="https://rsms.me/" />
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     </Head>
     <div
-        class="flex min-h-screen flex-col items-center bg-slate-100 p-6 text-[#1b1b18] lg:justify-center lg:p-8 dark:bg-slate-900"
+        class="flex min-h-screen flex-col bg-slate-100 text-[#1b1b18] dark:bg-slate-900"
     >
         <header
-            class="mb-6 w-full max-w-7xl text-sm lg:flex lg:justify-end lg:p-8"
+            class="w-full text-sm lg:p-8"
         >
             <nav class="flex items-center justify-end gap-4 p-4">
                 <Link
@@ -131,7 +213,7 @@ const applyFilters = () => {
         </header>
 
         <main
-            class="flex w-full flex-col items-center justify-center p-6 text-slate-800 dark:text-slate-200"
+            class="flex w-full flex-col justify-center px-4 py-6 lg:px-8 text-slate-800 dark:text-slate-200"
         >
             <div class="space-y-8 text-center">
                 <h1
@@ -152,7 +234,7 @@ const applyFilters = () => {
                         Long-term support
                     </Link>
                     <a
-                        href="#guest-donation-form"
+                        href="#"
                         class="rounded-md bg-indigo-600 px-6 py-3 text-lg font-semibold text-white shadow-lg hover:bg-indigo-500"
                     >
                         Donate a Meal
@@ -160,89 +242,137 @@ const applyFilters = () => {
                 </div>
             </div>
 
-            <div class="mt-12 w-full max-w-4xl space-y-12">
-                <section
-                    class="rounded-lg bg-white/70 p-8 shadow-xl dark:bg-slate-800/70"
-                >
-                    <h2 class="text-3xl font-bold">
-                        Hero Slider: "Become a Father Today"
-                    </h2>
-                    <p class="mt-4 text-slate-600 dark:text-slate-400">
-                        (Implementation for dynamic hero images and call to
-                        action)
-                    </p>
+            <div class="mt-12 w-full space-y-12">
+                <section class="relative w-full overflow-hidden py-12">
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="relative h-64 md:h-80">
+                            <template v-for="(slide, index) in heroSlides" :key="index">
+                                <transition
+                                    enter-active-class="transition-opacity ease-in-out duration-1000"
+                                    enter-from-class="opacity-0"
+                                    enter-to-class="opacity-100"
+                                    leave-active-class="transition-opacity ease-in-out duration-1000"
+                                    leave-from-class="opacity-100"
+                                    leave-to-class="opacity-0"
+                                >
+                                    <div v-show="currentSlide === index" class="absolute inset-0 h-full w-full">
+                                        <img :src="slide.image" :alt="slide.title" class="h-full w-full object-cover" />
+                                        <div class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center text-white p-4">
+                                            <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight">
+                                                {{ slide.title }}
+                                            </h2>
+                                            <p class="mt-2 md:mt-4 text-lg md:text-xl max-w-2xl">
+                                                {{ slide.description }}
+                                            </p>
+                                            <a :href="slide.cta_link" class="mt-4 md:mt-6 rounded-md bg-indigo-600 px-6 py-3 text-lg font-semibold text-white shadow-lg hover:bg-indigo-500">
+                                                {{ slide.cta_text }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </transition>
+                            </template>
+                        </div>
+
+                        <!-- Slider Controls -->
+                        <button @click="prevSlide" class="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/50 p-2 text-slate-800 hover:bg-white">
+                            &#10094;
+                        </button>
+                        <button @click="nextSlide" class="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/50 p-2 text-slate-800 hover:bg-white">
+                            &#10095;
+                        </button>
+
+                        <!-- Slider Indicators -->
+                        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+                            <button
+                                v-for="(_, index) in heroSlides"
+                                :key="`dot-${index}`"
+                                @click="goToSlide(index)"
+                                :class="[
+                                    'h-3 w-3 rounded-full',
+                                    currentSlide === index ? 'bg-indigo-600' : 'bg-white/50',
+                                ]"
+                            ></button>
+                        </div>
+                    </div>
                 </section>
 
                 <section
-                    class="rounded-lg bg-white/70 p-8 shadow-xl dark:bg-slate-800/70"
+                    class="py-12 bg-white/70 dark:bg-slate-800/70"
                 >
-                    <h2 class="text-3xl font-bold">Live Counters</h2>
-                    <div class="mt-4 grid grid-cols-3 gap-4">
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <h2 class="text-3xl font-bold text-center">Live Counters</h2>
                         <div
-                            class="rounded-md bg-blue-100 p-4 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
+                            class="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"
                         >
-                            Elders Waiting:
-                            <span class="text-2xl font-bold">{{
-                                liveCounters.eldersWaiting
-                            }}</span>
-                        </div>
-                        <div
-                            class="rounded-md bg-green-100 p-4 text-green-800 dark:bg-green-900 dark:text-green-100"
-                        >
-                            Matched:
-                            <span class="text-2xl font-bold">{{
-                                liveCounters.matchedElders
-                            }}</span>
-                        </div>
-                        <div
-                            class="rounded-md bg-purple-100 p-4 text-purple-800 dark:bg-purple-900 dark:text-purple-100"
-                        >
-                            Visited This Month:
-                            <span class="text-2xl font-bold">{{
-                                liveCounters.visitsThisMonth
-                            }}</span>
+                            <div
+                                ref="eldersWaitingRef"
+                                class="flex flex-col items-center justify-center rounded-lg bg-white p-6 text-center shadow-lg dark:bg-slate-800"
+                            >
+                                <div
+                                    class="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-blue-500 dark:bg-blue-900 dark:text-blue-300"
+                                >
+                                    <Users class="size-8" />
+                                </div>
+                                <p
+                                    class="mt-4 text-4xl font-extrabold text-slate-800 dark:text-white"
+                                >
+                                    {{ eldersWaitingCount }}
+                                </p>
+                                <p
+                                    class="mt-2 text-base font-medium text-slate-600 dark:text-slate-400"
+                                >
+                                    Elders Waiting
+                                </p>
+                            </div>
+                            <div
+                                ref="matchedEldersRef"
+                                class="flex flex-col items-center justify-center rounded-lg bg-white p-6 text-center shadow-lg dark:bg-slate-800"
+                            >
+                                <div
+                                    class="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-500 dark:bg-green-900 dark:text-green-300"
+                                >
+                                    <UserCheck class="size-8" />
+                                </div>
+                                <p
+                                    class="mt-4 text-4xl font-extrabold text-slate-800 dark:text-white"
+                                >
+                                    {{ matchedEldersCount }}
+                                </p>
+                                <p
+                                    class="mt-2 text-base font-medium text-slate-600 dark:text-slate-400"
+                                >
+                                    Matched
+                                </p>
+                            </div>
+                            <div
+                                ref="visitsThisMonthRef"
+                                class="flex flex-col items-center justify-center rounded-lg bg-white p-6 text-center shadow-lg dark:bg-slate-800"
+                            >
+                                <div
+                                    class="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 text-purple-500 dark:bg-purple-900 dark:text-purple-300"
+                                >
+                                    <CalendarHeart class="size-8" />
+                                </div>
+                                <p
+                                    class="mt-4 text-4xl font-extrabold text-slate-800 dark:text-white"
+                                >
+                                    {{ visitsThisMonthCount }}
+                                </p>
+                                <p
+                                    class="mt-2 text-base font-medium text-slate-600 dark:text-slate-400"
+                                >
+                                    Visited This Month
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </section>
                 
                 <section
-                    id="guest-donation-form"
-                    class="rounded-lg bg-white/70 p-8 shadow-xl dark:bg-slate-800/70"
+                    id="elders-gallery"
+                    class="py-12 bg-white/70 dark:bg-slate-800/70"
                 >
-                    <h2 class="text-3xl font-bold">One-Time Donation</h2>
-                    <p class="mt-2 text-slate-600 dark:text-slate-400">
-                        Support an elder today with a one-time donation.
-                    </p>
-                    <div v-if="$page.props.flash.success" class="mt-4 rounded-md bg-green-100 p-4 text-green-800 dark:bg-green-900 dark:text-green-100">
-                        {{ $page.props.flash.success }}
-                    </div>
-                    <form @submit.prevent="submit" class="mt-6 space-y-4">
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Full Name</label>
-                            <input v-model="form.name" type="text" id="name" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-600" />
-                            <div v-if="form.errors.name" class="mt-2 text-sm text-red-600">{{ form.errors.name }}</div>
-                        </div>
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
-                            <input v-model="form.email" type="email" id="email" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-600" />
-                            <div v-if="form.errors.email" class="mt-2 text-sm text-red-600">{{ form.errors.email }}</div>
-                        </div>
-                        <div>
-                            <label for="amount" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Amount (ETB)</label>
-                            <input v-model="form.amount" type="number" id="amount" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-600" />
-                            <div v-if="form.errors.amount" class="mt-2 text-sm text-red-600">{{ form.errors.amount }}</div>
-                        </div>
-                        <div class="flex justify-end">
-                            <button type="submit" :disabled="form.processing" class="rounded-md bg-indigo-600 px-6 py-2 text-white hover:bg-indigo-500 disabled:opacity-50">
-                                Donate
-                            </button>
-                        </div>
-                    </form>
-                </section>
-
-                <section
-                    class="rounded-lg bg-white/70 p-8 shadow-xl dark:bg-slate-800/70"
-                >
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                     <h2 class="text-3xl font-bold">Elder Gallery</h2>
                     <p class="mt-2 text-slate-600 dark:text-slate-400">
                         Browse elders in need of support.
@@ -338,16 +468,19 @@ const applyFilters = () => {
                     >
                         <Pagination :links="eldersGallery.links" />
                     </div>
+                    </div>
                 </section>
 
                 <section
-                    class="rounded-lg bg-white/70 p-8 shadow-xl dark:bg-slate-800/70"
+                    class="py-12"
                 >
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                     <h2 class="text-3xl font-bold">FAQ & Trust Badges</h2>
                     <p class="mt-4 text-slate-600 dark:text-slate-400">
                         (Content for frequently asked questions and trust
                         certifications)
                     </p>
+                    </div>
                 </section>
             </div>
         </main>

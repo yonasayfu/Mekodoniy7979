@@ -91,10 +91,28 @@ class SponsorshipController extends Controller
     public function show(Sponsorship $sponsorship): Response
     {
         $sponsorship->load(['user', 'elder' => fn ($query) => $query->withoutGlobalScope(\App\Scopes\BranchScope::class), 'activityLogs.causer']);
-        $sponsorship->refresh();
 
         return Inertia::render('Sponsorships/Show', [
-            'sponsorship' => $sponsorship,
+            'sponsorship' => [
+                'id' => $sponsorship->id,
+                'user_id' => $sponsorship->user_id,
+                'user' => $sponsorship->user ? [
+                    'id' => $sponsorship->user->id,
+                    'name' => $sponsorship->user->name,
+                ] : null,
+                'elder_id' => $sponsorship->elder_id,
+                'elder' => $sponsorship->elder ? [
+                    'id' => $sponsorship->elder->id,
+                    'first_name' => $sponsorship->elder->first_name,
+                    'last_name' => $sponsorship->elder->last_name,
+                ] : null,
+                'amount' => $sponsorship->amount,
+                'frequency' => $sponsorship->frequency,
+                'start_date' => $sponsorship->start_date,
+                'end_date' => $sponsorship->end_date,
+                'status' => $sponsorship->status,
+                'notes' => $sponsorship->notes,
+            ],
             'activity' => $sponsorship->activityLogs,
             'breadcrumbs' => [
                 [

@@ -22,10 +22,17 @@ class DonationController extends Controller
     {
         $validatedData = $request->validated();
 
+        $receiptPath = null;
+        if ($request->hasFile('receipt')) {
+            $receiptPath = $request->file('receipt')->store('receipts', 'public');
+        }
+
         Donation::create([
             'amount' => $validatedData['amount'],
-            'guest_name' => $validatedData['name'], // Assuming 'name' in request
-            'guest_email' => $validatedData['email'], // Assuming 'email' in request
+            'guest_name' => $validatedData['name'] ?? null,
+            'guest_email' => $validatedData['email'] ?? null,
+            'guest_phone' => $validatedData['phone'] ?? null,
+            'receipt_path' => $receiptPath,
             'status' => 'pending',
             'currency' => 'ETB', // Default currency
         ]);

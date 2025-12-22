@@ -6,9 +6,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAppearance } from '@/composables/useAppearance';
 import { Monitor, Moon, Sun } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 type AppearanceOption = {
     label: string;
@@ -16,7 +15,17 @@ type AppearanceOption = {
     icon: typeof Sun;
 };
 
-const { appearance, updateAppearance } = useAppearance();
+const appearance = ref(localStorage.getItem('theme') || 'system');
+
+const updateAppearance = (value: 'light' | 'dark' | 'system') => {
+    appearance.value = value;
+    localStorage.setItem('theme', value);
+    if (value === 'dark' || (value === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+};
 
 const options: AppearanceOption[] = [
     { label: 'Light', value: 'light', icon: Sun },
@@ -59,3 +68,4 @@ const handleSelect = (value: AppearanceOption['value']) => {
         </DropdownMenuContent>
     </DropdownMenu>
 </template>
+

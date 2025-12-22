@@ -99,11 +99,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the pledges made by the user.
+     * Get the sponsorships made by the user.
      */
-    public function pledges(): HasMany
+    public function sponsorships(): HasMany
     {
-        return $this->hasMany(Pledge::class);
+        return $this->hasMany(Sponsorship::class);
     }
 
     /**

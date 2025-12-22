@@ -36,8 +36,6 @@ class SponsorshipFactory extends Factory
             'end_date' => $this->faker->optional(0.3)->dateTimeBetween('now', '+2 years'),
             'status' => $this->faker->randomElement(['pending', 'active', 'completed', 'cancelled']),
             'relationship_type' => $this->faker->randomElement(['father', 'mother', 'brother', 'sister']),
-            'promise_kept_last_month' => $this->faker->boolean(85), // 85% keep promises
-            'consecutive_months_kept' => $this->faker->numberBetween(0, 24),
             'notes' => $this->faker->optional(0.5)->paragraph(),
             'subscription_id' => 'sub_' . $this->faker->unique()->lexify('??????????????'),
             'next_billing_date' => $this->faker->dateTimeBetween('now', '+1 month'),

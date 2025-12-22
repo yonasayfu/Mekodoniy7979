@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Pledge;
+use App\Models\Sponsorship;
 use App\Models\Visit;
 use App\Models\User; // Ensure User model is imported
 use App\Notifications\PledgeReminderNotification;
@@ -37,21 +37,21 @@ class SendRemindersCommand extends Command
 
         // --- Pledge Reminders ---
         $this->info('Checking for upcoming pledge reminders...');
-        $upcomingPledges = Pledge::where('status', 'active')
+        $upcomingSponsorships = Sponsorship::where('status', 'active')
             ->whereNotNull('next_payment_date')
             ->where('next_payment_date', '<=', Carbon::now()->addDays(7)) // Remind 7 days before due date
             ->get();
 
-        foreach ($upcomingPledges as $pledge) {
+        foreach ($upcomingSponsorships as $sponsorship) {
             /** @var User $donor */
-            $donor = $pledge->user;
+            $donor = $sponsorship->user;
 
             if ($donor) {
                 // In a real system, you'd check if a reminder was recently sent
                 // to avoid spamming the user.
-                $donor->notify(new PledgeReminderNotification($pledge, $donor));
-                $this->info("Sent pledge reminder to {$donor->email} for pledge ID: {$pledge->id}.");
-                Log::info("Pledge reminder sent for pledge ID: {$pledge->id} to user ID: {$donor->id}.");
+                $donor->notify(new PledgeReminderNotification($sponsorship, $donor));
+                $this->info("Sent pledge reminder to {$donor->email} for pledge ID: {$sponsorship->id}.");
+                Log::info("Pledge reminder sent for pledge ID: {$sponsorship->id} to user ID: {$donor->id}.");
             }
         }
         $this->info('Pledge reminders processed.');

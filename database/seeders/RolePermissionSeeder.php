@@ -58,12 +58,10 @@ class RolePermissionSeeder extends Seeder
             'elders.manage',
 
             // Sponsorship & Pledges
-            'pledges.view',
-            'pledges.create',
-            'pledges.update',
-            'pledges.delete',
-            'pledges.manage',
             'sponsorships.view',
+            'sponsorships.create',
+            'sponsorships.update',
+            'sponsorships.delete',
             'sponsorships.manage',
 
             // Donations
@@ -142,7 +140,6 @@ class RolePermissionSeeder extends Seeder
                 'permissions.view',
                 'branches.*',
                 'elders.*',
-                'pledges.*',
                 'sponsorships.*',
                 'donations.*',
                 'visits.*',
@@ -158,7 +155,6 @@ class RolePermissionSeeder extends Seeder
                 'staff.*',
                 'branches.view',
                 'elders.*',
-                'pledges.*',
                 'sponsorships.*',
                 'donations.*',
                 'visits.*',
@@ -180,8 +176,6 @@ class RolePermissionSeeder extends Seeder
                 'branches.view',
                 'elders.view',
                 'elders.update',
-                'pledges.view',
-                'pledges.update',
                 'donations.view',
                 'donations.create',
                 'visits.*',
@@ -194,7 +188,6 @@ class RolePermissionSeeder extends Seeder
                 'users.view',
                 'staff.view',
                 'elders.view',
-                'pledges.view',
                 'donations.view',
                 'visits.view',
                 'visits.create',
@@ -205,7 +198,6 @@ class RolePermissionSeeder extends Seeder
             'Finance Officer' => [
                 'users.view',
                 'donations.*',
-                'pledges.view',
                 'reports.view',
                 'reports.financial',
                 'reports.generate',
@@ -217,7 +209,6 @@ class RolePermissionSeeder extends Seeder
                 'users.view',
                 'staff.view',
                 'elders.view',
-                'pledges.view',
                 'donations.view',
                 'visits.view',
                 'reports.view',
@@ -229,7 +220,6 @@ class RolePermissionSeeder extends Seeder
                 'users.view',
                 'staff.view',
                 'elders.view',
-                'pledges.view',
                 'donations.view',
                 'visits.view',
                 'reports.view',
@@ -239,7 +229,7 @@ class RolePermissionSeeder extends Seeder
             ],
             'External' => [
                 'users.view', // Can view their own profile
-                'pledges.view', // Can view their own pledges
+                'sponsorships.view', // Can view their own pledges
                 'donations.view', // Can view their own donations
                 'reports.view', // Can view public reports
             ],

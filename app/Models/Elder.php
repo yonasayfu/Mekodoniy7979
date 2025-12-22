@@ -63,11 +63,11 @@ class Elder extends Model
     }
 
     /**
-     * Get the pledges for the elder.
+     * Get the sponsorships for the elder.
      */
-    public function pledges(): HasMany
+    public function sponsorships(): HasMany
     {
-        return $this->hasMany(Pledge::class);
+        return $this->hasMany(Sponsorship::class);
     }
 
     /**

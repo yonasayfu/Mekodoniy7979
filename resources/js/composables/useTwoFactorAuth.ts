@@ -1,121 +1,92 @@
-import { qrCode, recoveryCodes, secretKey } from '@/routes/two-factor';
-import { codes as emailRecoveryCodes } from '@/routes/two-factor-email-recovery';
-import { computed, ref } from 'vue';
+import { ref, computed } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
+import axios from 'axios';
 
-const fetchJson = async <T>(url: string): Promise<T> => {
-    const response = await fetch(url, {
-        headers: { Accept: 'application/json' },
-    });
+export function useTwoFactorAuth() {
+    const page = usePage();
+    const user = computed(() => page.props.auth.user);
 
-    if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.status}`);
+    const confirming = ref(false);
+    const qrCode = ref(null);
+    const setupKey = ref(null);
+    const recoveryCodes = ref([]);
+    const enabling = ref(false);
+    const disabling = ref(false);
+
+    const twoFactorEnabled = computed(() => !enabling.value && user.value?.two_factor_enabled);
+
+    const enableTwoFactorAuthentication = () => {
+        enabling.value = true;
+
+        axios.post(route('two-factor.enable')).then(() => {
+            Promise.all([
+                showQrCode(),
+                showSetupKey(),
+                showRecoveryCodes(),
+            ]).then(() => {
+                confirming.value = true;
+                enabling.value = false;
+            });
+        });
+    };
+
+    const confirmTwoFactorAuthentication = (confirmationForm) => {
+        confirmationForm.post(route('two-factor.confirm'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                confirming.value = false;
+                qrCode.value = null;
+                setupKey.value = null;
+            },
+        });
+    };
+
+    const regenerateRecoveryCodes = () => {
+        axios.post(route('two-factor.recovery-codes')).then(() => showRecoveryCodes());
+    };
+
+    const showQrCode = () => {
+        return axios.get(route('two-factor.qr-code')).then((response) => {
+            qrCode.value = response.data.svg;
+        });
+    };
+
+    const showSetupKey = () => {
+        return axios.get(route('two-factor.secret-key')).then(response => {
+            setupKey.value = response.data.secretKey;
+        });
     }
 
-    return response.json();
-};
-
-const errors = ref<string[]>([]);
-const manualSetupKey = ref<string | null>(null);
-const qrCodeSvg = ref<string | null>(null);
-const recoveryCodesList = ref<string[]>([]);
-const emailRecoveryCodesList = ref<string[]>([]);
-
-const hasSetupData = computed<boolean>(
-    () => qrCodeSvg.value !== null && manualSetupKey.value !== null,
-);
-
-export const useTwoFactorAuth = () => {
-    const fetchQrCode = async (): Promise<void> => {
-        try {
-            const { svg } = await fetchJson<{ svg: string; url: string }>(
-                qrCode.url(),
-            );
-
-            qrCodeSvg.value = svg;
-        } catch {
-            errors.value.push('Failed to fetch QR code');
-            qrCodeSvg.value = null;
-        }
+    const showRecoveryCodes = () => {
+        return axios.get(route('two-factor.recovery-codes')).then((response) => {
+            recoveryCodes.value = response.data;
+        });
     };
 
-    const fetchSetupKey = async (): Promise<void> => {
-        try {
-            const { secretKey: key } = await fetchJson<{ secretKey: string }>(
-                secretKey.url(),
-            );
-
-            manualSetupKey.value = key;
-        } catch {
-            errors.value.push('Failed to fetch a setup key');
-            manualSetupKey.value = null;
-        }
-    };
-
-    const clearSetupData = (): void => {
-        manualSetupKey.value = null;
-        qrCodeSvg.value = null;
-        clearErrors();
-    };
-
-    const clearErrors = (): void => {
-        errors.value = [];
-    };
-
-    const clearTwoFactorAuthData = (): void => {
-        clearSetupData();
-        clearErrors();
-        recoveryCodesList.value = [];
-        emailRecoveryCodesList.value = [];
-    };
-
-    const fetchRecoveryCodes = async (): Promise<void> => {
-        try {
-            clearErrors();
-            recoveryCodesList.value = await fetchJson<string[]>(
-                recoveryCodes.url(),
-            );
-        } catch {
-            errors.value.push('Failed to fetch recovery codes');
-            recoveryCodesList.value = [];
-        }
-    };
-
-    const fetchEmailRecoveryCodes = async (): Promise<void> => {
-        try {
-            clearErrors();
-            emailRecoveryCodesList.value = await fetchJson<string[]>(
-                emailRecoveryCodes.url(),
-            );
-        } catch {
-            errors.value.push('Failed to fetch email recovery codes');
-            emailRecoveryCodesList.value = [];
-        }
-    };
-
-    const fetchSetupData = async (): Promise<void> => {
-        try {
-            clearErrors();
-            await Promise.all([fetchQrCode(), fetchSetupKey()]);
-        } catch {
-            qrCodeSvg.value = null;
-            manualSetupKey.value = null;
-        }
+    const disableTwoFactorAuthentication = () => {
+        disabling.value = true;
+        router.delete(route('two-factor.disable'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                disabling.value = false;
+                confirming.value = false;
+            },
+        });
     };
 
     return {
-        qrCodeSvg,
-        manualSetupKey,
-        recoveryCodesList,
-        emailRecoveryCodesList,
-        errors,
-        hasSetupData,
-        clearSetupData,
-        clearErrors,
-        clearTwoFactorAuthData,
-        fetchQrCode,
-        fetchSetupKey,
-        fetchSetupData,
-        fetchRecoveryCodes,
-        fetchEmailRecoveryCodes,
+        confirming,
+        qrCode,
+        setupKey,
+        recoveryCodes,
+        enabling,
+        disabling,
+        twoFactorEnabled,
+        enableTwoFactorAuthentication,
+        confirmTwoFactorAuthentication,
+        regenerateRecoveryCodes,
+        showQrCode,
+        showRecoveryCodes,
+        disableTwoFactorAuthentication,
     };
-};
+}

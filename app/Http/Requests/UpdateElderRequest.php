@@ -38,6 +38,7 @@ class UpdateElderRequest extends FormRequest
                         'special_needs' => ['nullable', 'string'],
                         'monthly_expenses' => ['nullable', 'numeric'],
                         'video' => ['nullable', 'file', 'mimetypes:video/*', 'max:102400'], // Max 100MB video file
-                    ];
-                }
-            }
+                        ];
+                        }
+                    }
+                    

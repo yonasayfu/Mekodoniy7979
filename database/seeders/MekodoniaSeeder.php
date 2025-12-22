@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\Elder;
 use App\Models\User;
-use App\Models\Pledge;
+use App\Models\Sponsorship;
 use App\Models\Donation;
 use App\Models\Visit;
 use App\Models\TimelineEvent;
@@ -766,16 +766,17 @@ class MekodoniaSeeder extends Seeder
     }
 
     /**
-     * Create relationship-based pledges matching donors with elders.
+     * Create relationship-based sponsorships matching donors with elders.
      */
     private function createRelationshipBasedPledges(): void
     {
         $elders = Elder::all();
-        $users = User::where('account_type', User::TYPE_EXTERNAL)->get();
+                $users = User::where('account_type', User::TYPE_EXTERNAL)->get();
+        $relationshipTypes = ['father', 'mother', 'brother', 'sister'];
 
-        $pledges = [];
+        $sponsorships = [];
 
-        // Create pledges based on relationship matching
+        // Create sponsorships based on relationship matching
         foreach ($elders as $elder) {
             $matchingUsers = $users->filter(function ($user) use ($elder) {
                 // Try to match users who might be related to this elder
@@ -783,56 +784,54 @@ class MekodoniaSeeder extends Seeder
                 return rand(1, 3) === 1; // 33% chance of matching
             });
 
-            $pledgeCount = rand(1, 3); // 1-3 pledges per elder
-            $selectedUsers = $matchingUsers->take($pledgeCount);
+            $sponsorshipCount = rand(1, 3); // 1-3 sponsorships per elder
+            $selectedUsers = $matchingUsers->take($sponsorshipCount);
 
             if ($selectedUsers->isEmpty()) {
                 // If no matching users, assign random users
-                $selectedUsers = $users->random(min($pledgeCount, $users->count()));
+                $selectedUsers = $users->random(min($sponsorshipCount, $users->count()));
             }
 
-            foreach ($selectedUsers as $user) {
-                $pledges[] = [
+                        foreach ($selectedUsers as $user) {
+                $relationshipType = $relationshipTypes[array_rand($relationshipTypes)];
+                $sponsorships[] = [
                     'user_id' => $user->id,
                     'elder_id' => $elder->id,
                     'amount' => rand(150, 300), // 150-300 ETB per month
                     'currency' => 'ETB',
-                    'relationship_type' => $elder->relationship_type,
+                    'relationship_type' => $relationshipType,
                     'start_date' => Carbon::now()->subMonths(rand(1, 12)),
                     'status' => (rand(1, 10) <= 9) ? 'active' : 'inactive', // 90% active
                     'frequency' => 'monthly',
-                    'promise_kept_last_month' => (rand(1, 10) <= 8) ? true : false, // 80% kept promises
-                    'consecutive_months_kept' => rand(0, 12),
-                    'missed_payment_count' => rand(0, 3),
-                    'notes' => 'Supporting ' . $elder->relationship_type . ' through Mekodonia relationship program',
+                    'notes' => 'Supporting ' . $relationshipType . ' through Mekodonia relationship program',
                 ];
             }
         }
 
-        foreach ($pledges as $pledgeData) {
-            Pledge::create($pledgeData);
+        foreach ($sponsorships as $sponsorshipData) {
+            Sponsorship::create($sponsorshipData);
         }
     }
 
     /**
-     * Create donation history for active pledges.
+     * Create donation history for active sponsorships.
      */
     private function createDonationHistory(): void
     {
-        $pledges = Pledge::where('status', 'active')->get();
+        $sponsorships = Sponsorship::where('status', 'active')->get();
 
-        foreach ($pledges as $pledge) {
-            $startDate = Carbon::parse($pledge->start_date);
-            $monthsActive = min($startDate->diffInMonths(Carbon::now()), $pledge->consecutive_months_kept);
+        foreach ($sponsorships as $sponsorship) {
+            $startDate = Carbon::parse($sponsorship->start_date);
+            $monthsActive = min($startDate->diffInMonths(Carbon::now()), $sponsorship->consecutive_months_kept);
             $donationCount = max(1, $monthsActive); // At least 1 donation
 
             for ($i = 0; $i < $donationCount; $i++) {
                 Donation::create([
-                    'user_id' => $pledge->user_id,
-                    'pledge_id' => $pledge->id,
-                    'elder_id' => $pledge->elder_id,
-                    'amount' => $pledge->amount,
-                    'currency' => $pledge->currency,
+                    'user_id' => $sponsorship->user_id,
+                    'sponsorship_id' => $sponsorship->id,
+                    'elder_id' => $sponsorship->elder_id,
+                    'amount' => $sponsorship->amount,
+                    'currency' => $sponsorship->currency,
                     'payment_gateway' => 'stripe',
                     'status' => 'approved',
                     'donation_type' => 'pledge',

@@ -39,4 +39,5 @@ class StoreElderRequest extends FormRequest
             'monthly_expenses' => ['nullable', 'numeric'],
             'video' => ['nullable', 'file', 'mimetypes:video/*', 'max:102400'], // Max 100MB video file
         ];
-    }}
+    }
+}

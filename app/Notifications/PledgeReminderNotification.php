@@ -2,26 +2,26 @@
 
 namespace App\Notifications;
 
-use App\Models\Pledge;
+use App\Models\Sponsorship;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class PledgeReminderNotification extends Notification implements ShouldQueue
+class SponsorshipReminderNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected Pledge $pledge;
+    protected Sponsorship $sponsorship;
     protected User $donor;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(Pledge $pledge, User $donor)
+    public function __construct(Sponsorship $sponsorship, User $donor)
     {
-        $this->pledge = $pledge;
+        $this->sponsorship = $sponsorship;
         $this->donor = $donor;
     }
 
@@ -50,13 +50,13 @@ class PledgeReminderNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Pledge Reminder: Your Support for ' . $this->pledge->elder->full_name)
+            ->subject('Sponsorship Reminder: Your Support for ' . $this->sponsorship->elder->full_name)
             ->greeting('Hello ' . $this->donor->name . ',')
-            ->line('This is a friendly reminder about your upcoming pledge payment for ' . $this->pledge->elder->full_name . '.')
-            ->line('Amount: ' . $this->pledge->amount . ' ' . $this->pledge->currency)
-            ->line('Due Date: ' . $this->pledge->next_payment_date->format('M d, Y'))
-            ->action('View Your Pledge', url('/pledges/' . $this->pledge->id))
-            ->line('Thank you for your continuous support in enriching the life of ' . $this->pledge->elder->full_name . '.');
+            ->line('This is a friendly reminder about your upcoming sponsorship payment for ' . $this->sponsorship->elder->full_name . '.')
+            ->line('Amount: ' . $this->sponsorship->amount . ' ' . $this->sponsorship->currency)
+            ->line('Due Date: ' . $this->sponsorship->next_payment_date->format('M d, Y'))
+            ->action('View Your Sponsorship', url('/sponsorships/' . $this->sponsorship->id))
+            ->line('Thank you for your continuous support in enriching the life of ' . $this->sponsorship->elder->full_name . '.');
     }
 
     /**
@@ -67,12 +67,12 @@ class PledgeReminderNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'pledge_id' => $this->pledge->id,
-            'elder_name' => $this->pledge->elder->full_name,
-            'amount' => $this->pledge->amount,
-            'currency' => $this->pledge->currency,
-            'due_date' => $this->pledge->next_payment_date->toDateTimeString(),
-            'message' => 'Pledge reminder for ' . $this->pledge->elder->full_name . '.',
+            'sponsorship_id' => $this->sponsorship->id,
+            'elder_name' => $this->sponsorship->elder->full_name,
+            'amount' => $this->sponsorship->amount,
+            'currency' => $this->sponsorship->currency,
+            'due_date' => $this->sponsorship->next_payment_date->toDateTimeString(),
+            'message' => 'Sponsorship reminder for ' . $this->sponsorship->elder->full_name . '.',
         ];
     }
 }
