@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { User, Users, UserCheck, CalendarHeart } from 'lucide-vue-next'; // Import User icon
 import { ref, toRefs, watch, onMounted, onUnmounted } from 'vue';
 import { route } from 'ziggy-js';
+import Pagination from '@/Components/Pagination.vue';
 
 interface WallOfLoveEntry {
     donor_name: string;
@@ -86,27 +87,47 @@ const applyFilters = () => {
 };
 
 // Hero Slider Logic
-const currentSlide = ref(0);
-let slideInterval: number;
+const heroCurrentSlide = ref(0);
+let heroSlideInterval: number;
 
-const nextSlide = () => {
-    currentSlide.value = (currentSlide.value + 1) % props.heroSlides.length;
+const nextHeroSlide = () => {
+    heroCurrentSlide.value = (heroCurrentSlide.value + 1) % props.heroSlides.length;
 };
 
-const prevSlide = () => {
-    currentSlide.value = (currentSlide.value - 1 + props.heroSlides.length) % props.heroSlides.length;
-};
-
-const goToSlide = (index: number) => {
-    currentSlide.value = index;
+const goToHeroSlide = (index: number) => {
+    heroCurrentSlide.value = index;
 };
 
 onMounted(() => {
-    slideInterval = setInterval(nextSlide, 7000); // Change slide every 7 seconds
+    heroSlideInterval = setInterval(nextHeroSlide, 7000); // Change slide every 7 seconds
 });
 
 onUnmounted(() => {
-    clearInterval(slideInterval);
+    clearInterval(heroSlideInterval);
+});
+
+// Wall of Love Slider Logic
+const currentWallOfLoveSlide = ref(0);
+let wallOfLoveSlideInterval: number;
+
+const nextWallOfLoveSlide = () => {
+    currentWallOfLoveSlide.value =
+        (currentWallOfLoveSlide.value + 1) % props.wallOfLove.length;
+};
+
+const prevWallOfLoveSlide = () => {
+    currentWallOfLoveSlide.value =
+        (currentWallOfLoveSlide.value - 1 + props.wallOfLove.length) % props.wallOfLove.length;
+};
+
+onMounted(() => {
+    if (props.wallOfLove.length > 1) {
+        wallOfLoveSlideInterval = setInterval(nextWallOfLoveSlide, 5000); // Change slide every 5 seconds
+    }
+});
+
+onUnmounted(() => {
+    clearInterval(wallOfLoveSlideInterval);
 });
 
 // Live Counters Animation
@@ -178,213 +199,217 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
 </script>
 <template>
     <Head title="Welcome">
-        <link rel="preconnect" href="https://rsms.me/" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     </Head>
-    <div
-        class="flex min-h-screen flex-col bg-slate-100 text-[#1b1b18] dark:bg-slate-900"
-    >
-        <header
-            class="w-full text-sm lg:p-8"
-        >
-            <nav class="flex items-center justify-end gap-4 p-4">
-                <Link
-                    v-if="$page.props.auth.user"
-                    :href="dashboard()"
-                    class="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500"
-                >
-                    Dashboard
-                </Link>
-                <template v-else>
-                    <Link
-                        :href="login()"
-                        class="text-indigo-600 hover:text-indigo-500"
-                    >
-                        Log in
-                    </Link>
-                    <Link
-                        :href="register()"
-                        class="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500"
-                    >
-                        Register
-                    </Link>
-                </template>
-            </nav>
-        </header>
 
-        <main
-            class="flex w-full flex-col justify-center px-4 py-6 lg:px-8 text-slate-800 dark:text-slate-200"
+    <div
+        class="min-h-screen antialiased bg-background font-sans text-foreground"
+    >
+        <!-- Navbar -->
+        <nav
+            class="fixed left-0 right-0 top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm dark:bg-gray-900/80"
         >
-            <div class="space-y-8 text-center">
-                <h1
-                    class="text-5xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl"
-                >
-                    Mekodonia Home Connect
-                </h1>
-                <p class="mt-4 text-xl text-slate-600 dark:text-slate-400">
-                    A donor-elder matchmaking and stewardship platform.
-                </p>
-                <div
-                    class="flex flex-col items-center justify-center gap-4 sm:flex-row"
-                >
+            <div
+                class="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8"
+            >
+                <Link :href="route('home')" class="flex items-center space-x-2">
+                    <img
+                        src="/images/mekodonia-logo.png"
+                        alt="Mekodonia Logo"
+                        class="h-8 w-auto"
+                    />
+                    <span class="text-xl font-bold text-gray-900 dark:text-white"
+                        >Mekodonia</span
+                    >
+                </Link>
+                <div class="flex items-center space-x-4">
                     <Link
-                        href="#"
-                        class="rounded-md bg-emerald-600 px-6 py-3 text-lg font-semibold text-white shadow-lg hover:bg-emerald-500"
+                        v-if="$page.props.auth.user"
+                        :href="route('dashboard')"
+                        class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                     >
-                        Long-term support
+                        Dashboard
                     </Link>
-                    <a
-                        href="#"
-                        class="rounded-md bg-indigo-600 px-6 py-3 text-lg font-semibold text-white shadow-lg hover:bg-indigo-500"
-                    >
-                        Donate a Meal
-                    </a>
+                    <template v-else>
+                        <Link
+                            :href="route('login')"
+                            class="text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                        >
+                            Log in
+                        </Link>
+                        <Link
+                            :href="route('register')"
+                            class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                        >
+                            Register
+                        </Link>
+                    </template>
                 </div>
             </div>
+        </nav>
 
-            <div class="mt-12 w-full space-y-12">
-                <section class="relative w-full overflow-hidden py-12">
-                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div class="relative h-64 md:h-80">
-                            <template v-for="(slide, index) in heroSlides" :key="index">
-                                <transition
-                                    enter-active-class="transition-opacity ease-in-out duration-1000"
-                                    enter-from-class="opacity-0"
-                                    enter-to-class="opacity-100"
-                                    leave-active-class="transition-opacity ease-in-out duration-1000"
-                                    leave-from-class="opacity-100"
-                                    leave-to-class="opacity-0"
-                                >
-                                    <div v-show="currentSlide === index" class="absolute inset-0 h-full w-full">
-                                        <img :src="slide.image" :alt="slide.title" class="h-full w-full object-cover" />
-                                        <div class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center text-white p-4">
-                                            <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight">
-                                                {{ slide.title }}
-                                            </h2>
-                                            <p class="mt-2 md:mt-4 text-lg md:text-xl max-w-2xl">
-                                                {{ slide.description }}
-                                            </p>
-                                            <a :href="slide.cta_link" class="mt-4 md:mt-6 rounded-md bg-indigo-600 px-6 py-3 text-lg font-semibold text-white shadow-lg hover:bg-indigo-500">
-                                                {{ slide.cta_text }}
-                                            </a>
-                                        </div>
-                                    </div>
-                                </transition>
-                            </template>
-                        </div>
-
-                        <!-- Slider Controls -->
-                        <button @click="prevSlide" class="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/50 p-2 text-slate-800 hover:bg-white">
-                            &#10094;
-                        </button>
-                        <button @click="nextSlide" class="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/50 p-2 text-slate-800 hover:bg-white">
-                            &#10095;
-                        </button>
-
-                        <!-- Slider Indicators -->
-                        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
-                            <button
-                                v-for="(_, index) in heroSlides"
-                                :key="`dot-${index}`"
-                                @click="goToSlide(index)"
-                                :class="[
-                                    'h-3 w-3 rounded-full',
-                                    currentSlide === index ? 'bg-indigo-600' : 'bg-white/50',
-                                ]"
-                            ></button>
-                        </div>
+        <main>
+            <!-- Hero Section -->
+            <section
+                class="relative flex h-screen items-center justify-center bg-cover bg-center text-white"
+                :style="{ backgroundImage: `url(${heroSlides[heroCurrentSlide].image})` }"
+            >
+                <div class="absolute inset-0 bg-black/60"></div>
+                <div class="relative z-10 mx-auto max-w-4xl p-8 text-center">
+                    <h1 class="text-5xl font-extrabold leading-tight md:text-6xl">
+                        {{ heroSlides[heroCurrentSlide].title }}
+                    </h1>
+                    <p class="mt-4 text-xl md:text-2xl">
+                        {{ heroSlides[heroCurrentSlide].description }}
+                    </p>
+                    <div class="mt-8 flex justify-center space-x-4">
+                        <Link
+                            :href="heroSlides[heroCurrentSlide].cta_link"
+                            class="rounded-lg bg-indigo-600 px-8 py-3 text-lg font-semibold shadow-lg transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        >
+                            {{ heroSlides[heroCurrentSlide].cta_text }}
+                        </Link>
+                        <Link
+                            href="#how-it-works"
+                            class="rounded-lg bg-white px-8 py-3 text-lg font-semibold text-gray-800 shadow-lg transition-all hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        >
+                            Learn More
+                        </Link>
                     </div>
-                </section>
+                </div>
+                <!-- Slider Indicators -->
+                <div class="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 space-x-2">
+                    <button
+                        v-for="(_, index) in heroSlides"
+                        :key="`dot-${index}`"
+                        @click="goToHeroSlide(index)"
+                        :class="[
+                            'h-3 w-3 rounded-full transition-colors duration-300',
+                            heroCurrentSlide === index ? 'bg-indigo-500' : 'bg-white/50 hover:bg-white',
+                        ]"
+                    ></button>
+                </div>
+            </section>
 
-                <section
-                    class="py-12 bg-white/70 dark:bg-slate-800/70"
-                >
-                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <h2 class="text-3xl font-bold text-center">Live Counters</h2>
+            <!-- Impact Section (Live Counters) -->
+            <section class="py-20 bg-gray-50 dark:bg-gray-800">
+                <div class="container mx-auto px-4 text-center">
+                    <h2 class="text-4xl font-bold text-gray-800 dark:text-white">Our Impact</h2>
+                    <p class="mt-4 text-xl text-gray-600 dark:text-gray-300">Numbers that speak volumes about our mission.</p>
+                    <div class="mt-12 grid grid-cols-1 gap-10 md:grid-cols-3">
                         <div
-                            class="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"
+                            ref="eldersWaitingRef"
+                            class="flex flex-col items-center justify-center rounded-xl bg-white p-8 shadow-lg dark:bg-gray-700"
                         >
                             <div
-                                ref="eldersWaitingRef"
-                                class="flex flex-col items-center justify-center rounded-lg bg-white p-6 text-center shadow-lg dark:bg-slate-800"
+                                class="flex h-20 w-20 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
                             >
-                                <div
-                                    class="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-blue-500 dark:bg-blue-900 dark:text-blue-300"
-                                >
-                                    <Users class="size-8" />
-                                </div>
-                                <p
-                                    class="mt-4 text-4xl font-extrabold text-slate-800 dark:text-white"
-                                >
-                                    {{ eldersWaitingCount }}
-                                </p>
-                                <p
-                                    class="mt-2 text-base font-medium text-slate-600 dark:text-slate-400"
-                                >
-                                    Elders Waiting
-                                </p>
+                                <Users class="size-10" />
                             </div>
+                            <p class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white">
+                                {{ eldersWaitingCount }}
+                            </p>
+                            <p class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300">
+                                Elders Awaiting Sponsorship
+                            </p>
+                        </div>
+                        <div
+                            ref="matchedEldersRef"
+                            class="flex flex-col items-center justify-center rounded-xl bg-white p-8 shadow-lg dark:bg-gray-700"
+                        >
                             <div
-                                ref="matchedEldersRef"
-                                class="flex flex-col items-center justify-center rounded-lg bg-white p-6 text-center shadow-lg dark:bg-slate-800"
+                                class="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
                             >
-                                <div
-                                    class="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-500 dark:bg-green-900 dark:text-green-300"
-                                >
-                                    <UserCheck class="size-8" />
-                                </div>
-                                <p
-                                    class="mt-4 text-4xl font-extrabold text-slate-800 dark:text-white"
-                                >
-                                    {{ matchedEldersCount }}
-                                </p>
-                                <p
-                                    class="mt-2 text-base font-medium text-slate-600 dark:text-slate-400"
-                                >
-                                    Matched
-                                </p>
+                                <UserCheck class="size-10" />
                             </div>
+                            <p class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white">
+                                {{ matchedEldersCount }}
+                            </p>
+                            <p class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300">
+                                Elders Matched
+                            </p>
+                        </div>
+                        <div
+                            ref="visitsThisMonthRef"
+                            class="flex flex-col items-center justify-center rounded-xl bg-white p-8 shadow-lg dark:bg-gray-700"
+                        >
                             <div
-                                ref="visitsThisMonthRef"
-                                class="flex flex-col items-center justify-center rounded-lg bg-white p-6 text-center shadow-lg dark:bg-slate-800"
+                                class="flex h-20 w-20 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300"
                             >
-                                <div
-                                    class="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 text-purple-500 dark:bg-purple-900 dark:text-purple-300"
-                                >
-                                    <CalendarHeart class="size-8" />
-                                </div>
-                                <p
-                                    class="mt-4 text-4xl font-extrabold text-slate-800 dark:text-white"
-                                >
-                                    {{ visitsThisMonthCount }}
-                                </p>
-                                <p
-                                    class="mt-2 text-base font-medium text-slate-600 dark:text-slate-400"
-                                >
-                                    Visited This Month
-                                </p>
+                                <CalendarHeart class="size-10" />
                             </div>
+                            <p class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white">
+                                {{ visitsThisMonthCount }}
+                            </p>
+                            <p class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300">
+                                Visits This Month
+                            </p>
                         </div>
                     </div>
-                </section>
-                
-                <section
-                    id="elders-gallery"
-                    class="py-12 bg-white/70 dark:bg-slate-800/70"
-                >
-                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 class="text-3xl font-bold">Elder Gallery</h2>
-                    <p class="mt-2 text-slate-600 dark:text-slate-400">
-                        Browse elders in need of support.
+                </div>
+            </section>
+
+            <!-- How It Works Section -->
+            <section id="how-it-works" class="py-20 bg-white dark:bg-gray-900">
+                <div class="container mx-auto px-4 text-center">
+                    <h2 class="text-4xl font-bold text-gray-800 dark:text-white">How It Works</h2>
+                    <p class="mt-4 text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                        Connecting hearts, changing lives. Simple steps to make a profound difference.
                     </p>
-                    <div
-                        class="mt-6 flex flex-col gap-4 md:flex-row md:items-center"
-                    >
-                        <div class="flex flex-1 gap-2">
+                    <div class="mt-12 grid grid-cols-1 gap-10 md:grid-cols-3">
+                        <div class="flex flex-col items-center p-6 rounded-xl shadow-lg bg-gray-50 dark:bg-gray-800">
+                            <div class="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
+                                <User class="size-10" />
+                            </div>
+                            <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">1. Browse Elders</h3>
+                            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                Discover compelling stories of elders needing support. Filter by location, needs, and more.
+                            </p>
+                        </div>
+                        <div class="flex flex-col items-center p-6 rounded-xl shadow-lg bg-gray-50 dark:bg-gray-800">
+                            <div class="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300">
+                                <Heart class="size-10" />
+                            </div>
+                            <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">2. Choose Your Relationship</h3>
+                            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                Decide how you want to support – as a Father, Mother, Brother, or Sister.
+                            </p>
+                        </div>
+                        <div class="flex flex-col items-center p-6 rounded-xl shadow-lg bg-gray-50 dark:bg-gray-800">
+                            <div class="flex h-20 w-20 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                                <DollarSign class="size-10" />
+                            </div>
+                            <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">3. Make an Impact</h3>
+                            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                Set up monthly contributions or make a one-time donation easily and securely.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Elder Gallery Section -->
+            <section
+                id="elders-gallery"
+                class="py-20 bg-gray-50 dark:bg-gray-800"
+            >
+                <div class="container mx-auto px-4">
+                    <h2 class="text-4xl font-bold text-center text-gray-800 dark:text-white">Our Elders</h2>
+                    <p class="mt-4 text-xl text-center text-gray-600 dark:text-gray-300">
+                        Meet the elders whose lives you can transform.
+                    </p>
+                    <div class="mt-10 flex flex-col items-center justify-between gap-4 md:flex-row">
+                        <div class="flex flex-1 items-center justify-center gap-4">
                             <select
                                 v-model="currentPriority"
                                 @change="applyFilters"
-                                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             >
                                 <option
                                     v-for="option in priorityOptions"
@@ -397,7 +422,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                             <select
                                 v-model="currentGender"
                                 @change="applyFilters"
-                                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             >
                                 <option
                                     v-for="option in genderOptions"
@@ -409,47 +434,70 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                             </select>
                             <button
                                 @click="applyFilters"
-                                class="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500"
+                                class="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
-                                Apply Filters
+                                Filter
                             </button>
                         </div>
                     </div>
                     <div
-                        class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                        class="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                     >
                         <template v-if="eldersGallery.data.length">
                             <div
                                 v-for="elder in eldersGallery.data"
                                 :key="elder.id"
-                                class="rounded-lg bg-slate-100/80 p-4 shadow-md dark:bg-slate-700/80"
+                                class="overflow-hidden rounded-xl bg-white shadow-lg transition-all hover:shadow-xl dark:bg-gray-700"
                             >
                                 <Link :href="route('elders.show', elder.id)">
-                                    <div class="flex items-center gap-4">
+                                    <div class="relative h-56 w-full">
                                         <img
                                             v-if="elder.profile_picture_path"
                                             :src="`/storage/${elder.profile_picture_path}`"
-                                            class="h-16 w-16 rounded-full object-cover"
+                                            class="h-full w-full object-cover"
                                             alt="Elder"
                                         />
                                         <div
                                             v-else
-                                            class="flex h-16 w-16 items-center justify-center rounded-full bg-slate-300 text-slate-600 dark:bg-slate-600 dark:text-slate-300"
+                                            class="flex h-full w-full items-center justify-center bg-gray-200 text-gray-500 dark:bg-gray-600 dark:text-gray-400"
                                         >
-                                            <User class="size-8" />
+                                            <User class="size-20" />
                                         </div>
-                                        <div>
-                                            <h3
-                                                class="text-lg font-semibold text-slate-800 dark:text-slate-100"
+                                        <div
+                                            class="absolute right-4 top-4 rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold uppercase text-white"
+                                        >
+                                            {{ elder.priority_level }}
+                                        </div>
+                                    </div>
+                                    <div class="p-6">
+                                        <h3
+                                            class="text-2xl font-bold text-gray-900 dark:text-white"
+                                        >
+                                            {{ elder.full_name }}
+                                        </h3>
+                                        <p
+                                            class="mt-2 text-gray-600 dark:text-gray-300"
+                                        >
+                                            Awaiting your compassionate support.
+                                        </p>
+                                        <div
+                                            class="mt-4 inline-flex items-center text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+                                        >
+                                            Learn More
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                class="ml-1 size-4"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
                                             >
-                                                {{ elder.full_name }}
-                                            </h3>
-                                            <p
-                                                class="text-sm text-slate-600 dark:text-slate-300"
-                                            >
-                                                Priority:
-                                                {{ elder.priority_level }}
-                                            </p>
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M9 5l7 7-7 7"
+                                                />
+                                            </svg>
                                         </div>
                                     </div>
                                 </Link>
@@ -457,32 +505,200 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                         </template>
                         <p
                             v-else
-                            class="col-span-full text-center text-slate-500 dark:text-slate-400"
+                            class="col-span-full text-center text-gray-500 dark:text-gray-400"
                         >
                             No elders found matching your criteria.
                         </p>
                     </div>
                     <div
                         v-if="eldersGallery.last_page > 1"
-                        class="mt-8 flex justify-center"
+                        class="mt-12 flex justify-center"
                     >
-                        <Pagination :links="eldersGallery.links" />
+                        <!-- Pagination Component -->
+                        <nav
+                            class="flex items-center space-x-2"
+                            aria-label="Pagination"
+                        >
+                            <Link
+                                v-for="(link, index) in eldersGallery.links"
+                                :key="index"
+                                :href="link.url || '#'"
+                                :class="[
+                                    'relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg',
+                                    link.active
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600',
+                                    !link.url &&
+                                        'cursor-not-allowed opacity-50',
+                                ]"
+                                v-html="link.label"
+                            />
+                        </nav>
                     </div>
-                    </div>
-                </section>
+                </div>
+            </section>
 
-                <section
-                    class="py-12"
-                >
-                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 class="text-3xl font-bold">FAQ & Trust Badges</h2>
-                    <p class="mt-4 text-slate-600 dark:text-slate-400">
-                        (Content for frequently asked questions and trust
-                        certifications)
+            <!-- Wall of Love - Success Stories -->
+            <section class="py-20 bg-white dark:bg-gray-900">
+                <div class="container mx-auto px-4 text-center">
+                    <h2 class="text-4xl font-bold text-gray-800 dark:text-white">Wall of Love</h2>
+                    <p class="mt-4 text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                        Heartwarming connections made possible by our community.
                     </p>
+                    <div
+                        v-if="wallOfLove.length > 0"
+                        class="relative mt-12 overflow-hidden rounded-xl bg-gray-50 p-8 shadow-lg dark:bg-gray-800"
+                    >
+                        <div
+                            class="flex transition-transform duration-700 ease-in-out"
+                            :style="{ transform: `translateX(-${currentWallOfLoveSlide * 100}%)` }"
+                        >
+                            <div
+                                v-for="(match, index) in wallOfLove"
+                                :key="index"
+                                class="w-full flex-shrink-0 text-center"
+                            >
+                                <div
+                                    class="relative mx-auto h-32 w-32 overflow-hidden rounded-full border-4 border-indigo-500 shadow-md"
+                                >
+                                    <img
+                                        v-if="match.elder_profile_picture"
+                                        :src="`/storage/${match.elder_profile_picture}`"
+                                        alt="Elder Profile"
+                                        class="h-full w-full object-cover"
+                                    />
+                                    <div
+                                        v-else
+                                        class="flex h-full w-full items-center justify-center bg-gray-200 text-gray-500 dark:bg-gray-600 dark:text-gray-400"
+                                    >
+                                        <User class="size-16" />
+                                    </div>
+                                </div>
+                                <p class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">
+                                    {{ match.donor_name }} is supporting
+                                    {{ match.elder_name }}
+                                </p>
+                                <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                    Joined {{ match.sponsorship_date }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Wall of Love Slider Controls -->
+                        <button
+                            @click="prevWallOfLoveSlide"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/50 p-2 text-gray-800 hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        >
+                            &#10094;
+                        </button>
+                        <button
+                            @click="nextWallOfLoveSlide"
+                            class="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/50 p-2 text-gray-800 hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        >
+                            &#10095;
+                        </button>
+                        <!-- Wall of Love Slider Indicators -->
+                        <div class="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 space-x-2">
+                            <button
+                                v-for="(_, index) in wallOfLove"
+                                :key="`wall-dot-${index}`"
+                                @click="currentWallOfLoveSlide = index"
+                                :class="[
+                                    'h-3 w-3 rounded-full transition-colors duration-300',
+                                    currentWallOfLoveSlide === index ? 'bg-indigo-500' : 'bg-white/50 hover:bg-white',
+                                ]"
+                            ></button>
+                        </div>
                     </div>
-                </section>
-            </div>
+                    <div v-else class="mt-12 text-center text-gray-500 dark:text-gray-400">
+                        <p class="text-xl">No success stories to share yet.</p>
+                        <p class="mt-2">Be the first to create a lasting bond!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Call to Action Section -->
+            <section class="py-20 bg-indigo-600 text-white text-center">
+                <div class="container mx-auto px-4">
+                    <h2 class="text-4xl font-bold">Ready to Make a Difference?</h2>
+                    <p class="mt-4 text-xl max-w-3xl mx-auto">
+                        Your support can provide comfort, dignity, and care for our elders. Join our mission today.
+                    </p>
+                    <div class="mt-8 space-x-4">
+                        <Link
+                            :href="route('register')"
+                            class="rounded-lg bg-white px-8 py-3 text-lg font-semibold text-indigo-600 shadow-lg transition-all hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+                        >
+                            Sponsor an Elder
+                        </Link>
+                        <Link
+                            href="#guest-donation-form"
+                            class="rounded-lg border border-white px-8 py-3 text-lg font-semibold text-white shadow-lg transition-all hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+                        >
+                            Make a One-Time Donation
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ & Trust Badges Section -->
+            <section class="py-20 bg-gray-50 dark:bg-gray-800">
+                <div class="container mx-auto px-4">
+                    <h2 class="text-4xl font-bold text-center text-gray-800 dark:text-white">
+                        Frequently Asked Questions
+                    </h2>
+                    <div class="mt-12 max-w-4xl mx-auto space-y-8">
+                        <!-- FAQ Item 1 -->
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
+                                How can I sponsor an elder?
+                            </h3>
+                            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                You can browse our Elder Gallery, select an elder you wish to support, and choose a sponsorship relationship (Father, Mother, Brother, Sister). You can then set up a monthly contribution.
+                            </p>
+                        </div>
+                        <!-- FAQ Item 2 -->
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
+                                Can I make a one-time donation?
+                            </h3>
+                            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                Yes, you can make a one-time donation to provide essential items like meals or medication without committing to a long-term sponsorship. Look for the "Make a One-Time Donation" button.
+                            </p>
+                        </div>
+                        <!-- FAQ Item 3 -->
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
+                                Is my donation secure?
+                            </h3>
+                            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                We utilize secure payment gateways and protocols to ensure your donations are processed safely. Your financial information is always protected.
+                            </p>
+                        </div>
+                        <!-- FAQ Item 4 -->
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
+                                How do I track my impact?
+                            </h3>
+                            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                Registered donors can access a personalized dashboard to view their payment history, details of their sponsored elder, and receive annual thank-you summaries.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 py-12 text-white dark:bg-gray-950">
+            <div class="container mx-auto px-4 text-center">
+                <p>&copy; {{ new Date().getFullYear() }} Mekodonia Home Connect. All rights reserved.</p>
+                <div class="mt-4 space-x-4">
+                    <a href="#" class="hover:text-gray-300">Privacy Policy</a>
+                    <a href="#" class="hover:text-gray-300">Terms of Service</a>
+                    <a href="#" class="hover:text-gray-300">Contact Us</a>
+                </div>
+            </div>
+        </footer>
     </div>
 </template>
