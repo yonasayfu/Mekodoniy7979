@@ -34,6 +34,15 @@ class Elder extends Model
         'video_url',
         'health_conditions',
         'sponsorship_status',
+        'current_status',
+        'admitted_at',
+        'deceased_at',
+    ];
+
+    protected $casts = [
+        'date_of_birth' => 'date',
+        'admitted_at' => 'datetime',
+        'deceased_at' => 'datetime',
     ];
 
     /**
@@ -89,6 +98,26 @@ class Elder extends Model
     public function activityLogs(): MorphMany
     {
         return $this->morphMany(ActivityLog::class, 'subject');
+    }
+
+    public function statusEvents(): HasMany
+    {
+        return $this->hasMany(ElderStatusEvent::class);
+    }
+
+    public function healthAssessments(): HasMany
+    {
+        return $this->hasMany(ElderHealthAssessment::class);
+    }
+
+    public function medicalConditions(): HasMany
+    {
+        return $this->hasMany(ElderMedicalCondition::class);
+    }
+
+    public function medications(): HasMany
+    {
+        return $this->hasMany(ElderMedication::class);
     }
 
     // Accessor for full name

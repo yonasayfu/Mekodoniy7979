@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDonationRequest;
 use App\Models\Donation;
+use App\Models\Elder;
 use App\Support\Services\TelebirrService;
 use App\Support\Services\TimelineEventService;
 use Illuminate\Http\Request;
@@ -22,19 +23,28 @@ class DonationController extends Controller
     {
         $validatedData = $request->validated();
 
+        $elderId = $validatedData['elder_id'] ?? null;
+        $elder = $elderId ? Elder::find($elderId) : null;
+
         $receiptPath = null;
         if ($request->hasFile('receipt')) {
             $receiptPath = $request->file('receipt')->store('receipts', 'public');
         }
 
         Donation::create([
+            'elder_id' => $elder?->id,
+            'branch_id' => $elder?->branch_id,
             'amount' => $validatedData['amount'],
             'guest_name' => $validatedData['name'] ?? null,
             'guest_email' => $validatedData['email'] ?? null,
             'guest_phone' => $validatedData['phone'] ?? null,
             'receipt_path' => $receiptPath,
+            'payment_gateway' => 'manual',
+            'payment_id' => null,
             'status' => 'pending',
             'currency' => 'ETB', // Default currency
+            'donation_type' => 'guest_meal',
+            'campaign_id' => $validatedData['campaign_id'] ?? null,
         ]);
 
         return redirect()->route('home')->with('success', 'Thank you! Your donation is pending confirmation.');
@@ -48,6 +58,9 @@ class DonationController extends Controller
     {
         $validatedData = $request->validated();
 
+        $elderId = $validatedData['elder_id'] ?? null;
+        $elder = $elderId ? Elder::find($elderId) : null;
+
         // Process payment using TelebirrService
         $paymentResponse = $telebirrService->charge([
             'amount' => $validatedData['amount'],
@@ -60,12 +73,17 @@ class DonationController extends Controller
         if ($paymentResponse['status'] === 'success') {
             $donation = Donation::create([
                 'user_id' => Auth::id(),
+                'elder_id' => $elder?->id,
+                'branch_id' => $elder?->branch_id,
                 'amount' => $validatedData['amount'],
                 'guest_name' => $validatedData['name'],
                 'guest_email' => $validatedData['email'],
                 'payment_gateway' => 'telebirr',
-                'transaction_id' => $paymentResponse['transaction_id'],
+                'payment_id' => $paymentResponse['transaction_id'] ?? null,
                 'status' => 'completed',
+                'currency' => 'ETB',
+                'donation_type' => 'guest_one_time',
+                'campaign_id' => $validatedData['campaign_id'] ?? null,
             ]);
 
             // Create timeline event for successful donation

@@ -89,6 +89,13 @@ class RolePermissionSeeder extends Seeder
             'reports.operational',
             'reports.view_all',
 
+            // Campaigns
+            'campaigns.view',
+            'campaigns.create',
+            'campaigns.update',
+            'campaigns.delete',
+            'campaigns.manage',
+
             // Mailbox & Communication
             'mailbox.view',
             'mailbox.send',

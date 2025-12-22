@@ -65,6 +65,12 @@ return [
                     'permission' => 'visits.manage',
                 ],
                 [
+                    'title' => 'Campaigns',
+                    'href' => '/campaigns',
+                    'icon' => 'Folder',
+                    'permission' => 'campaigns.manage',
+                ],
+                [
                     'title' => 'Reports',
                     'href' => '/reports',
                     'icon' => 'Folder',

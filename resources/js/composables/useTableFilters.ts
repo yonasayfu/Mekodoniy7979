@@ -1,34 +1,66 @@
-import { ref, watch } from 'vue';
-import { router, usePage } from '@inertiajs/vue3';
-import debounce from 'lodash/debounce';
+import { computed, ref } from 'vue';
+import { router } from '@inertiajs/vue3';
 
-export function useTableFilters(
-    routeName: string,
-    filters: Record<string, any> = {},
-) {
-    const page = usePage();
-    const defaultFilters = {
-        search: page.props.filters?.search || '',
+type Direction = 'asc' | 'desc';
+
+interface TableFilterOptions {
+    route: string;
+    initial?: {
+        search?: string;
+        sort?: string;
+        direction?: Direction;
+        per_page?: number;
+        [key: string]: unknown;
     };
-    const filter = ref({ ...defaultFilters, ...filters });
+}
 
-    watch(
-        filter,
-        debounce(() => {
-            router.get(
-                route(routeName),
-                { ...filter.value },
-                {
-                    preserveState: true,
-                    replace: true,
-                    preserveScroll: true,
-                },
-            );
-        }, 300),
-        { deep: true },
-    );
+export function useTableFilters(options: TableFilterOptions) {
+    const search = ref<string>(String(options.initial?.search ?? ''));
+    const sort = ref<string>(String(options.initial?.sort ?? ''));
+    const direction = ref<Direction>((options.initial?.direction as Direction) ?? 'asc');
+    const perPage = ref<number>(Number(options.initial?.per_page ?? 10));
+
+    const baseParams = computed<Record<string, unknown>>(() => {
+        return {
+            search: search.value || undefined,
+            sort: sort.value || undefined,
+            direction: sort.value ? direction.value : undefined,
+            per_page: perPage.value,
+        };
+    });
+
+    const apply = (extra: Record<string, unknown> = {}) => {
+        router.get(
+            options.route,
+            {
+                ...baseParams.value,
+                ...extra,
+            },
+            {
+                preserveState: true,
+                replace: true,
+                preserveScroll: true,
+            },
+        );
+    };
+
+    const toggleSort = (field: string) => {
+        if (sort.value === field) {
+            direction.value = direction.value === 'asc' ? 'desc' : 'asc';
+        } else {
+            sort.value = field;
+            direction.value = 'asc';
+        }
+
+        apply();
+    };
 
     return {
-        filter,
+        search,
+        sort,
+        direction,
+        perPage,
+        apply,
+        toggleSort,
     };
 }

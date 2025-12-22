@@ -16,11 +16,16 @@ use App\Http\Controllers\PendingApprovalController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ElderController;
+use App\Http\Controllers\ElderLifecycleController;
+use App\Http\Controllers\ElderHealthAssessmentController;
+use App\Http\Controllers\ElderMedicalConditionController;
+use App\Http\Controllers\ElderMedicationController;
 use App\Http\Controllers\SponsorshipController;
 use App\Http\Controllers\VisitController;
 use App\Http\Controllers\DonorDashboardController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\WelcomeController;
+use App\Http\Controllers\CampaignController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -74,6 +79,40 @@ Route::middleware('auth')->group(function () {
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
             ->middleware('permission:elders.manage');
 
+        Route::post('elders/{elder}/lifecycle/status', [ElderLifecycleController::class, 'updateStatus'])
+            ->name('elders.lifecycle.status')
+            ->middleware('permission:elders.manage');
+
+        Route::post('elders/{elder}/health-assessments', [ElderHealthAssessmentController::class, 'store'])
+            ->name('elders.health-assessments.store')
+            ->middleware('permission:elders.manage');
+        Route::put('elders/{elder}/health-assessments/{assessment}', [ElderHealthAssessmentController::class, 'update'])
+            ->name('elders.health-assessments.update')
+            ->middleware('permission:elders.manage');
+        Route::delete('elders/{elder}/health-assessments/{assessment}', [ElderHealthAssessmentController::class, 'destroy'])
+            ->name('elders.health-assessments.destroy')
+            ->middleware('permission:elders.manage');
+
+        Route::post('elders/{elder}/medical-conditions', [ElderMedicalConditionController::class, 'store'])
+            ->name('elders.medical-conditions.store')
+            ->middleware('permission:elders.manage');
+        Route::put('elders/{elder}/medical-conditions/{condition}', [ElderMedicalConditionController::class, 'update'])
+            ->name('elders.medical-conditions.update')
+            ->middleware('permission:elders.manage');
+        Route::delete('elders/{elder}/medical-conditions/{condition}', [ElderMedicalConditionController::class, 'destroy'])
+            ->name('elders.medical-conditions.destroy')
+            ->middleware('permission:elders.manage');
+
+        Route::post('elders/{elder}/medications', [ElderMedicationController::class, 'store'])
+            ->name('elders.medications.store')
+            ->middleware('permission:elders.manage');
+        Route::put('elders/{elder}/medications/{medication}', [ElderMedicationController::class, 'update'])
+            ->name('elders.medications.update')
+            ->middleware('permission:elders.manage');
+        Route::delete('elders/{elder}/medications/{medication}', [ElderMedicationController::class, 'destroy'])
+            ->name('elders.medications.destroy')
+            ->middleware('permission:elders.manage');
+
         Route::get('sponsorships/export', [SponsorshipController::class, 'export'])->name('sponsorships.export');
 
         Route::resource('sponsorships', SponsorshipController::class)
@@ -85,6 +124,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('visits', VisitController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
             ->middleware('permission:visits.manage');
+
+        Route::resource('campaigns', CampaignController::class)
+            ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
+            ->middleware('permission:campaigns.manage');
 
         Route::get('reports', [ReportController::class, 'index'])
             ->name('reports.index')

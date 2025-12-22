@@ -3,9 +3,11 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import ActivityTimeline from '@/components/ActivityTimeline.vue';
 import GlassButton from '@/components/GlassButton.vue';
 import GlassCard from '@/components/GlassCard.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft, Edit3, Printer } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, onMounted } from 'vue';
+import InputError from '@/components/InputError.vue';
+import { confirmDialog } from '@/lib/confirm';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, Edit3, Plus, Printer, Trash2 } from 'lucide-vue-next';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 type ActivityEntry = {
     id: number | string;
@@ -47,11 +49,258 @@ const props = defineProps<{
         special_needs: string | null;
         monthly_expenses: number | null;
         video_url: string | null;
+        current_status?: string | null;
+        admitted_at?: string | null;
+        deceased_at?: string | null;
     };
     activity: ActivityEntry[];
+    statusEvents: Array<{
+        id: number;
+        from_status: string;
+        to_status: string;
+        reason: string | null;
+        occurred_at: string;
+        creator?: { id: number; name: string } | null;
+        created_at?: string;
+    }>;
+    healthAssessments: Array<{
+        id: number;
+        assessment_date: string;
+        summary: string;
+        mobility_level: string | null;
+        risk_level: string | null;
+        creator?: { id: number; name: string } | null;
+        created_at?: string;
+    }>;
+    medicalConditions: Array<{
+        id: number;
+        condition_name: string;
+        diagnosed_at: string | null;
+        status: string;
+        notes: string | null;
+        created_at?: string;
+    }>;
+    medications: Array<{
+        id: number;
+        medication_name: string;
+        dosage: string | null;
+        frequency: string | null;
+        started_at: string | null;
+        ended_at: string | null;
+        notes: string | null;
+        created_at?: string;
+    }>;
     breadcrumbs: { title: string; href: string }[];
     print?: boolean;
 }>();
+
+const lifecycleForm = useForm({
+    to_status: (props.elder.current_status ?? 'available') as string,
+    reason: '',
+    occurred_at: '',
+});
+
+const submitLifecycle = () => {
+    lifecycleForm.post(route('elders.lifecycle.status', props.elder.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            lifecycleForm.reset('reason', 'occurred_at');
+        },
+    });
+};
+
+const assessmentEditingId = ref<number | null>(null);
+const assessmentForm = useForm({
+    assessment_date: '',
+    summary: '',
+    mobility_level: '',
+    risk_level: '',
+});
+
+const startEditAssessment = (assessment: (typeof props.healthAssessments)[number]) => {
+    assessmentEditingId.value = assessment.id;
+    assessmentForm.assessment_date = assessment.assessment_date;
+    assessmentForm.summary = assessment.summary;
+    assessmentForm.mobility_level = assessment.mobility_level ?? '';
+    assessmentForm.risk_level = assessment.risk_level ?? '';
+};
+
+const resetAssessmentForm = () => {
+    assessmentEditingId.value = null;
+    assessmentForm.reset();
+};
+
+const submitAssessment = () => {
+    if (assessmentEditingId.value) {
+        assessmentForm.put(
+            route('elders.health-assessments.update', {
+                elder: props.elder.id,
+                assessment: assessmentEditingId.value,
+            }),
+            {
+                preserveScroll: true,
+                onSuccess: () => resetAssessmentForm(),
+            },
+        );
+        return;
+    }
+
+    assessmentForm.post(route('elders.health-assessments.store', { elder: props.elder.id }), {
+        preserveScroll: true,
+        onSuccess: () => resetAssessmentForm(),
+    });
+};
+
+const destroyAssessment = async (id: number) => {
+    const accepted = await confirmDialog({
+        title: 'Delete assessment?',
+        message: 'This will permanently remove the assessment entry.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+    });
+
+    if (!accepted) {
+        return;
+    }
+
+    router.delete(
+        route('elders.health-assessments.destroy', {
+            elder: props.elder.id,
+            assessment: id,
+        }),
+        { preserveScroll: true },
+    );
+};
+
+const conditionEditingId = ref<number | null>(null);
+const conditionForm = useForm({
+    condition_name: '',
+    diagnosed_at: '',
+    status: 'active',
+    notes: '',
+});
+
+const startEditCondition = (condition: (typeof props.medicalConditions)[number]) => {
+    conditionEditingId.value = condition.id;
+    conditionForm.condition_name = condition.condition_name;
+    conditionForm.diagnosed_at = condition.diagnosed_at ?? '';
+    conditionForm.status = condition.status;
+    conditionForm.notes = condition.notes ?? '';
+};
+
+const resetConditionForm = () => {
+    conditionEditingId.value = null;
+    conditionForm.reset();
+};
+
+const submitCondition = () => {
+    if (conditionEditingId.value) {
+        conditionForm.put(
+            route('elders.medical-conditions.update', {
+                elder: props.elder.id,
+                condition: conditionEditingId.value,
+            }),
+            {
+                preserveScroll: true,
+                onSuccess: () => resetConditionForm(),
+            },
+        );
+        return;
+    }
+
+    conditionForm.post(route('elders.medical-conditions.store', { elder: props.elder.id }), {
+        preserveScroll: true,
+        onSuccess: () => resetConditionForm(),
+    });
+};
+
+const destroyCondition = async (id: number) => {
+    const accepted = await confirmDialog({
+        title: 'Delete medical condition?',
+        message: 'This will permanently remove the medical condition entry.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+    });
+
+    if (!accepted) {
+        return;
+    }
+
+    router.delete(
+        route('elders.medical-conditions.destroy', {
+            elder: props.elder.id,
+            condition: id,
+        }),
+        { preserveScroll: true },
+    );
+};
+
+const medicationEditingId = ref<number | null>(null);
+const medicationForm = useForm({
+    medication_name: '',
+    dosage: '',
+    frequency: '',
+    started_at: '',
+    ended_at: '',
+    notes: '',
+});
+
+const startEditMedication = (medication: (typeof props.medications)[number]) => {
+    medicationEditingId.value = medication.id;
+    medicationForm.medication_name = medication.medication_name;
+    medicationForm.dosage = medication.dosage ?? '';
+    medicationForm.frequency = medication.frequency ?? '';
+    medicationForm.started_at = medication.started_at ?? '';
+    medicationForm.ended_at = medication.ended_at ?? '';
+    medicationForm.notes = medication.notes ?? '';
+};
+
+const resetMedicationForm = () => {
+    medicationEditingId.value = null;
+    medicationForm.reset();
+};
+
+const submitMedication = () => {
+    if (medicationEditingId.value) {
+        medicationForm.put(
+            route('elders.medications.update', {
+                elder: props.elder.id,
+                medication: medicationEditingId.value,
+            }),
+            {
+                preserveScroll: true,
+                onSuccess: () => resetMedicationForm(),
+            },
+        );
+        return;
+    }
+
+    medicationForm.post(route('elders.medications.store', { elder: props.elder.id }), {
+        preserveScroll: true,
+        onSuccess: () => resetMedicationForm(),
+    });
+};
+
+const destroyMedication = async (id: number) => {
+    const accepted = await confirmDialog({
+        title: 'Delete medication?',
+        message: 'This will permanently remove the medication entry.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+    });
+
+    if (!accepted) {
+        return;
+    }
+
+    router.delete(
+        route('elders.medications.destroy', {
+            elder: props.elder.id,
+            medication: id,
+        }),
+        { preserveScroll: true },
+    );
+};
 
 const priorityBadgeClass = computed(() => {
     switch (props.elder.priority_level) {
@@ -248,6 +497,435 @@ const printRecord = () => {
                                         </div>
                                         <p v-else class="font-medium text-slate-900 dark:text-slate-100">-</p>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </GlassCard>
+
+            <GlassCard padding="p-0" class="print:shadow-none print:bg-white print:border">
+                <div class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/60 print:border print:bg-white">
+                    <div class="grid gap-6 md:grid-cols-2">
+                        <div class="space-y-4">
+                            <div>
+                                <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Lifecycle</h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Update the elder status and keep an audit trail.</p>
+                            </div>
+
+                            <div class="rounded-lg border border-slate-200/70 bg-white/70 p-4 text-sm shadow-sm dark:border-slate-800/50 dark:bg-slate-900/60">
+                                <div class="grid gap-3 md:grid-cols-2">
+                                    <div>
+                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Current status</p>
+                                        <p class="font-medium text-slate-900 dark:text-slate-100">{{ props.elder.current_status ?? '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Admitted at</p>
+                                        <p class="font-medium text-slate-900 dark:text-slate-100">{{ props.elder.admitted_at ?? '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Deceased at</p>
+                                        <p class="font-medium text-slate-900 dark:text-slate-100">{{ props.elder.deceased_at ?? '-' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form class="space-y-4" @submit.prevent="submitLifecycle">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Change to</label>
+                                    <select
+                                        v-model="lifecycleForm.to_status"
+                                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                    >
+                                        <option value="available">Available</option>
+                                        <option value="admitted">Admitted</option>
+                                        <option value="sponsored">Sponsored</option>
+                                        <option value="transferred">Transferred</option>
+                                        <option value="deceased">Deceased</option>
+                                    </select>
+                                    <InputError :message="lifecycleForm.errors.to_status" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Occurred at (optional)</label>
+                                    <input
+                                        v-model="lifecycleForm.occurred_at"
+                                        type="datetime-local"
+                                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                    />
+                                    <InputError :message="lifecycleForm.errors.occurred_at" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Reason (optional)</label>
+                                    <textarea
+                                        v-model="lifecycleForm.reason"
+                                        rows="3"
+                                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                    ></textarea>
+                                    <InputError :message="lifecycleForm.errors.reason" class="mt-2" />
+                                </div>
+
+                                <div class="flex justify-end">
+                                    <GlassButton size="sm" type="submit" :disabled="lifecycleForm.processing" variant="primary" class="flex items-center gap-2">
+                                        <Plus class="size-4" />
+                                        <span>Update status</span>
+                                    </GlassButton>
+                                </div>
+                            </form>
+
+                            <div class="space-y-2">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Recent status events</p>
+                                <div v-if="props.statusEvents.length" class="space-y-2">
+                                    <div
+                                        v-for="event in props.statusEvents"
+                                        :key="event.id"
+                                        class="rounded-lg border border-slate-200/70 bg-white/70 p-3 text-sm dark:border-slate-800/50 dark:bg-slate-900/60"
+                                    >
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div>
+                                                <p class="font-medium text-slate-900 dark:text-slate-100">
+                                                    {{ event.from_status }} → {{ event.to_status }}
+                                                </p>
+                                                <p class="text-xs text-slate-500 dark:text-slate-400">
+                                                    {{ event.occurred_at }}
+                                                    <template v-if="event.creator?.name"> · by {{ event.creator.name }}</template>
+                                                </p>
+                                                <p v-if="event.reason" class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                                                    {{ event.reason }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p v-else class="text-sm text-slate-500 dark:text-slate-400">No status changes recorded.</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="space-y-4">
+                                <div>
+                                    <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Health assessments</h2>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Track periodic assessments.</p>
+                                </div>
+
+                                <form class="space-y-4" @submit.prevent="submitAssessment">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Assessment date</label>
+                                        <input
+                                            v-model="assessmentForm.assessment_date"
+                                            type="date"
+                                            class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                        />
+                                        <InputError :message="assessmentForm.errors.assessment_date" class="mt-2" />
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Summary</label>
+                                        <textarea
+                                            v-model="assessmentForm.summary"
+                                            rows="3"
+                                            class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                        ></textarea>
+                                        <InputError :message="assessmentForm.errors.summary" class="mt-2" />
+                                    </div>
+
+                                    <div class="grid gap-4 md:grid-cols-2">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Mobility level</label>
+                                            <input
+                                                v-model="assessmentForm.mobility_level"
+                                                type="text"
+                                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                            />
+                                            <InputError :message="assessmentForm.errors.mobility_level" class="mt-2" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Risk level</label>
+                                            <input
+                                                v-model="assessmentForm.risk_level"
+                                                type="text"
+                                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                            />
+                                            <InputError :message="assessmentForm.errors.risk_level" class="mt-2" />
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center justify-end gap-2">
+                                        <GlassButton v-if="assessmentEditingId" size="sm" variant="secondary" type="button" @click="resetAssessmentForm">Cancel</GlassButton>
+                                        <GlassButton size="sm" type="submit" :disabled="assessmentForm.processing" variant="primary" class="flex items-center gap-2">
+                                            <Plus class="size-4" />
+                                            <span>{{ assessmentEditingId ? 'Save changes' : 'Add assessment' }}</span>
+                                        </GlassButton>
+                                    </div>
+                                </form>
+
+                                <div class="space-y-2">
+                                    <div v-if="props.healthAssessments.length" class="space-y-2">
+                                        <div
+                                            v-for="assessment in props.healthAssessments"
+                                            :key="assessment.id"
+                                            class="rounded-lg border border-slate-200/70 bg-white/70 p-3 text-sm dark:border-slate-800/50 dark:bg-slate-900/60"
+                                        >
+                                            <div class="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <p class="font-medium text-slate-900 dark:text-slate-100">
+                                                        {{ assessment.assessment_date }}
+                                                    </p>
+                                                    <p class="mt-1 text-sm text-slate-700 dark:text-slate-200">{{ assessment.summary }}</p>
+                                                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                        <span v-if="assessment.mobility_level">Mobility: {{ assessment.mobility_level }}</span>
+                                                        <span v-if="assessment.risk_level"> · Risk: {{ assessment.risk_level }}</span>
+                                                        <template v-if="assessment.creator?.name"> · by {{ assessment.creator.name }}</template>
+                                                    </p>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        class="text-xs font-medium text-indigo-700 hover:underline dark:text-indigo-200"
+                                                        @click="startEditAssessment(assessment)"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        class="inline-flex items-center gap-1 text-xs font-medium text-red-700 hover:underline dark:text-red-200"
+                                                        @click="destroyAssessment(assessment.id)"
+                                                    >
+                                                        <Trash2 class="size-4" />
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p v-else class="text-sm text-slate-500 dark:text-slate-400">No assessments recorded.</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Medical conditions</h2>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Maintain active/inactive conditions.</p>
+                                </div>
+
+                                <form class="space-y-4" @submit.prevent="submitCondition">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Condition name</label>
+                                        <input
+                                            v-model="conditionForm.condition_name"
+                                            type="text"
+                                            class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                        />
+                                        <InputError :message="conditionForm.errors.condition_name" class="mt-2" />
+                                    </div>
+
+                                    <div class="grid gap-4 md:grid-cols-2">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Diagnosed at</label>
+                                            <input
+                                                v-model="conditionForm.diagnosed_at"
+                                                type="date"
+                                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                            />
+                                            <InputError :message="conditionForm.errors.diagnosed_at" class="mt-2" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Status</label>
+                                            <select
+                                                v-model="conditionForm.status"
+                                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                            >
+                                                <option value="active">Active</option>
+                                                <option value="inactive">Inactive</option>
+                                                <option value="resolved">Resolved</option>
+                                            </select>
+                                            <InputError :message="conditionForm.errors.status" class="mt-2" />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Notes</label>
+                                        <textarea
+                                            v-model="conditionForm.notes"
+                                            rows="3"
+                                            class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                        ></textarea>
+                                        <InputError :message="conditionForm.errors.notes" class="mt-2" />
+                                    </div>
+
+                                    <div class="flex items-center justify-end gap-2">
+                                        <GlassButton v-if="conditionEditingId" size="sm" variant="secondary" type="button" @click="resetConditionForm">Cancel</GlassButton>
+                                        <GlassButton size="sm" type="submit" :disabled="conditionForm.processing" variant="primary" class="flex items-center gap-2">
+                                            <Plus class="size-4" />
+                                            <span>{{ conditionEditingId ? 'Save changes' : 'Add condition' }}</span>
+                                        </GlassButton>
+                                    </div>
+                                </form>
+
+                                <div class="space-y-2">
+                                    <div v-if="props.medicalConditions.length" class="space-y-2">
+                                        <div
+                                            v-for="condition in props.medicalConditions"
+                                            :key="condition.id"
+                                            class="rounded-lg border border-slate-200/70 bg-white/70 p-3 text-sm dark:border-slate-800/50 dark:bg-slate-900/60"
+                                        >
+                                            <div class="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <p class="font-medium text-slate-900 dark:text-slate-100">
+                                                        {{ condition.condition_name }}
+                                                    </p>
+                                                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                        Status: {{ condition.status }}
+                                                        <span v-if="condition.diagnosed_at"> · Diagnosed: {{ condition.diagnosed_at }}</span>
+                                                    </p>
+                                                    <p v-if="condition.notes" class="mt-1 text-xs text-slate-600 dark:text-slate-300">{{ condition.notes }}</p>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        class="text-xs font-medium text-indigo-700 hover:underline dark:text-indigo-200"
+                                                        @click="startEditCondition(condition)"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        class="inline-flex items-center gap-1 text-xs font-medium text-red-700 hover:underline dark:text-red-200"
+                                                        @click="destroyCondition(condition.id)"
+                                                    >
+                                                        <Trash2 class="size-4" />
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p v-else class="text-sm text-slate-500 dark:text-slate-400">No conditions recorded.</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Medications</h2>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Track active and historical medications.</p>
+                                </div>
+
+                                <form class="space-y-4" @submit.prevent="submitMedication">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Medication name</label>
+                                        <input
+                                            v-model="medicationForm.medication_name"
+                                            type="text"
+                                            class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                        />
+                                        <InputError :message="medicationForm.errors.medication_name" class="mt-2" />
+                                    </div>
+
+                                    <div class="grid gap-4 md:grid-cols-2">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Dosage</label>
+                                            <input
+                                                v-model="medicationForm.dosage"
+                                                type="text"
+                                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                            />
+                                            <InputError :message="medicationForm.errors.dosage" class="mt-2" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Frequency</label>
+                                            <input
+                                                v-model="medicationForm.frequency"
+                                                type="text"
+                                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                            />
+                                            <InputError :message="medicationForm.errors.frequency" class="mt-2" />
+                                        </div>
+                                    </div>
+
+                                    <div class="grid gap-4 md:grid-cols-2">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Started at</label>
+                                            <input
+                                                v-model="medicationForm.started_at"
+                                                type="date"
+                                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                            />
+                                            <InputError :message="medicationForm.errors.started_at" class="mt-2" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Ended at</label>
+                                            <input
+                                                v-model="medicationForm.ended_at"
+                                                type="date"
+                                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                            />
+                                            <InputError :message="medicationForm.errors.ended_at" class="mt-2" />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Notes</label>
+                                        <textarea
+                                            v-model="medicationForm.notes"
+                                            rows="3"
+                                            class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                        ></textarea>
+                                        <InputError :message="medicationForm.errors.notes" class="mt-2" />
+                                    </div>
+
+                                    <div class="flex items-center justify-end gap-2">
+                                        <GlassButton v-if="medicationEditingId" size="sm" variant="secondary" type="button" @click="resetMedicationForm">Cancel</GlassButton>
+                                        <GlassButton size="sm" type="submit" :disabled="medicationForm.processing" variant="primary" class="flex items-center gap-2">
+                                            <Plus class="size-4" />
+                                            <span>{{ medicationEditingId ? 'Save changes' : 'Add medication' }}</span>
+                                        </GlassButton>
+                                    </div>
+                                </form>
+
+                                <div class="space-y-2">
+                                    <div v-if="props.medications.length" class="space-y-2">
+                                        <div
+                                            v-for="medication in props.medications"
+                                            :key="medication.id"
+                                            class="rounded-lg border border-slate-200/70 bg-white/70 p-3 text-sm dark:border-slate-800/50 dark:bg-slate-900/60"
+                                        >
+                                            <div class="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <p class="font-medium text-slate-900 dark:text-slate-100">
+                                                        {{ medication.medication_name }}
+                                                    </p>
+                                                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                        <span v-if="medication.dosage">Dosage: {{ medication.dosage }}</span>
+                                                        <span v-if="medication.frequency"> · Frequency: {{ medication.frequency }}</span>
+                                                    </p>
+                                                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                        <span v-if="medication.started_at">Start: {{ medication.started_at }}</span>
+                                                        <span v-if="medication.ended_at"> · End: {{ medication.ended_at }}</span>
+                                                    </p>
+                                                    <p v-if="medication.notes" class="mt-1 text-xs text-slate-600 dark:text-slate-300">{{ medication.notes }}</p>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        class="text-xs font-medium text-indigo-700 hover:underline dark:text-indigo-200"
+                                                        @click="startEditMedication(medication)"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        class="inline-flex items-center gap-1 text-xs font-medium text-red-700 hover:underline dark:text-red-200"
+                                                        @click="destroyMedication(medication.id)"
+                                                    >
+                                                        <Trash2 class="size-4" />
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p v-else class="text-sm text-slate-500 dark:text-slate-400">No medications recorded.</p>
                                 </div>
                             </div>
                         </div>

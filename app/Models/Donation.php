@@ -14,14 +14,21 @@ class Donation extends Model
     protected $fillable = [
         'user_id',
         'elder_id',
+        'branch_id',
         'sponsorship_id',
+        'campaign_id',
+        'name',
+        'email',
+        'phone',
         'guest_name',
         'guest_email',
         'guest_phone',
+        'donation_type',
         'amount',
         'currency',
         'payment_gateway',
         'payment_id',
+        'receipt_path',
         'status',
         'notes',
     ];
@@ -58,5 +65,15 @@ class Donation extends Model
     public function sponsorship(): BelongsTo
     {
         return $this->belongsTo(Sponsorship::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function campaign(): BelongsTo
+    {
+        return $this->belongsTo(Campaign::class);
     }
 }

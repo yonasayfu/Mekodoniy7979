@@ -23,6 +23,8 @@ class StoreDonationRequest extends FormRequest
     {
         return [
             'amount' => ['required', 'numeric'],
+            'elder_id' => ['nullable', 'integer', 'exists:elders,id'],
+            'campaign_id' => ['nullable', 'integer', 'exists:campaigns,id'],
             'name' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:255'],

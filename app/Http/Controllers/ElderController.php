@@ -78,18 +78,30 @@ class ElderController extends Controller
      */
     public function show(Elder $elder)
     {
-        $elder->load('branch', 'activityLogs.causer');
+        $elder->load(
+            'branch',
+            'activityLogs.causer',
+            'statusEvents.creator',
+            'healthAssessments.creator',
+            'medicalConditions',
+            'medications'
+        );
 
         return Inertia::render('Elders/Show', [
             'elder' => $elder,
             'activity' => $elder->activityLogs,
+            'statusEvents' => $elder->statusEvents()->with('creator')->latest('occurred_at')->take(50)->get(),
+            'healthAssessments' => $elder->healthAssessments()->with('creator')->latest('assessment_date')->take(50)->get(),
+            'medicalConditions' => $elder->medicalConditions()->latest()->take(50)->get(),
+            'medications' => $elder->medications()->latest()->take(50)->get(),
             'breadcrumbs' => [
                 [
-                    'label' => 'Elders',
-                    'url' => route('elders.index'),
+                    'title' => 'Elders',
+                    'href' => route('elders.index'),
                 ],
                 [
-                    'label' => $elder->name,
+                    'title' => $elder->name,
+                    'href' => route('elders.show', $elder),
                 ],
             ],
         ]);
