@@ -1,10 +1,15 @@
-
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { User, Users, UserCheck, CalendarHeart } from 'lucide-vue-next'; // Import User icon
-import { ref, toRefs, watch, onMounted, onUnmounted } from 'vue';
+import {
+    CalendarHeart,
+    DollarSign,
+    Heart,
+    User,
+    UserCheck,
+    Users,
+} from 'lucide-vue-next'; // Import User icon
+import { onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
 import { route } from 'ziggy-js';
-import Pagination from '@/Components/Pagination.vue';
 
 interface WallOfLoveEntry {
     donor_name: string;
@@ -91,7 +96,8 @@ const heroCurrentSlide = ref(0);
 let heroSlideInterval: number;
 
 const nextHeroSlide = () => {
-    heroCurrentSlide.value = (heroCurrentSlide.value + 1) % props.heroSlides.length;
+    heroCurrentSlide.value =
+        (heroCurrentSlide.value + 1) % props.heroSlides.length;
 };
 
 const goToHeroSlide = (index: number) => {
@@ -121,7 +127,8 @@ const nextWallOfLoveSlide = () => {
 
 const prevWallOfLoveSlide = () => {
     currentWallOfLoveSlide.value =
-        (currentWallOfLoveSlide.value - 1 + props.wallOfLove.length) % props.wallOfLove.length;
+        (currentWallOfLoveSlide.value - 1 + props.wallOfLove.length) %
+        props.wallOfLove.length;
 };
 
 onMounted(() => {
@@ -167,7 +174,7 @@ function useCountUp(target: ref<number>, duration = 2000) {
         },
         {
             threshold: 0.1,
-        }
+        },
     );
 
     const element = ref<HTMLElement | null>(null);
@@ -196,12 +203,16 @@ function useCountUp(target: ref<number>, duration = 2000) {
     return { count, element };
 }
 
-const { eldersWaiting, matchedElders, visitsThisMonth } = toRefs(props.liveCounters);
+const { eldersWaiting, matchedElders, visitsThisMonth } = toRefs(
+    props.liveCounters,
+);
 
-const { count: eldersWaitingCount, element: eldersWaitingRef } = useCountUp(eldersWaiting);
-const { count: matchedEldersCount, element: matchedEldersRef } = useCountUp(matchedElders);
-const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(visitsThisMonth);
-
+const { count: eldersWaitingCount, element: eldersWaitingRef } =
+    useCountUp(eldersWaiting);
+const { count: matchedEldersCount, element: matchedEldersRef } =
+    useCountUp(matchedElders);
+const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
+    useCountUp(visitsThisMonth);
 </script>
 <template>
     <Head title="Welcome">
@@ -215,11 +226,11 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
     </Head>
 
     <div
-        class="min-h-screen antialiased bg-background font-sans text-foreground"
+        class="min-h-screen bg-background font-sans text-foreground antialiased"
     >
         <!-- Navbar -->
         <nav
-            class="fixed left-0 right-0 top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm dark:bg-gray-900/80"
+            class="fixed top-0 right-0 left-0 z-50 bg-white/80 shadow-sm backdrop-blur-md dark:bg-gray-900/80"
         >
             <div
                 class="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8"
@@ -230,7 +241,8 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                         alt="Mekodonia Logo"
                         class="h-8 w-auto"
                     />
-                    <span class="text-xl font-bold text-gray-900 dark:text-white"
+                    <span
+                        class="text-xl font-bold text-gray-900 dark:text-white"
                         >Mekodonia</span
                     >
                 </Link>
@@ -238,7 +250,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                     <Link
                         v-if="$page.props.auth.user"
                         :href="route('dashboard')"
-                        class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                        class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-900"
                     >
                         Dashboard
                     </Link>
@@ -251,7 +263,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                         </Link>
                         <Link
                             :href="route('register')"
-                            class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                            class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-900"
                         >
                             Register
                         </Link>
@@ -264,11 +276,15 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
             <!-- Hero Section -->
             <section
                 class="relative flex h-screen items-center justify-center bg-cover bg-center text-white"
-                :style="{ backgroundImage: `url(${heroSlides[heroCurrentSlide].image})` }"
+                :style="{
+                    backgroundImage: `url(${heroSlides[heroCurrentSlide].image})`,
+                }"
             >
                 <div class="absolute inset-0 bg-black/60"></div>
                 <div class="relative z-10 mx-auto max-w-4xl p-8 text-center">
-                    <h1 class="text-5xl font-extrabold leading-tight md:text-6xl">
+                    <h1
+                        class="text-5xl leading-tight font-extrabold md:text-6xl"
+                    >
                         {{ heroSlides[heroCurrentSlide].title }}
                     </h1>
                     <p class="mt-4 text-xl md:text-2xl">
@@ -277,37 +293,47 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                     <div class="mt-8 flex justify-center space-x-4">
                         <Link
                             :href="heroSlides[heroCurrentSlide].cta_link"
-                            class="rounded-lg bg-indigo-600 px-8 py-3 text-lg font-semibold shadow-lg transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            class="rounded-lg bg-indigo-600 px-8 py-3 text-lg font-semibold shadow-lg transition-all hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                         >
                             {{ heroSlides[heroCurrentSlide].cta_text }}
                         </Link>
                         <Link
                             href="#how-it-works"
-                            class="rounded-lg bg-white px-8 py-3 text-lg font-semibold text-gray-800 shadow-lg transition-all hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            class="rounded-lg bg-white px-8 py-3 text-lg font-semibold text-gray-800 shadow-lg transition-all hover:bg-gray-100 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                         >
                             Learn More
                         </Link>
                     </div>
                 </div>
                 <!-- Slider Indicators -->
-                <div class="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 space-x-2">
+                <div
+                    class="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 space-x-2"
+                >
                     <button
                         v-for="(_, index) in heroSlides"
                         :key="`dot-${index}`"
                         @click="goToHeroSlide(index)"
                         :class="[
                             'h-3 w-3 rounded-full transition-colors duration-300',
-                            heroCurrentSlide === index ? 'bg-indigo-500' : 'bg-white/50 hover:bg-white',
+                            heroCurrentSlide === index
+                                ? 'bg-indigo-500'
+                                : 'bg-white/50 hover:bg-white',
                         ]"
                     ></button>
                 </div>
             </section>
 
             <!-- Impact Section (Live Counters) -->
-            <section class="py-20 bg-gray-50 dark:bg-gray-800">
+            <section class="bg-gray-50 py-20 dark:bg-gray-800">
                 <div class="container mx-auto px-4 text-center">
-                    <h2 class="text-4xl font-bold text-gray-800 dark:text-white">Our Impact</h2>
-                    <p class="mt-4 text-xl text-gray-600 dark:text-gray-300">Numbers that speak volumes about our mission.</p>
+                    <h2
+                        class="text-4xl font-bold text-gray-800 dark:text-white"
+                    >
+                        Our Impact
+                    </h2>
+                    <p class="mt-4 text-xl text-gray-600 dark:text-gray-300">
+                        Numbers that speak volumes about our mission.
+                    </p>
                     <div class="mt-12 grid grid-cols-1 gap-10 md:grid-cols-3">
                         <div
                             ref="eldersWaitingRef"
@@ -318,10 +344,14 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                             >
                                 <Users class="size-10" />
                             </div>
-                            <p class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white">
+                            <p
+                                class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white"
+                            >
                                 {{ eldersWaitingCount }}
                             </p>
-                            <p class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300">
+                            <p
+                                class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300"
+                            >
                                 Elders Awaiting Sponsorship
                             </p>
                         </div>
@@ -334,10 +364,14 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                             >
                                 <UserCheck class="size-10" />
                             </div>
-                            <p class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white">
+                            <p
+                                class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white"
+                            >
                                 {{ matchedEldersCount }}
                             </p>
-                            <p class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300">
+                            <p
+                                class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300"
+                            >
                                 Elders Matched
                             </p>
                         </div>
@@ -350,10 +384,14 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                             >
                                 <CalendarHeart class="size-10" />
                             </div>
-                            <p class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white">
+                            <p
+                                class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white"
+                            >
                                 {{ visitsThisMonthCount }}
                             </p>
-                            <p class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300">
+                            <p
+                                class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300"
+                            >
                                 Visits This Month
                             </p>
                         </div>
@@ -362,38 +400,72 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
             </section>
 
             <!-- How It Works Section -->
-            <section id="how-it-works" class="py-20 bg-white dark:bg-gray-900">
+            <section id="how-it-works" class="bg-white py-20 dark:bg-gray-900">
                 <div class="container mx-auto px-4 text-center">
-                    <h2 class="text-4xl font-bold text-gray-800 dark:text-white">How It Works</h2>
-                    <p class="mt-4 text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                        Connecting hearts, changing lives. Simple steps to make a profound difference.
+                    <h2
+                        class="text-4xl font-bold text-gray-800 dark:text-white"
+                    >
+                        How It Works
+                    </h2>
+                    <p
+                        class="mx-auto mt-4 max-w-3xl text-xl text-gray-600 dark:text-gray-300"
+                    >
+                        Connecting hearts, changing lives. Simple steps to make
+                        a profound difference.
                     </p>
                     <div class="mt-12 grid grid-cols-1 gap-10 md:grid-cols-3">
-                        <div class="flex flex-col items-center p-6 rounded-xl shadow-lg bg-gray-50 dark:bg-gray-800">
-                            <div class="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
+                        <div
+                            class="flex flex-col items-center rounded-xl bg-gray-50 p-6 shadow-lg dark:bg-gray-800"
+                        >
+                            <div
+                                class="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300"
+                            >
                                 <User class="size-10" />
                             </div>
-                            <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">1. Browse Elders</h3>
+                            <h3
+                                class="mt-6 text-xl font-semibold text-gray-800 dark:text-white"
+                            >
+                                1. Browse Elders
+                            </h3>
                             <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                Discover compelling stories of elders needing support. Filter by location, needs, and more.
+                                Discover compelling stories of elders needing
+                                support. Filter by location, needs, and more.
                             </p>
                         </div>
-                        <div class="flex flex-col items-center p-6 rounded-xl shadow-lg bg-gray-50 dark:bg-gray-800">
-                            <div class="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300">
+                        <div
+                            class="flex flex-col items-center rounded-xl bg-gray-50 p-6 shadow-lg dark:bg-gray-800"
+                        >
+                            <div
+                                class="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
+                            >
                                 <Heart class="size-10" />
                             </div>
-                            <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">2. Choose Your Relationship</h3>
+                            <h3
+                                class="mt-6 text-xl font-semibold text-gray-800 dark:text-white"
+                            >
+                                2. Choose Your Relationship
+                            </h3>
                             <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                Decide how you want to support – as a Father, Mother, Brother, or Sister.
+                                Decide how you want to support – as a Father,
+                                Mother, Brother, or Sister.
                             </p>
                         </div>
-                        <div class="flex flex-col items-center p-6 rounded-xl shadow-lg bg-gray-50 dark:bg-gray-800">
-                            <div class="flex h-20 w-20 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                        <div
+                            class="flex flex-col items-center rounded-xl bg-gray-50 p-6 shadow-lg dark:bg-gray-800"
+                        >
+                            <div
+                                class="flex h-20 w-20 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300"
+                            >
                                 <DollarSign class="size-10" />
                             </div>
-                            <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">3. Make an Impact</h3>
+                            <h3
+                                class="mt-6 text-xl font-semibold text-gray-800 dark:text-white"
+                            >
+                                3. Make an Impact
+                            </h3>
                             <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                Set up monthly contributions or make a one-time donation easily and securely.
+                                Set up monthly contributions or make a one-time
+                                donation easily and securely.
                             </p>
                         </div>
                     </div>
@@ -403,15 +475,25 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
             <!-- Elder Gallery Section -->
             <section
                 id="elders-gallery"
-                class="py-20 bg-gray-50 dark:bg-gray-800"
+                class="bg-gray-50 py-20 dark:bg-gray-800"
             >
                 <div class="container mx-auto px-4">
-                    <h2 class="text-4xl font-bold text-center text-gray-800 dark:text-white">Our Elders</h2>
-                    <p class="mt-4 text-xl text-center text-gray-600 dark:text-gray-300">
+                    <h2
+                        class="text-center text-4xl font-bold text-gray-800 dark:text-white"
+                    >
+                        Our Elders
+                    </h2>
+                    <p
+                        class="mt-4 text-center text-xl text-gray-600 dark:text-gray-300"
+                    >
                         Meet the elders whose lives you can transform.
                     </p>
-                    <div class="mt-10 flex flex-col items-center justify-between gap-4 md:flex-row">
-                        <div class="flex flex-1 items-center justify-center gap-4">
+                    <div
+                        class="mt-10 flex flex-col items-center justify-between gap-4 md:flex-row"
+                    >
+                        <div
+                            class="flex flex-1 items-center justify-center gap-4"
+                        >
                             <select
                                 v-model="currentPriority"
                                 @change="applyFilters"
@@ -440,7 +522,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                             </select>
                             <button
                                 @click="applyFilters"
-                                class="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                class="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                             >
                                 Filter
                             </button>
@@ -470,7 +552,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                                             <User class="size-20" />
                                         </div>
                                         <div
-                                            class="absolute right-4 top-4 rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold uppercase text-white"
+                                            class="absolute top-4 right-4 rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold text-white uppercase"
                                         >
                                             {{ elder.priority_level }}
                                         </div>
@@ -530,7 +612,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                                 :key="index"
                                 :href="link.url || '#'"
                                 :class="[
-                                    'relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg',
+                                    'relative inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium',
                                     link.active
                                         ? 'bg-indigo-600 text-white'
                                         : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600',
@@ -545,10 +627,16 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
             </section>
 
             <!-- Wall of Love - Success Stories -->
-            <section class="py-20 bg-white dark:bg-gray-900">
+            <section class="bg-white py-20 dark:bg-gray-900">
                 <div class="container mx-auto px-4 text-center">
-                    <h2 class="text-4xl font-bold text-gray-800 dark:text-white">Wall of Love</h2>
-                    <p class="mt-4 text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                    <h2
+                        class="text-4xl font-bold text-gray-800 dark:text-white"
+                    >
+                        Wall of Love
+                    </h2>
+                    <p
+                        class="mx-auto mt-4 max-w-3xl text-xl text-gray-600 dark:text-gray-300"
+                    >
                         Heartwarming connections made possible by our community.
                     </p>
                     <div
@@ -557,7 +645,9 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                     >
                         <div
                             class="flex transition-transform duration-700 ease-in-out"
-                            :style="{ transform: `translateX(-${currentWallOfLoveSlide * 100}%)` }"
+                            :style="{
+                                transform: `translateX(-${currentWallOfLoveSlide * 100}%)`,
+                            }"
                         >
                             <div
                                 v-for="(match, index) in wallOfLove"
@@ -580,11 +670,15 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                                         <User class="size-16" />
                                     </div>
                                 </div>
-                                <p class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">
+                                <p
+                                    class="mt-6 text-xl font-semibold text-gray-800 dark:text-white"
+                                >
                                     {{ match.donor_name }} is supporting
                                     {{ match.elder_name }}
                                 </p>
-                                <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                <p
+                                    class="mt-2 text-gray-600 dark:text-gray-300"
+                                >
                                     Joined {{ match.sponsorship_date }}
                                 </p>
                             </div>
@@ -593,53 +687,65 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
                         <!-- Wall of Love Slider Controls -->
                         <button
                             @click="prevWallOfLoveSlide"
-                            class="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/50 p-2 text-gray-800 hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            class="absolute top-1/2 left-4 -translate-y-1/2 rounded-full bg-white/50 p-2 text-gray-800 hover:bg-white focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                         >
                             &#10094;
                         </button>
                         <button
                             @click="nextWallOfLoveSlide"
-                            class="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/50 p-2 text-gray-800 hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            class="absolute top-1/2 right-4 -translate-y-1/2 rounded-full bg-white/50 p-2 text-gray-800 hover:bg-white focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                         >
                             &#10095;
                         </button>
                         <!-- Wall of Love Slider Indicators -->
-                        <div class="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 space-x-2">
+                        <div
+                            class="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 space-x-2"
+                        >
                             <button
                                 v-for="(_, index) in wallOfLove"
                                 :key="`wall-dot-${index}`"
                                 @click="currentWallOfLoveSlide = index"
                                 :class="[
                                     'h-3 w-3 rounded-full transition-colors duration-300',
-                                    currentWallOfLoveSlide === index ? 'bg-indigo-500' : 'bg-white/50 hover:bg-white',
+                                    currentWallOfLoveSlide === index
+                                        ? 'bg-indigo-500'
+                                        : 'bg-white/50 hover:bg-white',
                                 ]"
                             ></button>
                         </div>
                     </div>
-                    <div v-else class="mt-12 text-center text-gray-500 dark:text-gray-400">
+                    <div
+                        v-else
+                        class="mt-12 text-center text-gray-500 dark:text-gray-400"
+                    >
                         <p class="text-xl">No success stories to share yet.</p>
-                        <p class="mt-2">Be the first to create a lasting bond!</p>
+                        <p class="mt-2">
+                            Be the first to create a lasting bond!
+                        </p>
                     </div>
                 </div>
             </section>
 
             <!-- Call to Action Section -->
-            <section class="py-20 bg-indigo-600 text-white text-center">
+            <section class="bg-indigo-600 py-20 text-center text-white">
                 <div class="container mx-auto px-4">
-                    <h2 class="text-4xl font-bold">Ready to Make a Difference?</h2>
-                    <p class="mt-4 text-xl max-w-3xl mx-auto">
-                        Your support can provide comfort, dignity, and care for our elders. Join our mission today.
+                    <h2 class="text-4xl font-bold">
+                        Ready to Make a Difference?
+                    </h2>
+                    <p class="mx-auto mt-4 max-w-3xl text-xl">
+                        Your support can provide comfort, dignity, and care for
+                        our elders. Join our mission today.
                     </p>
                     <div class="mt-8 space-x-4">
                         <Link
                             :href="route('register')"
-                            class="rounded-lg bg-white px-8 py-3 text-lg font-semibold text-indigo-600 shadow-lg transition-all hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+                            class="rounded-lg bg-white px-8 py-3 text-lg font-semibold text-indigo-600 shadow-lg transition-all hover:bg-gray-100 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:outline-none"
                         >
                             Sponsor an Elder
                         </Link>
                         <Link
                             href="#guest-donation-form"
-                            class="rounded-lg border border-white px-8 py-3 text-lg font-semibold text-white shadow-lg transition-all hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+                            class="rounded-lg border border-white px-8 py-3 text-lg font-semibold text-white shadow-lg transition-all hover:bg-white/20 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:outline-none"
                         >
                             Make a One-Time Donation
                         </Link>
@@ -648,46 +754,68 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
             </section>
 
             <!-- FAQ & Trust Badges Section -->
-            <section class="py-20 bg-gray-50 dark:bg-gray-800">
+            <section class="bg-gray-50 py-20 dark:bg-gray-800">
                 <div class="container mx-auto px-4">
-                    <h2 class="text-4xl font-bold text-center text-gray-800 dark:text-white">
+                    <h2
+                        class="text-center text-4xl font-bold text-gray-800 dark:text-white"
+                    >
                         Frequently Asked Questions
                     </h2>
-                    <div class="mt-12 max-w-4xl mx-auto space-y-8">
+                    <div class="mx-auto mt-12 max-w-4xl space-y-8">
                         <!-- FAQ Item 1 -->
                         <div>
-                            <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
+                            <h3
+                                class="text-xl font-semibold text-gray-800 dark:text-white"
+                            >
                                 How can I sponsor an elder?
                             </h3>
                             <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                You can browse our Elder Gallery, select an elder you wish to support, and choose a sponsorship relationship (Father, Mother, Brother, Sister). You can then set up a monthly contribution.
+                                You can browse our Elder Gallery, select an
+                                elder you wish to support, and choose a
+                                sponsorship relationship (Father, Mother,
+                                Brother, Sister). You can then set up a monthly
+                                contribution.
                             </p>
                         </div>
                         <!-- FAQ Item 2 -->
                         <div>
-                            <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
+                            <h3
+                                class="text-xl font-semibold text-gray-800 dark:text-white"
+                            >
                                 Can I make a one-time donation?
                             </h3>
                             <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                Yes, you can make a one-time donation to provide essential items like meals or medication without committing to a long-term sponsorship. Look for the "Make a One-Time Donation" button.
+                                Yes, you can make a one-time donation to provide
+                                essential items like meals or medication without
+                                committing to a long-term sponsorship. Look for
+                                the "Make a One-Time Donation" button.
                             </p>
                         </div>
                         <!-- FAQ Item 3 -->
                         <div>
-                            <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
+                            <h3
+                                class="text-xl font-semibold text-gray-800 dark:text-white"
+                            >
                                 Is my donation secure?
                             </h3>
                             <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                We utilize secure payment gateways and protocols to ensure your donations are processed safely. Your financial information is always protected.
+                                We utilize secure payment gateways and protocols
+                                to ensure your donations are processed safely.
+                                Your financial information is always protected.
                             </p>
                         </div>
                         <!-- FAQ Item 4 -->
                         <div>
-                            <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
+                            <h3
+                                class="text-xl font-semibold text-gray-800 dark:text-white"
+                            >
                                 How do I track my impact?
                             </h3>
                             <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                Registered donors can access a personalized dashboard to view their payment history, details of their sponsored elder, and receive annual thank-you summaries.
+                                Registered donors can access a personalized
+                                dashboard to view their payment history, details
+                                of their sponsored elder, and receive annual
+                                thank-you summaries.
                             </p>
                         </div>
                     </div>
@@ -698,7 +826,10 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } = useCountUp(
         <!-- Footer -->
         <footer class="bg-gray-800 py-12 text-white dark:bg-gray-950">
             <div class="container mx-auto px-4 text-center">
-                <p>&copy; {{ new Date().getFullYear() }} Mekodonia Home Connect. All rights reserved.</p>
+                <p>
+                    &copy; {{ new Date().getFullYear() }} Mekodonia Home
+                    Connect. All rights reserved.
+                </p>
                 <div class="mt-4 space-x-4">
                     <a href="#" class="hover:text-gray-300">Privacy Policy</a>
                     <a href="#" class="hover:text-gray-300">Terms of Service</a>
