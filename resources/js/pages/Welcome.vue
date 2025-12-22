@@ -99,11 +99,15 @@ const goToHeroSlide = (index: number) => {
 };
 
 onMounted(() => {
-    heroSlideInterval = setInterval(nextHeroSlide, 7000); // Change slide every 7 seconds
+    if (props.heroSlides.length > 1) {
+        heroSlideInterval = setInterval(nextHeroSlide, 7000); // Change slide every 7 seconds
+    }
 });
 
 onUnmounted(() => {
-    clearInterval(heroSlideInterval);
+    if (heroSlideInterval) {
+        clearInterval(heroSlideInterval);
+    }
 });
 
 // Wall of Love Slider Logic
@@ -127,7 +131,9 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    clearInterval(wallOfLoveSlideInterval);
+    if (wallOfLoveSlideInterval) {
+        clearInterval(wallOfLoveSlideInterval);
+    }
 });
 
 // Live Counters Animation
