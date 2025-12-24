@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use App\Models\CaseNote;
 
 class Elder extends Model
 {
@@ -118,6 +119,14 @@ class Elder extends Model
     public function medications(): HasMany
     {
         return $this->hasMany(ElderMedication::class);
+    }
+
+    /**
+     * Get the case notes for the elder.
+     */
+    public function caseNotes(): HasMany
+    {
+        return $this->hasMany(CaseNote::class)->with('author')->latest();
     }
 
     // Accessor for full name

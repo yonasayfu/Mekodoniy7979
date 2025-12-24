@@ -6,7 +6,13 @@ const props = withDefaults(
         as?: string;
         size?: 'md' | 'sm';
         type?: 'button' | 'submit' | 'reset';
-        variant?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
+        variant?:
+            | 'default'
+            | 'primary'
+            | 'secondary'
+            | 'success'
+            | 'warning'
+            | 'danger';
     }>(),
     {
         as: 'button',

@@ -19,6 +19,7 @@ use App\Http\Controllers\ElderController;
 use App\Http\Controllers\ElderLifecycleController;
 use App\Http\Controllers\ElderHealthAssessmentController;
 use App\Http\Controllers\ElderMedicalConditionController;
+use App\Http\Controllers\CaseNoteController;
 use App\Http\Controllers\ElderMedicationController;
 use App\Http\Controllers\SponsorshipController;
 use App\Http\Controllers\VisitController;
@@ -60,6 +61,23 @@ Route::post('/donations/guest', [DonationController::class, 'storeGuest'])->name
 Route::post('/donations', [DonationController::class, 'store'])
     ->middleware('auth')
     ->name('donations.store');
+
+// Case Notes Routes
+Route::middleware(['auth', 'verified', 'approved'])->group(function () {
+    Route::resource('elders.case-notes', CaseNoteController::class)
+        ->except(['show', 'edit', 'create'])
+        ->scoped([
+            'case_note' => 'id',
+        ])
+        ->parameters([
+            'case-notes' => 'caseNote',
+        ]);
+
+    // Restore soft-deleted case note
+    Route::post('elders/{elder}/case-notes/{case_note}/restore', [CaseNoteController::class, 'restore'])
+        ->name('elders.case-notes.restore')
+        ->withTrashed();
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('onboarding/pending-approval', PendingApprovalController::class)->name('onboarding.pending');
@@ -123,6 +141,27 @@ Route::middleware('auth')->group(function () {
         Route::delete('elders/{elder}/medications/{medication}', [ElderMedicationController::class, 'destroy'])
             ->name('elders.medications.destroy')
             ->middleware('permission:elders.manage');
+
+        // Case Notes Routes
+        Route::get('elders/{elder}/case-notes', [CaseNoteController::class, 'index'])
+            ->name('elders.case-notes.index')
+            ->middleware('permission:elders.view_case_notes');
+            
+        Route::post('elders/{elder}/case-notes', [CaseNoteController::class, 'store'])
+            ->name('elders.case-notes.store')
+            ->middleware('permission:elders.manage_case_notes');
+            
+        Route::put('elders/{elder}/case-notes/{case_note}', [CaseNoteController::class, 'update'])
+            ->name('elders.case-notes.update')
+            ->middleware('permission:elders.manage_case_notes');
+            
+        Route::delete('elders/{elder}/case-notes/{case_note}', [CaseNoteController::class, 'destroy'])
+            ->name('elders.case-notes.destroy')
+            ->middleware('permission:elders.manage_case_notes');
+            
+        Route::put('elders/{elder}/case-notes/{case_note}/restore', [CaseNoteController::class, 'restore'])
+            ->name('elders.case-notes.restore')
+            ->middleware('permission:elders.manage_case_notes');
 
         Route::get('sponsorships/export', [SponsorshipController::class, 'export'])->name('sponsorships.export');
 

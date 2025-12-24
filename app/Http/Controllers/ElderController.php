@@ -78,22 +78,55 @@ class ElderController extends Controller
      */
     public function show(Elder $elder)
     {
-        $elder->load(
+        $elder->load([
             'branch',
             'activityLogs.causer',
             'statusEvents.creator',
             'healthAssessments.creator',
             'medicalConditions',
-            'medications'
-        );
+            'medications',
+            'caseNotes' => function ($query) {
+                $query->with('author')
+                    ->latest()
+                    ->paginate(10);
+            },
+        ]);
+
+        $user = auth()->user();
 
         return Inertia::render('Elders/Show', [
             'elder' => $elder,
             'activity' => $elder->activityLogs,
-            'statusEvents' => $elder->statusEvents()->with('creator')->latest('occurred_at')->take(50)->get(),
-            'healthAssessments' => $elder->healthAssessments()->with('creator')->latest('assessment_date')->take(50)->get(),
-            'medicalConditions' => $elder->medicalConditions()->latest()->take(50)->get(),
-            'medications' => $elder->medications()->latest()->take(50)->get(),
+            'statusEvents' => $elder->statusEvents()
+                ->with('creator')
+                ->latest('occurred_at')
+                ->take(50)
+                ->get(),
+            'healthAssessments' => $elder->healthAssessments()
+                ->with('creator')
+                ->latest('assessment_date')
+                ->take(50)
+                ->get(),
+            'medicalConditions' => $elder->medicalConditions()
+                ->latest()
+                ->take(50)
+                ->get(),
+            'medications' => $elder->medications()
+                ->latest()
+                ->take(50)
+                ->get(),
+            'caseNotes' => $elder->caseNotes()
+                ->with('author')
+                ->latest()
+                ->paginate(10)
+                ->appends(request()->query()),
+            'can' => [
+                'update' => auth()->user()->can('update', $elder),
+                'delete' => auth()->user()->can('delete', $elder),
+                'create_case_notes' => $user->can('create', [\App\Models\CaseNote::class, $elder]),
+                'update_case_notes' => $user->can('update', \App\Models\CaseNote::class),
+                'delete_case_notes' => $user->can('delete', \App\Models\CaseNote::class),
+            ],
             'breadcrumbs' => [
                 [
                     'title' => 'Elders',

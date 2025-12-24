@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import AuthCardLayout from '@/layouts/auth/AuthCardLayout.vue';
 import AuthGlassLayout from '@/layouts/auth/AuthGlassLayout.vue';
 import AuthSimpleLayout from '@/layouts/auth/AuthSimpleLayout.vue';
 import AuthSplitLayout from '@/layouts/auth/AuthSplitLayout.vue';
+import { computed } from 'vue';
 
 const props = withDefaults(
     defineProps<{

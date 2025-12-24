@@ -45,13 +45,19 @@ const latestValue = computed(() => props.series.at(-1) ?? 0);
 </script>
 
 <template>
-    <div class="rounded-xl border border-slate-200/70 bg-white/80 p-5 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/60">
+    <div
+        class="rounded-xl border border-slate-200/70 bg-white/80 p-5 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/60"
+    >
         <div class="flex items-center justify-between gap-3">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <p
+                    class="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                >
                     Team Growth
                 </p>
-                <p class="text-2xl font-semibold text-slate-900 dark:text-slate-50">
+                <p
+                    class="text-2xl font-semibold text-slate-900 dark:text-slate-50"
+                >
                     {{ latestValue }}
                 </p>
                 <p class="text-xs text-slate-500 dark:text-slate-400">
@@ -59,11 +65,12 @@ const latestValue = computed(() => props.series.at(-1) ?? 0);
                 </p>
             </div>
             <div class="h-16 w-24">
-                <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="h-full w-full">
-                    <polygon
-                        :points="areaPoints"
-                        :fill="fill"
-                    />
+                <svg
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                    class="h-full w-full"
+                >
+                    <polygon :points="areaPoints" :fill="fill" />
                     <polyline
                         :points="points"
                         :fill="'none'"
@@ -75,8 +82,14 @@ const latestValue = computed(() => props.series.at(-1) ?? 0);
                 </svg>
             </div>
         </div>
-        <div class="mt-4 grid grid-cols-3 gap-2 text-xs text-slate-500 dark:text-slate-400 sm:grid-cols-6">
-            <div v-for="(label, index) in labels" :key="label" class="text-center">
+        <div
+            class="mt-4 grid grid-cols-3 gap-2 text-xs text-slate-500 sm:grid-cols-6 dark:text-slate-400"
+        >
+            <div
+                v-for="(label, index) in labels"
+                :key="label"
+                class="text-center"
+            >
                 <span>{{ label }}</span>
             </div>
         </div>

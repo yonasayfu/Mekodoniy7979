@@ -67,10 +67,14 @@ const changeTone = computed(() => {
     >
         <div class="flex items-start justify-between gap-3">
             <div class="space-y-1">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <p
+                    class="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                >
                     {{ label }}
                 </p>
-                <p class="text-3xl font-semibold text-slate-900 dark:text-slate-50">
+                <p
+                    class="text-3xl font-semibold text-slate-900 dark:text-slate-50"
+                >
                     {{ value }}
                 </p>
             </div>
@@ -83,15 +87,25 @@ const changeTone = computed(() => {
             </div>
         </div>
 
-        <div v-if="description || change" class="mt-4 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div
+            v-if="description || change"
+            class="mt-4 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"
+        >
             <div v-if="description" class="max-w-[70%]">
                 {{ description }}
             </div>
 
-            <div v-if="change" class="flex items-center gap-1 font-medium" :class="changeTone">
+            <div
+                v-if="change"
+                class="flex items-center gap-1 font-medium"
+                :class="changeTone"
+            >
                 <component :is="changeIcon" class="size-3.5" />
                 <span>{{ change.percentage }}%</span>
-                <span v-if="change.label" class="ml-1 text-xs font-normal text-slate-400 dark:text-slate-500">
+                <span
+                    v-if="change.label"
+                    class="ml-1 text-xs font-normal text-slate-400 dark:text-slate-500"
+                >
                     {{ change.label }}
                 </span>
             </div>

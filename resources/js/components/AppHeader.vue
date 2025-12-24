@@ -83,11 +83,12 @@ const rightNavItems: NavItem[] = [
         icon: BookOpen,
     },
 ];
-
 </script>
 
 <template>
-    <div class="relative bg-gradient-to-br from-slate-50 via-slate-100 to-white transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div
+        class="relative bg-gradient-to-br from-slate-50 via-slate-100 to-white transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
+    >
         <div class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <GlassCard variant="lite" padding="p-0" content-class="">
                 <div class="flex h-16 w-full items-center gap-3 px-4 sm:px-6">
@@ -103,11 +104,19 @@ const rightNavItems: NavItem[] = [
                                 </GlassButton>
                             </SheetTrigger>
                             <SheetContent side="left" class="w-[300px] p-6">
-                                <SheetTitle class="sr-only">Navigation Menu</SheetTitle>
-                                <SheetHeader class="flex justify-start text-left">
-                                    <AppLogoIcon class="size-6 fill-current text-black dark:text-white" />
+                                <SheetTitle class="sr-only"
+                                    >Navigation Menu</SheetTitle
+                                >
+                                <SheetHeader
+                                    class="flex justify-start text-left"
+                                >
+                                    <AppLogoIcon
+                                        class="size-6 fill-current text-black dark:text-white"
+                                    />
                                 </SheetHeader>
-                                <div class="flex h-full flex-1 flex-col justify-between space-y-4 py-6">
+                                <div
+                                    class="flex h-full flex-1 flex-col justify-between space-y-4 py-6"
+                                >
                                     <nav class="-mx-3 space-y-1">
                                         <Link
                                             v-for="item in mainNavItems"
@@ -152,7 +161,9 @@ const rightNavItems: NavItem[] = [
 
                     <div class="hidden h-full flex-1 lg:flex">
                         <NavigationMenu class="ml-10 flex h-full items-stretch">
-                            <NavigationMenuList class="flex h-full items-stretch space-x-2">
+                            <NavigationMenuList
+                                class="flex h-full items-stretch space-x-2"
+                            >
                                 <NavigationMenuItem
                                     v-for="item in mainNavItems"
                                     :key="item.title"
@@ -188,7 +199,10 @@ const rightNavItems: NavItem[] = [
                             <GlobalSearch />
 
                             <div class="hidden space-x-1 lg:flex">
-                                <template v-for="item in rightNavItems" :key="item.title">
+                                <template
+                                    v-for="item in rightNavItems"
+                                    :key="item.title"
+                                >
                                     <TooltipProvider :delay-duration="0">
                                         <Tooltip>
                                             <TooltipTrigger :as-child="true">
@@ -200,7 +214,9 @@ const rightNavItems: NavItem[] = [
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                 >
-                                                    <span class="sr-only">{{ item.title }}</span>
+                                                    <span class="sr-only">{{
+                                                        item.title
+                                                    }}</span>
                                                     <component
                                                         :is="item.icon"
                                                         class="size-5 opacity-80 group-hover:opacity-100"
@@ -223,7 +239,9 @@ const rightNavItems: NavItem[] = [
                                     size="icon"
                                     class="btn-glass relative size-10 w-auto justify-center rounded-full p-1 focus-within:ring-0 focus-visible:ring-0"
                                 >
-                                    <Avatar class="size-8 overflow-hidden rounded-full">
+                                    <Avatar
+                                        class="size-8 overflow-hidden rounded-full"
+                                    >
                                         <AvatarImage
                                             v-if="auth.user.avatar"
                                             :src="auth.user.avatar"
@@ -246,7 +264,7 @@ const rightNavItems: NavItem[] = [
 
                 <div
                     v-if="props.breadcrumbs.length > 1"
-                    class="border-t border-white/30 px-4 py-3 text-sm text-slate-600 dark:border-white/10 dark:text-slate-300 sm:px-6"
+                    class="border-t border-white/30 px-4 py-3 text-sm text-slate-600 sm:px-6 dark:border-white/10 dark:text-slate-300"
                 >
                     <Breadcrumbs :breadcrumbs="breadcrumbs" />
                 </div>
@@ -254,4 +272,3 @@ const rightNavItems: NavItem[] = [
         </div>
     </div>
 </template>
-

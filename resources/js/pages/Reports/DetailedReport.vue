@@ -267,13 +267,15 @@ const exportData = () => {
                                 <p
                                     class="text-sm text-slate-600 dark:text-slate-400"
                                 >
-                                    ${{ sponsorship.amount }}/month • Last payment:
+                                    ${{ sponsorship.amount }}/month • Last
+                                    payment:
                                     {{ sponsorship.last_payment || 'Never' }}
                                     <span
                                         v-if="sponsorship.days_overdue"
                                         class="font-medium text-red-600"
                                     >
-                                        • {{ sponsorship.days_overdue }} days overdue
+                                        • {{ sponsorship.days_overdue }} days
+                                        overdue
                                     </span>
                                 </p>
                             </div>
@@ -387,7 +389,9 @@ const exportData = () => {
                         </div>
                         <div class="text-center">
                             <p class="text-2xl font-bold text-blue-600">
-                                ${{ Math.round(data.average_sponsorship_amount) }}
+                                ${{
+                                    Math.round(data.average_sponsorship_amount)
+                                }}
                             </p>
                             <p
                                 class="text-sm text-slate-600 dark:text-slate-400"
@@ -436,7 +440,8 @@ const exportData = () => {
                                     <span
                                         class="ml-2 text-sm text-slate-600 dark:text-slate-400"
                                     >
-                                        {{ donor.sponsorship_count }} sponsorships
+                                        {{ donor.sponsorship_count }}
+                                        sponsorships
                                     </span>
                                 </div>
                             </div>

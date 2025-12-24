@@ -14,7 +14,9 @@ const page = usePage<{ flash?: FlashPayload }>();
 const show = ref(false);
 const hideTimer = ref<number | null>(null);
 
-const style = computed<FlashPayload['bannerStyle']>(() => page.props.flash?.bannerStyle ?? 'success');
+const style = computed<FlashPayload['bannerStyle']>(
+    () => page.props.flash?.bannerStyle ?? 'success',
+);
 const message = computed(() => page.props.flash?.banner ?? '');
 
 const clearTimer = () => {
@@ -93,7 +95,7 @@ const styleClasses = computed(() => {
     <transition name="fade">
         <div
             v-if="show && message"
-            class="pointer-events-auto fixed inset-x-0 bottom-6 z-[120] flex justify-center px-4 sm:inset-auto sm:right-10 sm:top-8 sm:justify-end"
+            class="pointer-events-auto fixed inset-x-0 bottom-6 z-[120] flex justify-center px-4 sm:inset-auto sm:top-8 sm:right-10 sm:justify-end"
         >
             <GlassCard
                 padding="p-0"
@@ -104,12 +106,12 @@ const styleClasses = computed(() => {
                 @mouseleave="resume"
             >
                 <div class="flex items-start gap-3 px-5 py-4">
-                    <div class="flex-1 text-sm font-medium leading-5">
+                    <div class="flex-1 text-sm leading-5 font-medium">
                         {{ message }}
                     </div>
                     <GlassButton
                         size="sm"
-                        class="!py-1 text-xs font-semibold uppercase tracking-wide"
+                        class="!py-1 text-xs font-semibold tracking-wide uppercase"
                         @click="close"
                     >
                         Dismiss
@@ -123,7 +125,9 @@ const styleClasses = computed(() => {
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
 }
 .fade-enter-from,
 .fade-leave-to {

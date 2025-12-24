@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch, computed } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 interface Props {
     label: string;
@@ -58,7 +58,7 @@ watch(
         if (file && isImageVariant.value) {
             localPreviewUrl.value = URL.createObjectURL(file);
         }
-    }
+    },
 );
 
 onBeforeUnmount(() => {
@@ -74,7 +74,6 @@ const handleFileChange = (event: Event) => {
     const file = input.files?.[0] ?? null;
 
     emit('update:modelValue', file);
-
 };
 
 const handleDrop = (event: DragEvent) => {
@@ -128,13 +127,19 @@ const closePreview = () => {
 
 <template>
     <div class="space-y-2">
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
+        <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+        >
             {{ label }}
         </label>
 
         <div
             class="relative flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/70 px-5 py-8 text-center transition hover:border-indigo-400 hover:bg-indigo-50/60 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-indigo-300/70 dark:hover:bg-slate-900/60"
-            :class="dragging ? 'border-indigo-500 bg-indigo-50/80 dark:border-indigo-300/80' : ''"
+            :class="
+                dragging
+                    ? 'border-indigo-500 bg-indigo-50/80 dark:border-indigo-300/80'
+                    : ''
+            "
             @click.prevent="handleBrowse"
             @dragover="handleDragOver"
             @dragleave="handleDragLeave"
@@ -148,23 +153,43 @@ const closePreview = () => {
                 @change="handleFileChange"
             />
 
-            <div class="flex flex-col items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200">
-                    {{ variant === 'image' ? 'PNG, JPG up to 5MB' : 'PDF or DOC up to 10MB' }}
+            <div
+                class="flex flex-col items-center gap-2 text-sm text-slate-600 dark:text-slate-300"
+            >
+                <span
+                    class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200"
+                >
+                    {{
+                        variant === 'image'
+                            ? 'PNG, JPG up to 5MB'
+                            : 'PDF or DOC up to 10MB'
+                    }}
                 </span>
                 <p class="font-medium">
-                    Drag & drop a file, or <span class="text-indigo-600">browse</span>
+                    Drag & drop a file, or
+                    <span class="text-indigo-600">browse</span>
                 </p>
                 <p class="text-xs text-slate-500">
-                    {{ hint || 'Files are stored under module specific folders in storage/app/public.' }}
+                    {{
+                        hint ||
+                        'Files are stored under module specific folders in storage/app/public.'
+                    }}
                 </p>
             </div>
         </div>
 
-        <div v-if="fileLabel" class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white py-3 px-4 text-sm text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+        <div
+            v-if="fileLabel"
+            class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
+        >
             <div class="flex flex-col">
-                <span class="font-medium text-slate-800 dark:text-slate-100">{{ fileLabel }}</span>
-                <span v-if="modelValue" class="text-xs text-slate-500 dark:text-slate-400">
+                <span class="font-medium text-slate-800 dark:text-slate-100">{{
+                    fileLabel
+                }}</span>
+                <span
+                    v-if="modelValue"
+                    class="text-xs text-slate-500 dark:text-slate-400"
+                >
                     Selected file is not yet uploaded.
                 </span>
             </div>
@@ -194,7 +219,7 @@ const closePreview = () => {
         >
             <button
                 type="button"
-                class="absolute right-6 top-6 rounded-full bg-white/80 px-3 py-1 text-sm font-medium text-slate-700 shadow hover:bg-white"
+                class="absolute top-6 right-6 rounded-full bg-white/80 px-3 py-1 text-sm font-medium text-slate-700 shadow hover:bg-white"
                 @click="closePreview"
             >
                 Close

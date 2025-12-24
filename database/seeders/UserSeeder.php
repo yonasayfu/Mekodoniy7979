@@ -1,0 +1,109 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\User;
+use App\Models\Staff;
+use App\Models\Branch;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Hash;
+
+class UserSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        // Create default admin user
+        $this->createDefaultAdmin();
+
+        // Create additional staff users for testing
+        $this->createAdditionalStaff();
+        
+        // Create 10 random users
+        User::factory(10)->create();
+    }
+
+    /**
+     * Create additional staff users for testing purposes.
+     */
+    private function createAdditionalStaff(): void
+    {
+        $branches = Branch::all();
+
+        $additionalStaff = [
+            [
+                'role' => 'Auditor',
+                'name' => 'Avery Auditor',
+                'email' => 'auditor@example.com',
+                'first_name' => 'Avery',
+                'last_name' => 'Auditor',
+                'job_title' => 'Compliance Auditor',
+                'status' => 'active',
+            ],
+            [
+                'role' => 'Reporting Analyst',
+                'name' => 'Riley Readonly',
+                'email' => 'readonly@example.com',
+                'first_name' => 'Riley',
+                'last_name' => 'Readonly',
+                'job_title' => 'Reporting Analyst',
+                'status' => 'inactive',
+            ],
+        ];
+
+        foreach ($additionalStaff as $staff) {
+            $user = User::updateOrCreate(['email' => $staff['email']], [
+                'name' => $staff['name'],
+                'password' => Hash::make('password'),
+                'account_status' => User::STATUS_ACTIVE,
+                'account_type' => User::TYPE_INTERNAL,
+                'approved_at' => Carbon::now(),
+                'approved_by' => 1,
+                'branch_id' => $branches->random()->id,
+            ]);
+
+            $user->assignRole($staff['role']);
+
+            Staff::updateOrCreate(['email' => $staff['email']], [
+                'user_id' => $user->id,
+                'first_name' => $staff['first_name'],
+                'last_name' => $staff['last_name'],
+                'job_title' => $staff['job_title'],
+                'status' => $staff['status'],
+            ]);
+        }
+    }
+
+    /**
+     * Create the default admin user for easy login.
+     */
+    private function createDefaultAdmin(): void
+    {
+        $branches = Branch::all();
+        $approvalTimestamp = Carbon::now();
+
+        $admin = User::updateOrCreate(['email' => 'admin@example.com'], [
+            'name' => 'System Administrator',
+            'password' => bcrypt('password'),
+            'recovery_email' => 'recovery_admin@example.com',
+            'account_status' => User::STATUS_ACTIVE,
+            'account_type' => User::TYPE_INTERNAL,
+            'approved_at' => $approvalTimestamp,
+            'approved_by' => null,
+            'branch_id' => $branches->first()->id,
+        ]);
+
+        $admin->assignRole('Super Admin');
+
+        Staff::updateOrCreate(['email' => $admin->email], [
+            'user_id' => $admin->id,
+            'first_name' => 'System',
+            'last_name' => 'Administrator',
+            'job_title' => 'Super Administrator',
+            'status' => 'active',
+        ]);
+    }
+}

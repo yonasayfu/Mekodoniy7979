@@ -26,7 +26,7 @@ class ElderFactory extends Factory
     public function definition(): array
     {
         return [
-            'branch_id' => Branch::factory(),
+            'branch_id' => Branch::inRandomOrder()->first()->id,
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
             'date_of_birth' => $this->faker->dateTimeBetween('-90 years', '-60 years'),

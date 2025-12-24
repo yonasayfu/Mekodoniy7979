@@ -22,23 +22,36 @@ const year = computed(() => new Date().getFullYear());
 
 <template>
     <div
-        class="min-h-screen grid bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 md:grid-cols-2"
+        class="grid min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 md:grid-cols-2 dark:from-slate-950 dark:to-slate-900"
     >
         <div class="relative hidden overflow-hidden md:block">
             <div class="absolute inset-0">
-                <div class="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl" />
-                <div class="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-indigo-400/20 blur-3xl" />
+                <div
+                    class="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl"
+                />
+                <div
+                    class="absolute right-0 bottom-0 h-96 w-96 rounded-full bg-indigo-400/20 blur-3xl"
+                />
             </div>
-            <div class="relative flex h-full flex-col justify-between p-10 text-slate-700 dark:text-slate-300">
-                <div class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            <div
+                class="relative flex h-full flex-col justify-between p-10 text-slate-700 dark:text-slate-300"
+            >
+                <div
+                    class="text-sm font-medium text-slate-500 dark:text-slate-400"
+                >
                     {{ appName }}
                 </div>
                 <div class="mt-auto space-y-3">
-                    <h2 class="text-3xl font-semibold text-slate-900 dark:text-slate-100">
+                    <h2
+                        class="text-3xl font-semibold text-slate-900 dark:text-slate-100"
+                    >
                         Control your application with clarity
                     </h2>
-                    <p class="max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                        Monitor purchases, maintenance, reservations, and turnover from a secure command center.
+                    <p
+                        class="max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300"
+                    >
+                        Monitor purchases, maintenance, reservations, and
+                        turnover from a secure command center.
                     </p>
                 </div>
                 <div class="text-xs text-slate-500 dark:text-slate-400">
@@ -48,16 +61,23 @@ const year = computed(() => new Date().getFullYear());
         </div>
 
         <div class="relative flex items-center justify-center p-6 md:p-10">
-            <div class="absolute inset-0 pointer-events-none">
-                <div class="absolute top-10 right-10 h-40 w-40 rounded-full bg-white/20 dark:bg-white/5 blur-2xl" />
+            <div class="pointer-events-none absolute inset-0">
+                <div
+                    class="absolute top-10 right-10 h-40 w-40 rounded-full bg-white/20 blur-2xl dark:bg-white/5"
+                />
             </div>
 
             <GlassCard class="w-full max-w-md" padding="p-0" content-class="">
                 <div class="px-6 py-6 md:px-8 md:py-8">
-                    <h1 class="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                    <h1
+                        class="text-2xl font-semibold text-slate-900 dark:text-slate-100"
+                    >
                         {{ props.title }}
                     </h1>
-                    <p v-if="props.description" class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                    <p
+                        v-if="props.description"
+                        class="mt-2 text-sm text-slate-600 dark:text-slate-300"
+                    >
                         {{ props.description }}
                     </p>
                     <div class="mt-6">

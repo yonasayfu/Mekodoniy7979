@@ -1,18 +1,14 @@
-<script setup lang="ts">
-import NavFooter from '@/components/NavFooter.vue';
+<script setup lang="js">
 import NavMain from '@/components/NavMain.vue';
-import NavUser from '@/components/NavUser.vue';
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import {
     BookOpen,
@@ -31,27 +27,16 @@ import {
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
-interface Props {
-    class?: string;
-}
-
-withDefaults(defineProps<Props>(), {
-    class: '',
+defineProps({
+    class: {
+        type: String,
+        default: '',
+    },
 });
 
-const page = usePage<{
-    auth: {
-        permissions: string[];
-    };
-    navigation?: {
-        sidebar?: Array<{
-            label?: string | null;
-            items: Array<NavItem & { icon?: string }>;
-        }>;
-    };
-}>();
+const page = usePage();
 
-const iconMap: Record<string, unknown> = {
+const iconMap = {
     LayoutGrid,
     Download,
     ScrollText,
@@ -66,10 +51,7 @@ const iconMap: Record<string, unknown> = {
     Settings,
 };
 
-const hasPermission = (
-    permission: string | null | undefined,
-    permissions: string[] = [],
-) => {
+const hasPermission = (permission, permissions = []) => {
     if (!permission) {
         return true;
     }
@@ -104,28 +86,15 @@ const sidebarGroups = computed(() => {
                 id: group.label ?? `group-${index}`,
                 label: group.label ?? null,
                 icon:
-                    typeof (group as any).icon === 'string' &&
-                    iconMap[(group as any).icon]
-                        ? iconMap[(group as any).icon as string]
-                        : (group as any).icon,
+                    typeof group.icon === 'string' &&
+                    iconMap[group.icon]
+                        ? iconMap[group.icon]
+                        : group.icon,
                 items,
             };
         })
         .filter(Boolean);
 });
-
-const footerNavItems: NavItem[] = [
-    // {
-    //     title: 'Github Repo',
-    //     href: 'https://github.com/laravel/vue-starter-kit',
-    //     icon: Folder,
-    // },
-    // {
-    //     title: 'Documentation',
-    //     href: 'https://laravel.com/docs/starter-kits#vue',
-    //     icon: BookOpen,
-    // },
-];
 </script>
 
 <template>
@@ -150,11 +119,5 @@ const footerNavItems: NavItem[] = [
         <SidebarContent>
             <NavMain :groups="sidebarGroups" />
         </SidebarContent>
-
-        <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
-            <NavUser />
-        </SidebarFooter>
     </Sidebar>
-    <slot />
 </template>

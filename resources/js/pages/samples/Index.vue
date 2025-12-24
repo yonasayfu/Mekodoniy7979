@@ -1,30 +1,34 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head } from '@inertiajs/vue3';
 
 const sampleLinks = [
     {
         title: 'Admin Capability Sample',
-        description: 'Verifies full control over user, role, and staff management.',
+        description:
+            'Verifies full control over user, role, and staff management.',
         href: '/samples/admin',
         audience: 'Admin',
     },
     {
         title: 'Manager Capability Sample',
-        description: 'Confirms managers can maintain staff records but cannot reconfigure the platform.',
+        description:
+            'Confirms managers can maintain staff records but cannot reconfigure the platform.',
         href: '/samples/manager',
         audience: 'Manager',
     },
     {
         title: 'Technician Capability Sample',
-        description: 'Ensures technicians are limited to read-only operational views.',
+        description:
+            'Ensures technicians are limited to read-only operational views.',
         href: '/samples/technician',
         audience: 'Technician, Staff, Auditor, ReadOnly',
     },
     {
         title: 'External Viewer Sample',
-        description: 'Validates the restricted dashboard-only experience for external stakeholders.',
+        description:
+            'Validates the restricted dashboard-only experience for external stakeholders.',
         href: '/samples/external',
         audience: 'External / Guest',
     },
@@ -47,11 +51,15 @@ const sampleLinks = [
                     :key="sample.href"
                     class="flex flex-col gap-3 rounded-lg border border-dashed border-primary/30 bg-card/60 p-5 shadow-sm"
                 >
-                    <h2 class="text-base font-semibold text-foreground">{{ sample.title }}</h2>
+                    <h2 class="text-base font-semibold text-foreground">
+                        {{ sample.title }}
+                    </h2>
                     <p class="text-sm text-muted-foreground">
                         {{ sample.description }}
                     </p>
-                    <p class="text-xs font-medium uppercase tracking-wide text-primary">
+                    <p
+                        class="text-xs font-medium tracking-wide text-primary uppercase"
+                    >
                         Intended audience: {{ sample.audience }}
                     </p>
                     <div>

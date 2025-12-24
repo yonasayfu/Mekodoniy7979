@@ -20,7 +20,11 @@ const appearance = ref(localStorage.getItem('theme') || 'system');
 const updateAppearance = (value: 'light' | 'dark' | 'system') => {
     appearance.value = value;
     localStorage.setItem('theme', value);
-    if (value === 'dark' || (value === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (
+        value === 'dark' ||
+        (value === 'system' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches)
+    ) {
         document.documentElement.classList.add('dark');
     } else {
         document.documentElement.classList.remove('dark');
@@ -68,4 +72,3 @@ const handleSelect = (value: AppearanceOption['value']) => {
         </DropdownMenuContent>
     </DropdownMenu>
 </template>
-

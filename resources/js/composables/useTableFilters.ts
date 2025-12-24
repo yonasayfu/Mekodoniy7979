@@ -1,5 +1,5 @@
-import { computed, ref } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
 type Direction = 'asc' | 'desc';
 
@@ -17,7 +17,9 @@ interface TableFilterOptions {
 export function useTableFilters(options: TableFilterOptions) {
     const search = ref<string>(String(options.initial?.search ?? ''));
     const sort = ref<string>(String(options.initial?.sort ?? ''));
-    const direction = ref<Direction>((options.initial?.direction as Direction) ?? 'asc');
+    const direction = ref<Direction>(
+        (options.initial?.direction as Direction) ?? 'asc',
+    );
     const perPage = ref<number>(Number(options.initial?.per_page ?? 10));
 
     const baseParams = computed<Record<string, unknown>>(() => {

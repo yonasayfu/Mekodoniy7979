@@ -8,8 +8,11 @@ const totalUnread = ref(0);
 const showDropdown = ref(false);
 const loading = ref(false);
 
-const unreadCount = computed(() =>
-    totalUnread.value ?? notifications.value.filter((notification) => !notification.read_at).length,
+const unreadCount = computed(
+    () =>
+        totalUnread.value ??
+        notifications.value.filter((notification) => !notification.read_at)
+            .length,
 );
 
 const normaliseNotification = (notification) => ({
@@ -29,7 +32,9 @@ const fetchNotifications = async () => {
         totalUnread.value =
             typeof data?.unread_count === 'number'
                 ? data.unread_count
-                : notifications.value.filter((notification) => !notification.read_at).length;
+                : notifications.value.filter(
+                      (notification) => !notification.read_at,
+                  ).length;
     } catch (error) {
         console.error('Error fetching notifications:', error);
     } finally {
@@ -94,7 +99,7 @@ const formattedTimestamp = (timestamp) => {
 </script>
 
 <template>
-    <div class="relative notification-bell">
+    <div class="notification-bell relative">
         <button
             type="button"
             class="relative rounded-full p-2 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none dark:text-slate-300 dark:hover:bg-slate-800/70"
@@ -126,7 +131,9 @@ const formattedTimestamp = (timestamp) => {
             v-if="showDropdown"
             class="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
         >
-            <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <div
+                class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            >
                 Notifications
                 <button
                     v-if="unreadCount > 0"
@@ -137,8 +144,13 @@ const formattedTimestamp = (timestamp) => {
                     Mark all as read
                 </button>
             </div>
-            <div class="max-h-96 divide-y divide-slate-200 dark:divide-slate-800">
-                <div v-if="loading" class="px-4 py-3 text-sm text-slate-500 dark:text-slate-300">
+            <div
+                class="max-h-96 divide-y divide-slate-200 dark:divide-slate-800"
+            >
+                <div
+                    v-if="loading"
+                    class="px-4 py-3 text-sm text-slate-500 dark:text-slate-300"
+                >
                     Loading notifications…
                 </div>
                 <div
@@ -154,23 +166,30 @@ const formattedTimestamp = (timestamp) => {
                         :href="notification.data?.url ?? '#'"
                         class="block px-4 py-3 text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800/70"
                         :class="{
-                            'bg-indigo-50/80 dark:bg-indigo-500/10 font-semibold text-slate-900 dark:text-slate-100':
+                            'bg-indigo-50/80 font-semibold text-slate-900 dark:bg-indigo-500/10 dark:text-slate-100':
                                 !notification.read_at,
-                            'text-slate-600 dark:text-slate-300': notification.read_at,
+                            'text-slate-600 dark:text-slate-300':
+                                notification.read_at,
                         }"
                         @click="
                             markAsRead(notification.id);
                             showDropdown = false;
                         "
                     >
-                        <p>{{ notification.data?.message ?? 'Notification' }}</p>
-                        <span class="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                        <p>
+                            {{ notification.data?.message ?? 'Notification' }}
+                        </p>
+                        <span
+                            class="mt-1 block text-xs text-slate-500 dark:text-slate-400"
+                        >
                             {{ formattedTimestamp(notification.created_at) }}
                         </span>
                     </Link>
                 </template>
             </div>
-            <div class="border-t border-slate-200 bg-slate-50 px-4 py-2 text-right dark:border-slate-700 dark:bg-slate-800">
+            <div
+                class="border-t border-slate-200 bg-slate-50 px-4 py-2 text-right dark:border-slate-700 dark:bg-slate-800"
+            >
                 <Link
                     href="/notifications"
                     class="text-sm font-medium text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-300"

@@ -1,6 +1,6 @@
-import { ref, computed } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
+import { computed, ref } from 'vue';
 
 export function useTwoFactorAuth() {
     const page = usePage();
@@ -13,7 +13,9 @@ export function useTwoFactorAuth() {
     const enabling = ref(false);
     const disabling = ref(false);
 
-    const twoFactorEnabled = computed(() => !enabling.value && user.value?.two_factor_enabled);
+    const twoFactorEnabled = computed(
+        () => !enabling.value && user.value?.two_factor_enabled,
+    );
 
     const enableTwoFactorAuthentication = () => {
         enabling.value = true;
@@ -42,7 +44,9 @@ export function useTwoFactorAuth() {
     };
 
     const regenerateRecoveryCodes = () => {
-        axios.post(route('two-factor.recovery-codes')).then(() => showRecoveryCodes());
+        axios
+            .post(route('two-factor.recovery-codes'))
+            .then(() => showRecoveryCodes());
     };
 
     const showQrCode = () => {
@@ -52,15 +56,17 @@ export function useTwoFactorAuth() {
     };
 
     const showSetupKey = () => {
-        return axios.get(route('two-factor.secret-key')).then(response => {
+        return axios.get(route('two-factor.secret-key')).then((response) => {
             setupKey.value = response.data.secretKey;
         });
-    }
+    };
 
     const showRecoveryCodes = () => {
-        return axios.get(route('two-factor.recovery-codes')).then((response) => {
-            recoveryCodes.value = response.data;
-        });
+        return axios
+            .get(route('two-factor.recovery-codes'))
+            .then((response) => {
+                recoveryCodes.value = response.data;
+            });
     };
 
     const disableTwoFactorAuthentication = () => {

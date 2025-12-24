@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { Head } from '@inertiajs/vue3';
-import { type ActivityLog } from '@/types';
-import { format, formatDistanceToNow } from 'date-fns';
 import Heading from '@/components/Heading.vue';
+import Pagination from '@/components/Pagination.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -14,8 +10,19 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import Pagination from '@/components/Pagination.vue';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { type ActivityLog } from '@/types';
+import { Head } from '@inertiajs/vue3';
+import { format, formatDistanceToNow } from 'date-fns';
+import { computed, ref } from 'vue';
 
 interface Props {
     activityLogs: {
@@ -39,7 +46,11 @@ const escapeHtml = (value: string) =>
         .replace(/'/g, '&#39;');
 
 const formatValueMarkup = (value: unknown) => {
-    if (value === null || value === undefined || (typeof value === 'string' && value.length === 0)) {
+    if (
+        value === null ||
+        value === undefined ||
+        (typeof value === 'string' && value.length === 0)
+    ) {
         return '<span class="text-muted-foreground">—</span>';
     }
 
@@ -50,10 +61,15 @@ const formatValueMarkup = (value: unknown) => {
     return `<span>${escapeHtml(String(value))}</span>`;
 };
 
-const emptyChangesPlaceholder = '<span class="text-muted-foreground italic">No field-level data</span>';
+const emptyChangesPlaceholder =
+    '<span class="text-muted-foreground italic">No field-level data</span>';
 
 const formatChanges = (changes: ActivityLog['changes']) => {
-    if (!changes || typeof changes !== 'object' || Object.keys(changes).length === 0) {
+    if (
+        !changes ||
+        typeof changes !== 'object' ||
+        Object.keys(changes).length === 0
+    ) {
         return emptyChangesPlaceholder;
     }
 
@@ -81,7 +97,10 @@ const formatChanges = (changes: ActivityLog['changes']) => {
 };
 
 const detailChanges = computed(() => {
-    if (!selectedLog.value?.changes || typeof selectedLog.value.changes !== 'object') {
+    if (
+        !selectedLog.value?.changes ||
+        typeof selectedLog.value.changes !== 'object'
+    ) {
         return [];
     }
 
@@ -201,7 +220,7 @@ const formatExactDate = (value: string) => {
             description="View all system and user activity logs."
         />
 
-        <div class="mt-6 bg-white rounded-lg shadow-md p-6">
+        <div class="mt-6 rounded-lg bg-white p-6 shadow-md">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -218,14 +237,24 @@ const formatExactDate = (value: string) => {
                     <TableRow v-for="log in activityLogs.data" :key="log.id">
                         <TableCell>
                             <div class="flex flex-col">
-                                <span>{{ formatDistanceToNow(new Date(log.created_at), { addSuffix: true }) }}</span>
-                                <span class="text-xs text-muted-foreground">{{ formatExactDate(log.created_at) }}</span>
+                                <span>{{
+                                    formatDistanceToNow(
+                                        new Date(log.created_at),
+                                        { addSuffix: true },
+                                    )
+                                }}</span>
+                                <span class="text-xs text-muted-foreground">{{
+                                    formatExactDate(log.created_at)
+                                }}</span>
                             </div>
                         </TableCell>
                         <TableCell>
                             <div class="flex flex-col">
                                 <span>{{ log.causer?.name ?? 'System' }}</span>
-                                <span v-if="log.causer?.email" class="text-xs text-muted-foreground">
+                                <span
+                                    v-if="log.causer?.email"
+                                    class="text-xs text-muted-foreground"
+                                >
                                     {{ log.causer.email }}
                                 </span>
                             </div>
@@ -234,13 +263,23 @@ const formatExactDate = (value: string) => {
                         <TableCell>{{ log.description ?? '—' }}</TableCell>
                         <TableCell>
                             <div class="flex flex-col">
-                                <span>{{ getSubjectName(log.subject_type) }}</span>
-                                <span class="text-xs text-muted-foreground">ID: {{ log.subject_id ?? '—' }}</span>
+                                <span>{{
+                                    getSubjectName(log.subject_type)
+                                }}</span>
+                                <span class="text-xs text-muted-foreground"
+                                    >ID: {{ log.subject_id ?? '—' }}</span
+                                >
                             </div>
                         </TableCell>
-                        <TableCell v-html="formatChanges(log.changes)"></TableCell>
+                        <TableCell
+                            v-html="formatChanges(log.changes)"
+                        ></TableCell>
                         <TableCell class="text-right">
-                            <Button size="sm" variant="outline" @click="openDetails(log)">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                @click="openDetails(log)"
+                            >
                                 View details
                             </Button>
                         </TableCell>
@@ -256,51 +295,75 @@ const formatExactDate = (value: string) => {
                     <DialogTitle>Activity details</DialogTitle>
                     <DialogDescription v-if="selectedLog">
                         Logged {{ detailTimestamp.relative }}
-                        <span class="ml-1 text-muted-foreground">(on {{ detailTimestamp.absolute }})</span>
+                        <span class="ml-1 text-muted-foreground"
+                            >(on {{ detailTimestamp.absolute }})</span
+                        >
                     </DialogDescription>
                 </DialogHeader>
 
                 <div v-if="selectedLog" class="space-y-6">
                     <div class="grid gap-4 text-sm sm:grid-cols-2">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            <p
+                                class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                            >
                                 Action
                             </p>
-                            <p class="font-medium text-slate-900 dark:text-slate-100">
+                            <p
+                                class="font-medium text-slate-900 dark:text-slate-100"
+                            >
                                 {{ selectedLog.action }}
                             </p>
                         </div>
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            <p
+                                class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                            >
                                 Subject
                             </p>
-                            <p class="font-medium text-slate-900 dark:text-slate-100">
+                            <p
+                                class="font-medium text-slate-900 dark:text-slate-100"
+                            >
                                 {{ getSubjectName(selectedLog.subject_type) }}
                             </p>
                             <p class="text-xs text-muted-foreground">
                                 Identifier: {{ selectedLog.subject_id ?? '—' }}
                             </p>
                             <p class="truncate text-xs text-muted-foreground">
-                                <span class="font-semibold text-slate-500 dark:text-slate-400">Class:</span>
+                                <span
+                                    class="font-semibold text-slate-500 dark:text-slate-400"
+                                    >Class:</span
+                                >
                                 {{ selectedLog.subject_type ?? 'n/a' }}
                             </p>
                         </div>
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            <p
+                                class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                            >
                                 Triggered by
                             </p>
-                            <p class="font-medium text-slate-900 dark:text-slate-100">
+                            <p
+                                class="font-medium text-slate-900 dark:text-slate-100"
+                            >
                                 {{ selectedLog.causer?.name ?? 'System' }}
                             </p>
-                            <p v-if="selectedLog.causer?.email" class="text-xs text-muted-foreground">
+                            <p
+                                v-if="selectedLog.causer?.email"
+                                class="text-xs text-muted-foreground"
+                            >
                                 {{ selectedLog.causer.email }}
                             </p>
                         </div>
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            <p
+                                class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                            >
                                 Event reference
                             </p>
-                            <p class="font-medium text-slate-900 dark:text-slate-100">
+                            <p
+                                class="font-medium text-slate-900 dark:text-slate-100"
+                            >
                                 #{{ selectedLog.id }}
                             </p>
                             <p class="text-xs text-muted-foreground">
@@ -310,16 +373,23 @@ const formatExactDate = (value: string) => {
                     </div>
 
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        <p
+                            class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
                             Description
                         </p>
                         <p class="mt-2 text-sm leading-relaxed">
-                            {{ selectedLog.description ?? 'No description was provided for this activity.' }}
+                            {{
+                                selectedLog.description ??
+                                'No description was provided for this activity.'
+                            }}
                         </p>
                     </div>
 
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        <p
+                            class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
                             Field changes
                         </p>
                         <div v-if="detailChanges.length" class="mt-2 space-y-3">
@@ -328,64 +398,86 @@ const formatExactDate = (value: string) => {
                                 :key="change.field"
                                 class="rounded-md border border-border/60 bg-muted/40 px-4 py-3"
                             >
-                                <p class="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                <p
+                                    class="text-sm font-medium text-slate-900 dark:text-slate-100"
+                                >
                                     {{ change.field }}
                                 </p>
                                 <div class="mt-2 grid gap-3 sm:grid-cols-2">
                                     <div>
-                                        <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        <p
+                                            class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                                        >
                                             Before
                                         </p>
                                         <pre
                                             v-if="isComplexValue(change.before)"
-                                            class="mt-1 overflow-x-auto whitespace-pre-wrap rounded bg-background/70 p-2 text-xs"
-                                        >{{ formatDetailValue(change.before) }}</pre>
-                                        <p
-                                            v-else
-                                            class="mt-1 text-sm"
+                                            class="mt-1 overflow-x-auto rounded bg-background/70 p-2 text-xs whitespace-pre-wrap"
+                                            >{{
+                                                formatDetailValue(change.before)
+                                            }}</pre
                                         >
-                                            {{ formatDetailValue(change.before) }}
+                                        <p v-else class="mt-1 text-sm">
+                                            {{
+                                                formatDetailValue(change.before)
+                                            }}
                                         </p>
                                     </div>
                                     <div>
-                                        <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        <p
+                                            class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                                        >
                                             After
                                         </p>
                                         <pre
                                             v-if="isComplexValue(change.after)"
-                                            class="mt-1 overflow-x-auto whitespace-pre-wrap rounded bg-background/70 p-2 text-xs"
-                                        >{{ formatDetailValue(change.after) }}</pre>
-                                        <p
-                                            v-else
-                                            class="mt-1 text-sm"
+                                            class="mt-1 overflow-x-auto rounded bg-background/70 p-2 text-xs whitespace-pre-wrap"
+                                            >{{
+                                                formatDetailValue(change.after)
+                                            }}</pre
                                         >
-                                            {{ formatDetailValue(change.after) }}
+                                        <p v-else class="mt-1 text-sm">
+                                            {{
+                                                formatDetailValue(change.after)
+                                            }}
                                         </p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <p v-else class="mt-2 text-sm italic text-muted-foreground">
+                        <p
+                            v-else
+                            class="mt-2 text-sm text-muted-foreground italic"
+                        >
                             No field-level changes were recorded for this event.
                         </p>
                     </div>
 
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        <p
+                            class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
                             Raw change payload
                         </p>
                         <pre
                             v-if="rawChangePayload"
-                            class="mt-2 max-h-60 overflow-y-auto whitespace-pre-wrap rounded bg-muted/30 p-3 text-xs"
-                        >{{ rawChangePayload }}</pre>
-                        <p v-else class="mt-2 text-sm italic text-muted-foreground">
-                            No raw change payload is available for this activity.
+                            class="mt-2 max-h-60 overflow-y-auto rounded bg-muted/30 p-3 text-xs whitespace-pre-wrap"
+                            >{{ rawChangePayload }}</pre
+                        >
+                        <p
+                            v-else
+                            class="mt-2 text-sm text-muted-foreground italic"
+                        >
+                            No raw change payload is available for this
+                            activity.
                         </p>
                     </div>
                 </div>
 
                 <DialogFooter>
-                    <Button variant="secondary" @click="closeDetails">Close</Button>
+                    <Button variant="secondary" @click="closeDetails"
+                        >Close</Button
+                    >
                 </DialogFooter>
             </DialogContent>
         </Dialog>

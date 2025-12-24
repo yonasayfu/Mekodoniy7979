@@ -62,11 +62,13 @@ onUnmounted(() => {
             :message="confirmMessage"
             :confirm-text="confirmOkText"
             :cancel-text="confirmCancelText"
-            @update:open="(value) => {
-                if (!value && confirmOpen) {
-                    closeConfirm(false);
+            @update:open="
+                (value) => {
+                    if (!value && confirmOpen) {
+                        closeConfirm(false);
+                    }
                 }
-            }"
+            "
             @confirm="() => closeConfirm(true)"
             @cancel="() => closeConfirm(false)"
         />

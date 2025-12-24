@@ -3,10 +3,12 @@ import GlassCard from '@/components/GlassCard.vue';
 import type { useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
-type RoleForm = ReturnType<typeof useForm<{
-    name: string;
-    permissions: string[];
-}>>;
+type RoleForm = ReturnType<
+    typeof useForm<{
+        name: string;
+        permissions: string[];
+    }>
+>;
 
 const props = defineProps<{
     form: RoleForm;
@@ -16,11 +18,14 @@ const props = defineProps<{
 
 const permissions = computed(() => props.permissions ?? []);
 
-const isChecked = (permission: string) => props.form.permissions.includes(permission);
+const isChecked = (permission: string) =>
+    props.form.permissions.includes(permission);
 
 const togglePermission = (permission: string) => {
     if (isChecked(permission)) {
-        props.form.permissions = props.form.permissions.filter((item) => item !== permission);
+        props.form.permissions = props.form.permissions.filter(
+            (item) => item !== permission,
+        );
     } else {
         props.form.permissions = [...props.form.permissions, permission];
     }
@@ -29,13 +34,11 @@ const togglePermission = (permission: string) => {
 
 <template>
     <div class="space-y-6">
-        <GlassCard
-            variant="lite"
-            padding="px-6 py-5"
-            content-class="space-y-4"
-        >
+        <GlassCard variant="lite" padding="px-6 py-5" content-class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                <label
+                    class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                >
                     Role name
                 </label>
                 <input
@@ -50,14 +53,12 @@ const togglePermission = (permission: string) => {
             </div>
         </GlassCard>
 
-        <GlassCard
-            variant="lite"
-            padding="px-6 py-5"
-            content-class="space-y-4"
-        >
+        <GlassCard variant="lite" padding="px-6 py-5" content-class="space-y-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    <h2
+                        class="text-sm font-semibold text-slate-900 dark:text-slate-100"
+                    >
                         Permissions
                     </h2>
                     <p class="text-xs text-slate-500 dark:text-slate-400">

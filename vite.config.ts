@@ -1,4 +1,3 @@
-import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
@@ -28,9 +27,6 @@ export default defineConfig({
                 },
             },
         }),
-        wayfinder({
-            formVariants: true,
-        }),
         vue({
             template: {
                 transformAssetUrls: {
@@ -39,9 +35,14 @@ export default defineConfig({
                 },
             },
         }),
-        VitePWA({ // Add VitePWA plugin
+        VitePWA({
+            strategy: 'injectManifest',
+            srcDir: 'resources/js',
+            filename: 'sw.js',
             registerType: 'autoUpdate',
-            includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'pwa-192x192.svg', 'pwa-512x512.svg'],
+            devOptions: {
+                enabled: true,
+            },
             manifest: {
                 name: 'Mekodonia Home Connect',
                 short_name: 'Mekodonia',
@@ -64,6 +65,9 @@ export default defineConfig({
                         purpose: 'any maskable',
                     },
                 ],
+            },
+            injectManifest: {
+                globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
             },
         }),
     ],

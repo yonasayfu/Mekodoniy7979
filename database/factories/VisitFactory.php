@@ -30,7 +30,7 @@ class VisitFactory extends Factory
         return [
             'user_id' => User::factory(),
             'elder_id' => Elder::factory(),
-            'branch_id' => Branch::factory(),
+            'branch_id' => Branch::inRandomOrder()->first()->id,
             'visit_date' => $this->faker->dateTimeBetween('-6 months', 'now'),
             'purpose' => $this->faker->randomElement([
                 'Regular check-in',

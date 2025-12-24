@@ -1,10 +1,14 @@
 ﻿<script setup lang="ts">
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import {
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+} from '@/components/ui/sidebar';
 import { urlIsActive } from '@/lib/utils';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, ref, watch } from 'vue';
 import { ChevronRight } from 'lucide-vue-next';
+import { computed, onMounted, ref, watch } from 'vue';
 
 interface SidebarGroupConfig {
     id: string;
@@ -20,7 +24,9 @@ const props = defineProps<{
 const page = usePage();
 
 const availableGroups = computed(() =>
-    (props.groups ?? []).filter((group) => group.items && group.items.length > 0),
+    (props.groups ?? []).filter(
+        (group) => group.items && group.items.length > 0,
+    ),
 );
 
 const openGroupId = ref<string | null>(null);
@@ -30,7 +36,9 @@ const hasActiveItem = (group: SidebarGroupConfig) =>
     group.items?.some((item) => urlIsActive(item.href, page.url));
 
 const ensureOpenGroup = (forceDefault = false) => {
-    const activeGroup = availableGroups.value.find((group) => hasActiveItem(group));
+    const activeGroup = availableGroups.value.find((group) =>
+        hasActiveItem(group),
+    );
     if (activeGroup) {
         openGroupId.value = activeGroup.id;
         closingGroupId.value = null;
@@ -61,11 +69,19 @@ watch(
 watch(
     availableGroups,
     () => {
-        if (!availableGroups.value.some((group) => group.id === openGroupId.value)) {
+        if (
+            !availableGroups.value.some(
+                (group) => group.id === openGroupId.value,
+            )
+        ) {
             openGroupId.value = null;
         }
         ensureOpenGroup(true);
-        if (!availableGroups.value.some((group) => group.id === closingGroupId.value)) {
+        if (
+            !availableGroups.value.some(
+                (group) => group.id === closingGroupId.value,
+            )
+        ) {
             closingGroupId.value = null;
         }
     },
@@ -111,12 +127,16 @@ const groupTitle = (group: SidebarGroupConfig, index: number) =>
         >
             <button
                 type="button"
-                class="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                class="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 @click="toggleGroup(group.id)"
                 :aria-expanded="isExpanded(group.id)"
             >
                 <div class="flex items-center gap-2 truncate">
-                    <component v-if="group.icon" :is="group.icon" class="h-4 w-4 flex-shrink-0" />
+                    <component
+                        v-if="group.icon"
+                        :is="group.icon"
+                        class="h-4 w-4 flex-shrink-0"
+                    />
                     <span class="truncate">{{ groupTitle(group, index) }}</span>
                 </div>
                 <ChevronRight
@@ -136,10 +156,13 @@ const groupTitle = (group: SidebarGroupConfig, index: number) =>
             >
                 <div
                     v-show="shouldRenderGroup(group.id)"
-                    class="mt-1 overflow-hidden rounded-md bg-muted/10 pl-1 pr-1"
+                    class="mt-1 overflow-hidden rounded-md bg-muted/10 pr-1 pl-1"
                 >
                     <SidebarMenu class="space-y-1 px-1 py-1">
-                        <SidebarMenuItem v-for="item in group.items" :key="item.title">
+                        <SidebarMenuItem
+                            v-for="item in group.items"
+                            :key="item.title"
+                        >
                             <SidebarMenuButton
                                 as-child
                                 :is-active="urlIsActive(item.href, page.url)"
@@ -152,7 +175,9 @@ const groupTitle = (group: SidebarGroupConfig, index: number) =>
                                         :is="item.icon"
                                         class="h-4 w-4 flex-shrink-0"
                                     />
-                                    <span class="truncate">{{ item.title }}</span>
+                                    <span class="truncate">{{
+                                        item.title
+                                    }}</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

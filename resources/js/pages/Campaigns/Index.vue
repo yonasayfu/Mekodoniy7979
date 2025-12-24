@@ -67,7 +67,9 @@ const tableFilters = useTableFilters({
 
 const { search, perPage, apply, toggleSort } = tableFilters;
 
-const campaignList = computed<CampaignSummary[]>(() => props.campaigns?.data ?? []);
+const campaignList = computed<CampaignSummary[]>(
+    () => props.campaigns?.data ?? [],
+);
 const hasResults = computed<boolean>(() => campaignList.value.length > 0);
 const paginationLinks = computed(() => props.campaigns?.links ?? []);
 
@@ -116,14 +118,18 @@ const statusTone = (status: string) => {
 
             <GlassCard>
                 <div class="flex flex-col gap-4">
-                    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div
+                        class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                    >
                         <div class="relative w-full md:max-w-sm">
-                            <Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                            <Search
+                                class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                            />
                             <input
                                 v-model="search"
                                 type="text"
                                 placeholder="Search campaigns..."
-                                class="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                class="w-full rounded-lg border border-slate-200 bg-white py-2 pr-3 pl-9 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
                                 @keydown.enter.prevent="apply"
                             />
                         </div>
@@ -142,9 +148,13 @@ const statusTone = (status: string) => {
                     </div>
 
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                        <table
+                            class="min-w-full divide-y divide-slate-200 dark:divide-slate-800"
+                        >
                             <thead>
-                                <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                <tr
+                                    class="text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
+                                >
                                     <th class="px-4 py-3">
                                         <button
                                             type="button"
@@ -157,19 +167,31 @@ const statusTone = (status: string) => {
                                     <th class="px-4 py-3">Status</th>
                                     <th class="px-4 py-3">Goal</th>
                                     <th class="px-4 py-3">Dates</th>
-                                    <th class="px-4 py-3 text-right">Actions</th>
+                                    <th class="px-4 py-3 text-right">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100 text-sm dark:divide-slate-800">
+                            <tbody
+                                class="divide-y divide-slate-100 text-sm dark:divide-slate-800"
+                            >
                                 <tr v-if="!hasResults">
-                                    <td class="px-4 py-6 text-center text-slate-500" colspan="5">
+                                    <td
+                                        class="px-4 py-6 text-center text-slate-500"
+                                        colspan="5"
+                                    >
                                         No campaigns found.
                                     </td>
                                 </tr>
 
-                                <tr v-for="campaign in campaignList" :key="campaign.id">
+                                <tr
+                                    v-for="campaign in campaignList"
+                                    :key="campaign.id"
+                                >
                                     <td class="px-4 py-3">
-                                        <div class="font-medium text-slate-900 dark:text-slate-100">
+                                        <div
+                                            class="font-medium text-slate-900 dark:text-slate-100"
+                                        >
                                             {{ campaign.title }}
                                         </div>
                                         <div class="text-xs text-slate-500">
@@ -186,19 +208,36 @@ const statusTone = (status: string) => {
                                     </td>
                                     <td class="px-4 py-3">
                                         <span v-if="campaign.goal_amount">
-                                            {{ campaign.goal_amount }} {{ campaign.goal_currency ?? '' }}
+                                            {{ campaign.goal_amount }}
+                                            {{ campaign.goal_currency ?? '' }}
                                         </span>
-                                        <span v-else class="text-slate-500">-</span>
+                                        <span v-else class="text-slate-500"
+                                            >-</span
+                                        >
                                     </td>
-                                    <td class="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
-                                        <div>Start: {{ campaign.starts_at ?? '-' }}</div>
-                                        <div>End: {{ campaign.ends_at ?? '-' }}</div>
+                                    <td
+                                        class="px-4 py-3 text-xs text-slate-600 dark:text-slate-300"
+                                    >
+                                        <div>
+                                            Start:
+                                            {{ campaign.starts_at ?? '-' }}
+                                        </div>
+                                        <div>
+                                            End: {{ campaign.ends_at ?? '-' }}
+                                        </div>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <div class="flex items-center justify-end gap-2">
+                                        <div
+                                            class="flex items-center justify-end gap-2"
+                                        >
                                             <Link
                                                 class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                                                :href="route('campaigns.show', campaign.id)"
+                                                :href="
+                                                    route(
+                                                        'campaigns.show',
+                                                        campaign.id,
+                                                    )
+                                                "
                                             >
                                                 <Eye class="size-4" />
                                                 <span>View</span>
@@ -207,7 +246,12 @@ const statusTone = (status: string) => {
                                             <Link
                                                 v-if="canEdit"
                                                 class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 dark:text-indigo-200 dark:hover:bg-indigo-500/10"
-                                                :href="route('campaigns.edit', campaign.id)"
+                                                :href="
+                                                    route(
+                                                        'campaigns.edit',
+                                                        campaign.id,
+                                                    )
+                                                "
                                             >
                                                 <Edit3 class="size-4" />
                                                 <span>Edit</span>

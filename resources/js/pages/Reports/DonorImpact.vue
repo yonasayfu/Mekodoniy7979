@@ -148,7 +148,9 @@ const downloadReport = (pdfPath: string) => {
                                 <p
                                     class="text-sm text-slate-600 dark:text-slate-400"
                                 >
-                                    Monthly commitment: ${{ sponsorship.amount }}
+                                    Monthly commitment: ${{
+                                        sponsorship.amount
+                                    }}
                                 </p>
                             </div>
                             <div class="text-right">

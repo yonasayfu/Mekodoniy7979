@@ -22,7 +22,6 @@ class DonationFactory extends Factory
         return [
             'user_id' => User::factory(),
             'elder_id' => Elder::factory(),
-            'pledge_id' => null,
             'amount' => $this->faker->randomFloat(2, 10, 1000),
             'currency' => 'ETB',
             'payment_gateway' => $this->faker->randomElement(['Telebirr', 'CBE', 'Stripe']),

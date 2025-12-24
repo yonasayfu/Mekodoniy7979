@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import GlassButton from '@/components/GlassButton.vue';
 import {
     Dialog,
     DialogContent,
@@ -7,7 +8,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import GlassButton from '@/components/GlassButton.vue';
 
 const props = withDefaults(
     defineProps<{
@@ -51,7 +51,9 @@ const handleConfirm = () => {
                     {{ props.message }}
                 </DialogDescription>
             </DialogHeader>
-            <DialogFooter class="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <DialogFooter
+                class="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end"
+            >
                 <GlassButton
                     size="sm"
                     class="justify-center bg-transparent text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"

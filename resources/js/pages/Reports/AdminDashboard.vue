@@ -534,10 +534,14 @@ onMounted(() => {
                                 />
                             </div>
                             <div class="flex-1">
-                                <p class="font-medium text-slate-800 dark:text-slate-200">
+                                <p
+                                    class="font-medium text-slate-800 dark:text-slate-200"
+                                >
                                     {{ activity.description }}
                                 </p>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">
+                                <p
+                                    class="text-xs text-slate-500 dark:text-slate-400"
+                                >
                                     {{ activity.time_ago }}
                                 </p>
                             </div>

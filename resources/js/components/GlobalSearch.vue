@@ -2,7 +2,7 @@
 import { router } from '@inertiajs/vue3';
 import { useDebounceFn } from '@vueuse/core';
 import axios from 'axios';
-import { Search, X, User, Users, Package } from 'lucide-vue-next';
+import { Package, Search, User, Users, X } from 'lucide-vue-next';
 import {
     computed,
     nextTick,
@@ -35,7 +35,8 @@ const iconMap: Record<string, Component> = {
     default: Search,
 };
 
-const iconComponent = (icon?: string | null) => iconMap[icon ?? ''] ?? iconMap.default;
+const iconComponent = (icon?: string | null) =>
+    iconMap[icon ?? ''] ?? iconMap.default;
 
 const groupedResults = computed(() => {
     const groups = new Map<string, SearchResult[]>();
@@ -151,7 +152,7 @@ onBeforeUnmount(() => {
             <Search class="h-4 w-4" />
             <span class="hidden sm:inline">Search...</span>
             <kbd
-                class="ml-auto hidden items-center gap-1 rounded border border-slate-200 bg-slate-100 px-1.5 font-mono text-[10px] font-medium text-slate-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 sm:inline-flex"
+                class="ml-auto hidden items-center gap-1 rounded border border-slate-200 bg-slate-100 px-1.5 font-mono text-[10px] font-medium text-slate-600 sm:inline-flex dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300"
             >
                 <span class="text-xs">⌘</span>K
             </kbd>
@@ -161,14 +162,16 @@ onBeforeUnmount(() => {
     <Teleport to="body">
         <div
             v-if="isOpen"
-            class="fixed inset-0 z-[10000] flex items-start justify-center bg-black/40 backdrop-blur-sm pt-16 md:pt-24"
+            class="fixed inset-0 z-[10000] flex items-start justify-center bg-black/40 pt-16 backdrop-blur-sm md:pt-24"
             @click="handleBackdropClick"
         >
             <div
                 class="w-full max-w-2xl overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-2xl dark:border-slate-700/80 dark:bg-slate-900"
                 @click.stop
             >
-                <div class="flex items-center gap-3 border-b border-slate-200/70 bg-slate-50/60 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/80">
+                <div
+                    class="flex items-center gap-3 border-b border-slate-200/70 bg-slate-50/60 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/80"
+                >
                     <Search class="h-4 w-4 text-slate-400" />
                     <input
                         ref="inputRef"
@@ -214,7 +217,9 @@ onBeforeUnmount(() => {
                             :key="group.name"
                             class="mb-4 last:mb-0"
                         >
-                            <div class="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            <div
+                                class="px-4 py-2 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                            >
                                 {{ group.name }} ({{ group.items.length }})
                             </div>
 
@@ -230,7 +235,9 @@ onBeforeUnmount(() => {
                                     class="h-4 w-4 text-slate-400"
                                 />
                                 <span class="flex-1">
-                                    <span class="block font-medium text-slate-900 dark:text-slate-100">
+                                    <span
+                                        class="block font-medium text-slate-900 dark:text-slate-100"
+                                    >
                                         {{ result.title }}
                                     </span>
                                     <span
@@ -240,7 +247,9 @@ onBeforeUnmount(() => {
                                         {{ result.description }}
                                     </span>
                                 </span>
-                                <span class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                <span
+                                    class="text-xs tracking-wide text-slate-400 uppercase dark:text-slate-500"
+                                >
                                     {{ result.type }}
                                 </span>
                             </button>
@@ -248,7 +257,9 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
 
-                <div class="border-t border-slate-200/70 bg-slate-50/60 px-4 py-3 text-[11px] text-slate-500 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-400">
+                <div
+                    class="border-t border-slate-200/70 bg-slate-50/60 px-4 py-3 text-[11px] text-slate-500 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-400"
+                >
                     Press ⌘ + K / Ctrl + K to open · Esc to close
                 </div>
             </div>

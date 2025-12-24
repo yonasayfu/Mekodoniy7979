@@ -42,17 +42,20 @@ const accountStatusOptions = [
     {
         value: 'pending',
         label: 'Pending approval',
-        description: 'Access is limited to the pending screen until an admin approves.',
+        description:
+            'Access is limited to the pending screen until an admin approves.',
     },
     {
         value: 'active',
         label: 'Active',
-        description: 'User can access the application according to their roles.',
+        description:
+            'User can access the application according to their roles.',
     },
     {
         value: 'suspended',
         label: 'Suspended',
-        description: 'Login is allowed, but access is redirected to a suspension notice.',
+        description:
+            'Login is allowed, but access is redirected to a suspension notice.',
     },
 ];
 
@@ -60,7 +63,8 @@ const accountTypeOptions = [
     {
         value: 'external',
         label: 'External collaborator',
-        description: 'Use for contractors or customers awaiting staff onboarding.',
+        description:
+            'Use for contractors or customers awaiting staff onboarding.',
     },
     {
         value: 'internal',
@@ -70,10 +74,14 @@ const accountTypeOptions = [
 ];
 
 const selectedStatusOption = computed(() =>
-    accountStatusOptions.find((option) => option.value === props.form.account_status),
+    accountStatusOptions.find(
+        (option) => option.value === props.form.account_status,
+    ),
 );
 const selectedTypeOption = computed(() =>
-    accountTypeOptions.find((option) => option.value === props.form.account_type),
+    accountTypeOptions.find(
+        (option) => option.value === props.form.account_type,
+    ),
 );
 
 const toggleRole = (role: string) => {
@@ -105,7 +113,9 @@ const hasPermission = (permission: string) =>
         <GlassCard>
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <label
+                        class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                    >
                         Full name
                     </label>
                     <input
@@ -114,11 +124,16 @@ const hasPermission = (permission: string) =>
                         autocomplete="name"
                         class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                     />
-                    <InputError :message="$page.props.errors?.name" class="mt-2" />
+                    <InputError
+                        :message="$page.props.errors?.name"
+                        class="mt-2"
+                    />
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <label
+                        class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                    >
                         Email
                     </label>
                     <input
@@ -127,13 +142,18 @@ const hasPermission = (permission: string) =>
                         autocomplete="email"
                         class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                     />
-                    <InputError :message="$page.props.errors?.email" class="mt-2" />
+                    <InputError
+                        :message="$page.props.errors?.email"
+                        class="mt-2"
+                    />
                 </div>
             </div>
 
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <label
+                        class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                    >
                         {{ isEdit ? 'New password (optional)' : 'Password' }}
                     </label>
                     <input
@@ -142,11 +162,16 @@ const hasPermission = (permission: string) =>
                         autocomplete="new-password"
                         class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                     />
-                    <InputError :message="$page.props.errors?.password" class="mt-2" />
+                    <InputError
+                        :message="$page.props.errors?.password"
+                        class="mt-2"
+                    />
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <label
+                        class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                    >
                         {{ isEdit ? 'Confirm password' : 'Confirm password' }}
                     </label>
                     <input
@@ -160,7 +185,9 @@ const hasPermission = (permission: string) =>
 
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <label
+                        class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                    >
                         Account status
                     </label>
                     <select
@@ -178,11 +205,16 @@ const hasPermission = (permission: string) =>
                     <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         {{ selectedStatusOption?.description }}
                     </p>
-                    <InputError :message="$page.props.errors?.account_status" class="mt-2" />
+                    <InputError
+                        :message="$page.props.errors?.account_status"
+                        class="mt-2"
+                    />
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <label
+                        class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                    >
                         Account type
                     </label>
                     <select
@@ -200,12 +232,17 @@ const hasPermission = (permission: string) =>
                     <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         {{ selectedTypeOption?.description }}
                     </p>
-                    <InputError :message="$page.props.errors?.account_type" class="mt-2" />
+                    <InputError
+                        :message="$page.props.errors?.account_type"
+                        class="mt-2"
+                    />
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                <label
+                    class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                >
                     Branch
                 </label>
                 <select
@@ -213,15 +250,24 @@ const hasPermission = (permission: string) =>
                     class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
                     <option :value="null">No branch assigned</option>
-                    <option v-for="branch in branches" :key="branch.id" :value="branch.id">
+                    <option
+                        v-for="branch in branches"
+                        :key="branch.id"
+                        :value="branch.id"
+                    >
                         {{ branch.name }}
                     </option>
                 </select>
-                <InputError :message="$page.props.errors?.branch_id" class="mt-2" />
+                <InputError
+                    :message="$page.props.errors?.branch_id"
+                    class="mt-2"
+                />
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                <label
+                    class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                >
                     Link to staff profile
                 </label>
                 <select
@@ -235,20 +281,31 @@ const hasPermission = (permission: string) =>
                         :value="option.id"
                     >
                         {{ option.label }}
-                        <span v-if="option.linked_user_id && !option.linked_to_current_user">
+                        <span
+                            v-if="
+                                option.linked_user_id &&
+                                !option.linked_to_current_user
+                            "
+                        >
                             (currently linked)
                         </span>
                     </option>
                 </select>
                 <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Selecting a staff profile will move it to this user if already linked elsewhere.
+                    Selecting a staff profile will move it to this user if
+                    already linked elsewhere.
                 </p>
-                <InputError :message="$page.props.errors?.staff_id" class="mt-2" />
+                <InputError
+                    :message="$page.props.errors?.staff_id"
+                    class="mt-2"
+                />
             </div>
         </GlassCard>
 
         <GlassCard>
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+            <h2
+                class="text-sm font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-300"
+            >
                 Roles
             </h2>
             <div class="mt-3 grid gap-2 md:grid-cols-2">
@@ -270,7 +327,9 @@ const hasPermission = (permission: string) =>
 
         <GlassCard>
             <div class="flex items-center justify-between">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                <h2
+                    class="text-sm font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-300"
+                >
                     Direct permissions
                 </h2>
                 <p class="text-xs text-slate-400 dark:text-slate-500">

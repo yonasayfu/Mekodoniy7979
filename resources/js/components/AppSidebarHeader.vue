@@ -18,7 +18,6 @@ const props = withDefaults(
 const showBreadcrumbs = computed(
     () => props.breadcrumbs && props.breadcrumbs.length > 0,
 );
-
 </script>
 
 <template>
@@ -28,14 +27,19 @@ const showBreadcrumbs = computed(
             variant="lite"
             padding="px-4 py-3 sm:px-6"
             content-class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-            class="shadow-none overflow-visible"
+            class="overflow-visible shadow-none"
         >
             <div class="flex items-center gap-3">
                 <SidebarTrigger class="btn-glass btn-glass-sm -ml-1" />
-                <Breadcrumbs v-if="showBreadcrumbs" :breadcrumbs="breadcrumbs" />
+                <Breadcrumbs
+                    v-if="showBreadcrumbs"
+                    :breadcrumbs="breadcrumbs"
+                />
             </div>
 
-            <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+            <div
+                class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end"
+            >
                 <div class="w-full max-w-sm sm:w-auto">
                     <GlobalSearch />
                 </div>

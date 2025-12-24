@@ -1,11 +1,11 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { useForm, usePage, router } from '@inertiajs/vue3';
-import { Button } from '@/components/ui/button'; // Assuming these components exist
 import InputError from '@/components/InputError.vue';
+import { Button } from '@/components/ui/button'; // Assuming these components exist
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { router, useForm, usePage } from '@inertiajs/vue3';
 import axios from 'axios'; // Assuming axios is available globally or imported
+import { computed, ref, watch } from 'vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -25,7 +25,10 @@ const enableTwoFactorAuthentication = () => {
         preserveScroll: true,
         onSuccess: () => {
             // Force a full page visit to ensure the user prop is completely refreshed
-            router.visit(window.location.href, { preserveScroll: true, preserveState: false });
+            router.visit(window.location.href, {
+                preserveScroll: true,
+                preserveState: false,
+            });
         },
         onFinish: () => {
             enablingTwoFactorAuthentication.value = false;
@@ -57,48 +60,65 @@ const disableTwoFactorAuthentication = () => {
 };
 
 const showQrCode = () => {
-    axios.get('/user/two-factor-qr-code').then(response => {
+    axios.get('/user/two-factor-qr-code').then((response) => {
         setupKey.value = response.data.svg;
     });
 };
 
 const showRecoveryCodes = () => {
-    axios.get('/user/two-factor-recovery-codes').then(response => {
+    axios.get('/user/two-factor-recovery-codes').then((response) => {
         twoFactorRecoveryCodes.value = response.data;
     });
 };
 
 const regenerateRecoveryCodes = () => {
-    axios.post('/user/two-factor-recovery-codes').then(response => {
+    axios.post('/user/two-factor-recovery-codes').then((response) => {
         showRecoveryCodes();
     });
 };
 
-const twoFactorEnabled = computed(() => !enablingTwoFactorAuthentication.value && !!user.value?.two_factor_secret);
+const twoFactorEnabled = computed(
+    () =>
+        !enablingTwoFactorAuthentication.value &&
+        !!user.value?.two_factor_secret,
+);
 
-watch(twoFactorEnabled, (enabled) => {
-    if (enabled) {
-        showQrCode();
-        showRecoveryCodes();
-    }
-}, { immediate: true });
+watch(
+    twoFactorEnabled,
+    (enabled) => {
+        if (enabled) {
+            showQrCode();
+            showRecoveryCodes();
+        }
+    },
+    { immediate: true },
+);
 </script>
 
 <template>
     <div>
-        <h2 class="text-lg font-medium text-gray-900">Two Factor Authentication</h2>
+        <h2 class="text-lg font-medium text-gray-900">
+            Two Factor Authentication
+        </h2>
 
         <div class="mt-3 max-w-xl text-sm text-gray-600">
             <p>
-                Add additional security to your account using two factor authentication.
+                Add additional security to your account using two factor
+                authentication.
             </p>
         </div>
 
-        <h3 v-if="twoFactorEnabled && !confirmingTwoFactorAuthentication" class="text-lg font-medium text-gray-900">
+        <h3
+            v-if="twoFactorEnabled && !confirmingTwoFactorAuthentication"
+            class="text-lg font-medium text-gray-900"
+        >
             You have enabled two factor authentication.
         </h3>
 
-        <h3 v-if="twoFactorEnabled && confirmingTwoFactorAuthentication" class="text-lg font-medium text-gray-900">
+        <h3
+            v-if="twoFactorEnabled && confirmingTwoFactorAuthentication"
+            class="text-lg font-medium text-gray-900"
+        >
             Finish enabling two factor authentication.
         </h3>
 
@@ -108,13 +128,19 @@ watch(twoFactorEnabled, (enabled) => {
 
         <div class="mt-3 max-w-xl text-sm text-gray-600">
             <p v-if="twoFactorEnabled && !confirmingTwoFactorAuthentication">
-                Two factor authentication is now enabled. Scan the following QR code using your phone's authenticator application.
+                Two factor authentication is now enabled. Scan the following QR
+                code using your phone's authenticator application.
             </p>
             <p v-if="twoFactorEnabled && confirmingTwoFactorAuthentication">
-                To finish enabling two factor authentication, scan the following QR code using your phone's authenticator application or enter the setup key and provide the generated OTP code.
+                To finish enabling two factor authentication, scan the following
+                QR code using your phone's authenticator application or enter
+                the setup key and provide the generated OTP code.
             </p>
             <p v-if="!twoFactorEnabled">
-                When two factor authentication is enabled, you will be prompted for a secure, random token during authentication. You may retrieve this token from your phone's Google Authenticator application.
+                When two factor authentication is enabled, you will be prompted
+                for a secure, random token during authentication. You may
+                retrieve this token from your phone's Google Authenticator
+                application.
             </p>
         </div>
 
@@ -125,10 +151,14 @@ watch(twoFactorEnabled, (enabled) => {
 
             <div v-if="twoFactorRecoveryCodes.length > 0" class="mt-4">
                 <p class="font-semibold">
-                    Store these recovery codes in a secure password manager. They can be used to recover access to your account if your two factor authentication device is lost.
+                    Store these recovery codes in a secure password manager.
+                    They can be used to recover access to your account if your
+                    two factor authentication device is lost.
                 </p>
 
-                <div class="grid gap-1 max-w-xl mt-4 px-4 py-4 font-mono text-sm bg-gray-100 rounded-lg">
+                <div
+                    class="mt-4 grid max-w-xl gap-1 rounded-lg bg-gray-100 px-4 py-4 font-mono text-sm"
+                >
                     <div v-for="code in twoFactorRecoveryCodes" :key="code">
                         {{ code }}
                     </div>
@@ -142,33 +172,55 @@ watch(twoFactorEnabled, (enabled) => {
                     v-model="confirmationForm.code"
                     type="text"
                     name="code"
-                    class="block mt-1 w-1/2"
+                    class="mt-1 block w-1/2"
                     inputmode="numeric"
                     autofocus
                     autocomplete="one-time-code"
                     @keyup.enter="confirmTwoFactorAuthentication"
                 />
-                <InputError :message="confirmationForm.errors.code" class="mt-2" />
+                <InputError
+                    :message="confirmationForm.errors.code"
+                    class="mt-2"
+                />
             </div>
         </div>
 
         <div class="mt-5">
             <div v-if="!twoFactorEnabled">
-                <Button :disabled="enablingTwoFactorAuthentication" @click="enableTwoFactorAuthentication">
+                <Button
+                    :disabled="enablingTwoFactorAuthentication"
+                    @click="enableTwoFactorAuthentication"
+                >
                     Enable
                 </Button>
             </div>
 
             <div v-else>
-                <Button v-if="confirmingTwoFactorAuthentication" :disabled="confirmationForm.processing" @click="confirmTwoFactorAuthentication">
+                <Button
+                    v-if="confirmingTwoFactorAuthentication"
+                    :disabled="confirmationForm.processing"
+                    @click="confirmTwoFactorAuthentication"
+                >
                     Confirm
                 </Button>
 
-                <Button v-if="twoFactorRecoveryCodes.length > 0 && !confirmingTwoFactorAuthentication" @click="regenerateRecoveryCodes" class="ml-3">
+                <Button
+                    v-if="
+                        twoFactorRecoveryCodes.length > 0 &&
+                        !confirmingTwoFactorAuthentication
+                    "
+                    @click="regenerateRecoveryCodes"
+                    class="ml-3"
+                >
                     Regenerate Recovery Codes
                 </Button>
 
-                <Button v-if="!confirmingTwoFactorAuthentication" :disabled="enablingTwoFactorAuthentication" @click="disableTwoFactorAuthentication" class="ml-3">
+                <Button
+                    v-if="!confirmingTwoFactorAuthentication"
+                    :disabled="enablingTwoFactorAuthentication"
+                    @click="disableTwoFactorAuthentication"
+                    class="ml-3"
+                >
                     Disable
                 </Button>
             </div>

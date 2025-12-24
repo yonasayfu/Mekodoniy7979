@@ -3,8 +3,6 @@ import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Dialog,
     DialogContent,
@@ -13,12 +11,14 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import { Form, Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle, CheckCircle } from 'lucide-vue-next';
+import { CheckCircle, LoaderCircle } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 
 defineProps<{
@@ -98,11 +98,14 @@ watch(isDialogOpen, (open) => {
                 <div class="grid gap-2">
                     <div class="flex items-center justify-between">
                         <Label for="password">Password</Label>
-                        <Dialog v-if="canResetPassword" v-model:open="isDialogOpen">
+                        <Dialog
+                            v-if="canResetPassword"
+                            v-model:open="isDialogOpen"
+                        >
                             <DialogTrigger as-child>
                                 <button
                                     type="button"
-                                    class="rounded-md px-1 text-sm font-medium text-primary transition hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                    class="rounded-md px-1 text-sm font-medium text-primary transition hover:text-primary/80 focus:ring-2 focus:ring-primary/40 focus:outline-none"
                                     :tabindex="5"
                                 >
                                     Forgot password?
@@ -111,45 +114,72 @@ watch(isDialogOpen, (open) => {
                             <DialogContent class="sm:max-w-md">
                                 <DialogHeader>
                                     <DialogTitle class="text-center">
-                                        <span v-if="!isEmailSent">Reset your password</span>
-                                        <span v-else class="flex items-center justify-center gap-2">
-                                            <CheckCircle class="h-5 w-5 text-green-600" />
+                                        <span v-if="!isEmailSent"
+                                            >Reset your password</span
+                                        >
+                                        <span
+                                            v-else
+                                            class="flex items-center justify-center gap-2"
+                                        >
+                                            <CheckCircle
+                                                class="h-5 w-5 text-green-600"
+                                            />
                                             Check your email
                                         </span>
                                     </DialogTitle>
                                     <DialogDescription class="text-center">
                                         <span v-if="!isEmailSent">
-                                            Enter your email address and we'll send you a password reset link.
+                                            Enter your email address and we'll
+                                            send you a password reset link.
                                         </span>
                                         <span v-else>
-                                            We've sent a password reset link to your email address.
+                                            We've sent a password reset link to
+                                            your email address.
                                         </span>
                                     </DialogDescription>
                                 </DialogHeader>
 
                                 <div v-if="!isEmailSent" class="space-y-4">
-                                    <form @submit.prevent="submitForgotPassword" class="space-y-4">
+                                    <form
+                                        @submit.prevent="submitForgotPassword"
+                                        class="space-y-4"
+                                    >
                                         <div class="space-y-2">
-                                            <Label for="forgot-email">Email address</Label>
+                                            <Label for="forgot-email"
+                                                >Email address</Label
+                                            >
                                             <Input
                                                 id="forgot-email"
-                                                v-model="forgotPasswordForm.email"
+                                                v-model="
+                                                    forgotPasswordForm.email
+                                                "
                                                 type="email"
                                                 required
                                                 placeholder="email@example.com"
-                                                :disabled="forgotPasswordForm.processing"
+                                                :disabled="
+                                                    forgotPasswordForm.processing
+                                                "
                                             />
-                                            <InputError :message="forgotPasswordForm.errors.email" />
+                                            <InputError
+                                                :message="
+                                                    forgotPasswordForm.errors
+                                                        .email
+                                                "
+                                            />
                                         </div>
 
                                         <div class="flex gap-2">
                                             <Button
                                                 type="submit"
                                                 class="flex-1"
-                                                :disabled="forgotPasswordForm.processing"
+                                                :disabled="
+                                                    forgotPasswordForm.processing
+                                                "
                                             >
                                                 <LoaderCircle
-                                                    v-if="forgotPasswordForm.processing"
+                                                    v-if="
+                                                        forgotPasswordForm.processing
+                                                    "
                                                     class="mr-2 h-4 w-4 animate-spin"
                                                 />
                                                 Send reset link
@@ -158,7 +188,9 @@ watch(isDialogOpen, (open) => {
                                                 type="button"
                                                 variant="outline"
                                                 @click="closeDialog"
-                                                :disabled="forgotPasswordForm.processing"
+                                                :disabled="
+                                                    forgotPasswordForm.processing
+                                                "
                                             >
                                                 Cancel
                                             </Button>
@@ -168,7 +200,8 @@ watch(isDialogOpen, (open) => {
 
                                 <div v-else class="space-y-4 text-center">
                                     <p class="text-sm text-muted-foreground">
-                                        If you don't see the email, check your spam folder or try again.
+                                        If you don't see the email, check your
+                                        spam folder or try again.
                                     </p>
                                     <Button class="w-full" @click="closeDialog">
                                         Close

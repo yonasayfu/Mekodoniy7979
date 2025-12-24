@@ -162,7 +162,9 @@ const printCurrent = () => {
 };
 
 const stats = computed<StatCard[]>(() => props.stats ?? []);
-const sponsorshipList = computed<SponsorshipSummary[]>(() => props.sponsorships?.data ?? []);
+const sponsorshipList = computed<SponsorshipSummary[]>(
+    () => props.sponsorships?.data ?? [],
+);
 const hasResults = computed<boolean>(() => sponsorshipList.value.length > 0);
 const paginationLinks = computed(() => props.sponsorships?.links ?? []);
 const paginationFrom = computed(() => props.sponsorships?.meta?.from ?? 1);
@@ -214,7 +216,9 @@ const statTone = (tone?: string) => {
 <template>
     <Head title="Sponsorships" />
 
-    <AppLayout :breadcrumbs="[{ title: 'Sponsorships', href: '/sponsorships' }]">
+    <AppLayout
+        :breadcrumbs="[{ title: 'Sponsorships', href: '/sponsorships' }]"
+    >
         <div class="space-y-6">
             <ResourceToolbar
                 title="Sponsorship Management"
@@ -365,8 +369,8 @@ const statTone = (tone?: string) => {
                                 colspan="7"
                                 class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-300"
                             >
-                                No sponsorships match your filters yet. Add a new
-                                sponsorship to get started.
+                                No sponsorships match your filters yet. Add a
+                                new sponsorship to get started.
                             </td>
                         </tr>
                         <tr
@@ -384,7 +388,9 @@ const statTone = (tone?: string) => {
                                 class="px-5 py-4 text-sm font-medium text-slate-900 dark:text-slate-100"
                             >
                                 <Link
-                                    :href="route('users.show', sponsorship.user_id)"
+                                    :href="
+                                        route('users.show', sponsorship.user_id)
+                                    "
                                     class="transition hover:text-indigo-600 dark:hover:text-indigo-300"
                                 >
                                     {{ sponsorship.user_name }}
@@ -395,7 +401,10 @@ const statTone = (tone?: string) => {
                             >
                                 <Link
                                     :href="
-                                        route('elders.show', sponsorship.elder_id)
+                                        route(
+                                            'elders.show',
+                                            sponsorship.elder_id,
+                                        )
                                     "
                                     class="transition hover:text-indigo-600 dark:hover:text-indigo-300"
                                 >
@@ -429,7 +438,12 @@ const statTone = (tone?: string) => {
                             >
                                 <div class="flex justify-end gap-2">
                                     <Link
-                                        :href="route('sponsorships.show', sponsorship.id)"
+                                        :href="
+                                            route(
+                                                'sponsorships.show',
+                                                sponsorship.id,
+                                            )
+                                        "
                                         class="inline-flex items-center rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-indigo-300"
                                         title="View sponsorship details"
                                     >
@@ -438,7 +452,12 @@ const statTone = (tone?: string) => {
                                     </Link>
                                     <Link
                                         v-if="canEdit"
-                                        :href="route('sponsorships.edit', sponsorship.id)"
+                                        :href="
+                                            route(
+                                                'sponsorships.edit',
+                                                sponsorship.id,
+                                            )
+                                        "
                                         class="inline-flex items-center rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-indigo-300"
                                         title="Edit sponsorship"
                                     >

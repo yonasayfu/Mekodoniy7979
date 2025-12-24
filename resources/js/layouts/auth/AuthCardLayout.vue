@@ -12,7 +12,7 @@ defineProps<{
 
 <template>
     <div
-        class="flex min-h-svh flex-col items-center justify-center gap-6 bg-slate-100 p-6 transition-colors dark:bg-slate-950 md:p-10"
+        class="flex min-h-svh flex-col items-center justify-center gap-6 bg-slate-100 p-6 transition-colors md:p-10 dark:bg-slate-950"
     >
         <div class="flex w-full max-w-md flex-col gap-6">
             <Link
@@ -24,7 +24,10 @@ defineProps<{
 
             <GlassCard padding="p-0" content-class="">
                 <div class="px-8 py-8 text-center">
-                    <h1 v-if="title" class="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                    <h1
+                        v-if="title"
+                        class="text-xl font-semibold text-slate-900 dark:text-slate-100"
+                    >
                         {{ title }}
                     </h1>
                     <p

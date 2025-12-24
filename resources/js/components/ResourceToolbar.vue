@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import GlassButton from '@/components/GlassButton.vue';
 import { Link } from '@inertiajs/vue3';
-import { Download, Printer, Plus } from 'lucide-vue-next';
+import { Download, Plus, Printer } from 'lucide-vue-next';
 
 interface Props {
     title: string;
@@ -40,12 +40,19 @@ const handlePrint = () => {
 <template>
     <div class="liquidGlass-wrapper print:hidden">
         <span class="liquidGlass-inner-shine" aria-hidden="true" />
-        <div class="liquidGlass-content flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between">
+        <div
+            class="liquidGlass-content flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between"
+        >
             <div>
-                <h1 class="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                <h1
+                    class="text-2xl font-semibold text-slate-900 dark:text-slate-100"
+                >
                     {{ title }}
                 </h1>
-                <p v-if="description" class="text-sm text-slate-600 dark:text-slate-300">
+                <p
+                    v-if="description"
+                    class="text-sm text-slate-600 dark:text-slate-300"
+                >
                     {{ description }}
                 </p>
             </div>

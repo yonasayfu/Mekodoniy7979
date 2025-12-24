@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
 import ActivityTimeline from '@/components/ActivityTimeline.vue';
 import GlassButton from '@/components/GlassButton.vue';
 import GlassCard from '@/components/GlassCard.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { ArrowLeft, Edit3, Printer } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted } from 'vue';
@@ -72,7 +72,8 @@ const printTimestamp = new Intl.DateTimeFormat(undefined, {
     timeStyle: 'short',
 }).format(new Date());
 
-const buildPrintTitle = () => `Sponsorship Details - ${props.sponsorship.user?.name ?? 'Unknown User'} to ${props.sponsorship.elder?.first_name ?? 'Unknown Elder First Name'} ${props.sponsorship.elder?.last_name ?? 'Unknown Elder Last Name'}`;
+const buildPrintTitle = () =>
+    `Sponsorship Details - ${props.sponsorship.user?.name ?? 'Unknown User'} to ${props.sponsorship.elder?.first_name ?? 'Unknown Elder First Name'} ${props.sponsorship.elder?.last_name ?? 'Unknown Elder Last Name'}`;
 
 const triggerPrint = () => {
     const originalTitle = document.title;
@@ -110,36 +111,72 @@ const printRecord = () => {
 </script>
 
 <template>
-    <Head :title="`Sponsorship - ${props.sponsorship.user?.name ?? 'Unknown User'} to ${props.sponsorship.elder?.first_name ?? 'Unknown Elder First Name'} ${props.sponsorship.elder?.last_name ?? 'Unknown Elder Last Name'}`" />
+    <Head
+        :title="`Sponsorship - ${props.sponsorship.user?.name ?? 'Unknown User'} to ${props.sponsorship.elder?.first_name ?? 'Unknown Elder First Name'} ${props.sponsorship.elder?.last_name ?? 'Unknown Elder Last Name'}`"
+    />
 
     <AppLayout :breadcrumbs="props.breadcrumbs">
         <div class="space-y-6">
             <div class="liquidGlass-wrapper print:hidden">
                 <span class="liquidGlass-inner-shine" aria-hidden="true" />
-                <div class="liquidGlass-content flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between">
+                <div
+                    class="liquidGlass-content flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between"
+                >
                     <div>
-                        <h1 class="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                        <h1
+                            class="text-2xl font-semibold text-slate-900 dark:text-slate-100"
+                        >
                             Sponsorship details
                         </h1>
-<p class="text-sm">Sponsorship by {{ props.sponsorship.user?.name ?? 'Unknown User' }} for {{ props.sponsorship.elder?.first_name ?? 'Unknown Elder First Name' }} {{ props.sponsorship.elder?.last_name ?? 'Unknown Elder Last Name' }}</p>
+                        <p class="text-sm">
+                            Sponsorship by
+                            {{ props.sponsorship.user?.name ?? 'Unknown User' }}
+                            for
+                            {{
+                                props.sponsorship.elder?.first_name ??
+                                'Unknown Elder First Name'
+                            }}
+                            {{
+                                props.sponsorship.elder?.last_name ??
+                                'Unknown Elder Last Name'
+                            }}
+                        </p>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
                         <GlassButton as="span" size="sm" variant="secondary">
-                            <Link :href="route('sponsorships.index')" class="flex items-center gap-2">
+                            <Link
+                                :href="route('sponsorships.index')"
+                                class="flex items-center gap-2"
+                            >
                                 <ArrowLeft class="size-4" />
                                 <span>Back to list</span>
                             </Link>
                         </GlassButton>
 
                         <GlassButton as="span" size="sm" variant="primary">
-                            <Link v-if="props.sponsorship.id" :href="route('sponsorships.edit', props.sponsorship.id)" class="flex items-center gap-2">
+                            <Link
+                                v-if="props.sponsorship.id"
+                                :href="
+                                    route(
+                                        'sponsorships.edit',
+                                        props.sponsorship.id,
+                                    )
+                                "
+                                class="flex items-center gap-2"
+                            >
                                 <Edit3 class="size-4" />
                                 <span>Edit</span>
                             </Link>
                         </GlassButton>
 
-                        <GlassButton size="sm" type="button" class="flex items-center gap-2" variant="warning" @click="printRecord">
+                        <GlassButton
+                            size="sm"
+                            type="button"
+                            class="flex items-center gap-2"
+                            variant="warning"
+                            @click="printRecord"
+                        >
                             <Printer class="size-4" />
                             <span>Print</span>
                         </GlassButton>
@@ -147,59 +184,187 @@ const printRecord = () => {
                 </div>
             </div>
 
-            <div class="hidden print:block text-center text-slate-800">
-                <img src="/images/logo.svg" alt="Logo" class="mx-auto mb-3 h-12 w-auto print-logo" />
+            <div class="hidden text-center text-slate-800 print:block">
+                <img
+                    src="/images/logo.svg"
+                    alt="Logo"
+                    class="print-logo mx-auto mb-3 h-12 w-auto"
+                />
                 <h1 class="text-xl font-semibold">{{ $page.props.name }}</h1>
-                <p class="text-sm">Sponsorship Details: {{ props.sponsorship.user?.name ?? 'Unknown User' }} to {{ props.sponsorship.elder?.first_name ?? 'Unknown Elder First Name' }} {{ props.sponsorship.elder?.last_name ?? 'Unknown Elder Last Name' }}</p>
-                <p class="text-xs text-slate-500">Printed {{ printTimestamp }}</p>
+                <p class="text-sm">
+                    Sponsorship Details:
+                    {{ props.sponsorship.user?.name ?? 'Unknown User' }} to
+                    {{
+                        props.sponsorship.elder?.first_name ??
+                        'Unknown Elder First Name'
+                    }}
+                    {{
+                        props.sponsorship.elder?.last_name ??
+                        'Unknown Elder Last Name'
+                    }}
+                </p>
+                <p class="text-xs text-slate-500">
+                    Printed {{ printTimestamp }}
+                </p>
                 <hr class="print-divider" />
             </div>
 
-            <GlassCard padding="p-0" class="print:shadow-none print:bg-white print:border">
-                <div class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/80 dark:border-slate-800/60 dark:bg-slate-900/60 print:border print:bg-white">
-                    <div class="flex flex-col gap-6 p-6 md:flex-row md:items-start">
-                        <div class="flex-1 grid gap-4 md:grid-cols-2">
+            <GlassCard
+                padding="p-0"
+                class="print:border print:bg-white print:shadow-none"
+            >
+                <div
+                    class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/80 dark:border-slate-800/60 dark:bg-slate-900/60 print:border print:bg-white"
+                >
+                    <div
+                        class="flex flex-col gap-6 p-6 md:flex-row md:items-start"
+                    >
+                        <div class="grid flex-1 gap-4 md:grid-cols-2">
                             <div class="space-y-2">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                <p
+                                    class="text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500"
+                                >
                                     Sponsorship Information
                                 </p>
-                                <div class="space-y-2 rounded-lg border border-slate-200/70 bg-white/70 p-4 text-sm shadow-sm dark:border-slate-800/50 dark:bg-slate-900/60">
+                                <div
+                                    class="space-y-2 rounded-lg border border-slate-200/70 bg-white/70 p-4 text-sm shadow-sm dark:border-slate-800/50 dark:bg-slate-900/60"
+                                >
                                     <div>
-                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Donor</p>
-                                        <p class="font-medium text-slate-900 dark:text-slate-100">
-                                            <Link v-if="props.sponsorship.user?.id" :href="route('users.show', props.sponsorship.user.id)" class="text-indigo-600 hover:underline">
-                                                {{ props.sponsorship.user?.name ?? 'Unknown User' }}
+                                        <p
+                                            class="text-xs tracking-wide text-slate-400 uppercase dark:text-slate-500"
+                                        >
+                                            Donor
+                                        </p>
+                                        <p
+                                            class="font-medium text-slate-900 dark:text-slate-100"
+                                        >
+                                            <Link
+                                                v-if="
+                                                    props.sponsorship.user?.id
+                                                "
+                                                :href="
+                                                    route(
+                                                        'users.show',
+                                                        props.sponsorship.user
+                                                            .id,
+                                                    )
+                                                "
+                                                class="text-indigo-600 hover:underline"
+                                            >
+                                                {{
+                                                    props.sponsorship.user
+                                                        ?.name ?? 'Unknown User'
+                                                }}
                                             </Link>
-                                            <span v-else class="text-slate-500">Unknown User</span>
+                                            <span v-else class="text-slate-500"
+                                                >Unknown User</span
+                                            >
                                         </p>
                                     </div>
                                     <div>
-                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Elder</p>
-                                        <p class="font-medium text-slate-900 dark:text-slate-100">
-                                            <Link v-if="props.sponsorship.elder?.id" :href="route('elders.show', props.sponsorship.elder.id)" class="text-indigo-600 hover:underline">
-                                                {{ props.sponsorship.elder?.first_name ?? 'Unknown Elder First Name' }} {{ props.sponsorship.elder?.last_name ?? 'Unknown Elder Last Name' }}
+                                        <p
+                                            class="text-xs tracking-wide text-slate-400 uppercase dark:text-slate-500"
+                                        >
+                                            Elder
+                                        </p>
+                                        <p
+                                            class="font-medium text-slate-900 dark:text-slate-100"
+                                        >
+                                            <Link
+                                                v-if="
+                                                    props.sponsorship.elder?.id
+                                                "
+                                                :href="
+                                                    route(
+                                                        'elders.show',
+                                                        props.sponsorship.elder
+                                                            .id,
+                                                    )
+                                                "
+                                                class="text-indigo-600 hover:underline"
+                                            >
+                                                {{
+                                                    props.sponsorship.elder
+                                                        ?.first_name ??
+                                                    'Unknown Elder First Name'
+                                                }}
+                                                {{
+                                                    props.sponsorship.elder
+                                                        ?.last_name ??
+                                                    'Unknown Elder Last Name'
+                                                }}
                                             </Link>
-                                            <span v-else class="text-slate-500">Unknown Elder</span>
+                                            <span v-else class="text-slate-500"
+                                                >Unknown Elder</span
+                                            >
                                         </p>
                                     </div>
                                     <div>
-                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Amount</p>
-                                        <p class="font-medium text-slate-900 dark:text-slate-100">{{ props.sponsorship.amount ?? '-' }} ETB</p>
+                                        <p
+                                            class="text-xs tracking-wide text-slate-400 uppercase dark:text-slate-500"
+                                        >
+                                            Amount
+                                        </p>
+                                        <p
+                                            class="font-medium text-slate-900 dark:text-slate-100"
+                                        >
+                                            {{
+                                                props.sponsorship.amount ?? '-'
+                                            }}
+                                            ETB
+                                        </p>
                                     </div>
                                     <div>
-                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Frequency</p>
-                                        <p class="font-medium text-slate-900 dark:text-slate-100">{{ props.sponsorship.frequency ?? '-' }}</p>
+                                        <p
+                                            class="text-xs tracking-wide text-slate-400 uppercase dark:text-slate-500"
+                                        >
+                                            Frequency
+                                        </p>
+                                        <p
+                                            class="font-medium text-slate-900 dark:text-slate-100"
+                                        >
+                                            {{
+                                                props.sponsorship.frequency ??
+                                                '-'
+                                            }}
+                                        </p>
                                     </div>
                                     <div>
-                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Start Date</p>
-                                        <p class="font-medium text-slate-900 dark:text-slate-100">{{ props.sponsorship.start_date ?? '-' }}</p>
+                                        <p
+                                            class="text-xs tracking-wide text-slate-400 uppercase dark:text-slate-500"
+                                        >
+                                            Start Date
+                                        </p>
+                                        <p
+                                            class="font-medium text-slate-900 dark:text-slate-100"
+                                        >
+                                            {{
+                                                props.sponsorship.start_date ??
+                                                '-'
+                                            }}
+                                        </p>
                                     </div>
                                     <div>
-                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">End Date</p>
-                                        <p class="font-medium text-slate-900 dark:text-slate-100">{{ props.sponsorship.end_date ?? '-' }}</p>
+                                        <p
+                                            class="text-xs tracking-wide text-slate-400 uppercase dark:text-slate-500"
+                                        >
+                                            End Date
+                                        </p>
+                                        <p
+                                            class="font-medium text-slate-900 dark:text-slate-100"
+                                        >
+                                            {{
+                                                props.sponsorship.end_date ??
+                                                '-'
+                                            }}
+                                        </p>
                                     </div>
                                     <div>
-                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Status</p>
+                                        <p
+                                            class="text-xs tracking-wide text-slate-400 uppercase dark:text-slate-500"
+                                        >
+                                            Status
+                                        </p>
                                         <span
                                             class="mt-2 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
                                             :class="statusBadgeClass"
@@ -208,8 +373,16 @@ const printRecord = () => {
                                         </span>
                                     </div>
                                     <div>
-                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Notes</p>
-                                        <p class="font-medium text-slate-900 dark:text-slate-100">{{ props.sponsorship.notes ?? '-' }}</p>
+                                        <p
+                                            class="text-xs tracking-wide text-slate-400 uppercase dark:text-slate-500"
+                                        >
+                                            Notes
+                                        </p>
+                                        <p
+                                            class="font-medium text-slate-900 dark:text-slate-100"
+                                        >
+                                            {{ props.sponsorship.notes ?? '-' }}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -223,10 +396,12 @@ const printRecord = () => {
                 variant="lite"
                 content-class="space-y-4"
                 :disable-shine="true"
-                class="print:shadow-none print:bg-white print:border"
+                class="print:border print:bg-white print:shadow-none"
             >
                 <div>
-                    <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    <h2
+                        class="text-sm font-semibold text-slate-900 dark:text-slate-100"
+                    >
                         Recent activity
                     </h2>
                     <p class="text-xs text-slate-500 dark:text-slate-400">

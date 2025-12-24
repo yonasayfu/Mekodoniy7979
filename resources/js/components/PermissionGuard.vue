@@ -13,7 +13,9 @@ const page = usePage<{
     };
 }>();
 
-const permissionSet = computed(() => new Set(page.props.auth?.permissions ?? []));
+const permissionSet = computed(
+    () => new Set(page.props.auth?.permissions ?? []),
+);
 
 const canRender = computed(() => {
     const permissions = permissionSet.value;

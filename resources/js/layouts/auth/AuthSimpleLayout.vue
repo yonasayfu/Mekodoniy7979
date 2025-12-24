@@ -12,7 +12,7 @@ defineProps<{
 
 <template>
     <div
-        class="flex min-h-svh flex-col items-center justify-center bg-gradient-to-b from-slate-50 via-white to-slate-100 p-6 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-10"
+        class="flex min-h-svh flex-col items-center justify-center bg-gradient-to-b from-slate-50 via-white to-slate-100 p-6 transition-colors md:p-10 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
     >
         <div class="w-full max-w-sm">
             <div class="flex flex-col items-center gap-6">
@@ -31,7 +31,10 @@ defineProps<{
                     content-class="space-y-6 text-center"
                 >
                     <div class="space-y-2">
-                        <h1 v-if="title" class="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                        <h1
+                            v-if="title"
+                            class="text-xl font-semibold text-slate-900 dark:text-slate-100"
+                        >
                             {{ title }}
                         </h1>
                         <p
