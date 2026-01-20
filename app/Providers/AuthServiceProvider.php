@@ -27,7 +27,7 @@ class AuthServiceProvider extends ServiceProvider
 
         // Define a super-admin role that bypasses all permissions
         Gate::before(function ($user, $ability) {
-            if ($user->hasRole('super-admin')) {
+            if ($user->hasRole('Super Admin')) {
                 return true;
             }
         });

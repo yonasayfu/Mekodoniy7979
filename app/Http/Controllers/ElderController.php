@@ -124,8 +124,8 @@ class ElderController extends Controller
                 'update' => auth()->user()->can('update', $elder),
                 'delete' => auth()->user()->can('delete', $elder),
                 'create_case_notes' => $user->can('create', [\App\Models\CaseNote::class, $elder]),
-                'update_case_notes' => $user->can('update', \App\Models\CaseNote::class),
-                'delete_case_notes' => $user->can('delete', \App\Models\CaseNote::class),
+                'update_case_notes' => $user->can('create', \App\Models\CaseNote::class),
+                'delete_case_notes' => $user->can('create', \App\Models\CaseNote::class),
             ],
             'breadcrumbs' => [
                 [
@@ -230,6 +230,18 @@ class ElderController extends Controller
         return $this->handleExport($request, Elder::class, ExportConfig::elders(), [
             'label' => 'Elders Directory',
             'type' => 'elders',
+        ]);
+    }
+
+    /**
+     * Display the specified resource for public view.
+     */
+    public function publicShow(Elder $elder)
+    {
+        $elder->load('branch');
+
+        return Inertia::render('Elders/PublicShow', [
+            'elder' => $elder,
         ]);
     }
 }

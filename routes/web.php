@@ -62,6 +62,8 @@ Route::post('/donations', [DonationController::class, 'store'])
     ->middleware('auth')
     ->name('donations.store');
 
+Route::get('/elders/{elder}/public', [ElderController::class, 'publicShow'])->name('elders.public.show');
+
 // Case Notes Routes
 Route::middleware(['auth', 'verified', 'approved'])->group(function () {
     Route::resource('elders.case-notes', CaseNoteController::class)
@@ -100,105 +102,105 @@ Route::middleware('auth')->group(function () {
 
         Route::resource('branches', BranchController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
-            ->middleware('permission:branches.manage');
+            ->middleware('can:branches.manage');
 
         Route::get('elders/export', [ElderController::class, 'export'])->name('elders.export');
 
         Route::resource('elders', ElderController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
-            ->middleware('permission:elders.manage');
+            ->middleware('can:elders.manage');
 
         Route::post('elders/{elder}/lifecycle/status', [ElderLifecycleController::class, 'updateStatus'])
             ->name('elders.lifecycle.status')
-            ->middleware('permission:elders.manage');
+            ->middleware('can:elders.manage');
 
         Route::post('elders/{elder}/health-assessments', [ElderHealthAssessmentController::class, 'store'])
             ->name('elders.health-assessments.store')
-            ->middleware('permission:elders.manage');
+            ->middleware('can:elders.manage');
         Route::put('elders/{elder}/health-assessments/{assessment}', [ElderHealthAssessmentController::class, 'update'])
             ->name('elders.health-assessments.update')
-            ->middleware('permission:elders.manage');
+            ->middleware('can:elders.manage');
         Route::delete('elders/{elder}/health-assessments/{assessment}', [ElderHealthAssessmentController::class, 'destroy'])
             ->name('elders.health-assessments.destroy')
-            ->middleware('permission:elders.manage');
+            ->middleware('can:elders.manage');
 
         Route::post('elders/{elder}/medical-conditions', [ElderMedicalConditionController::class, 'store'])
             ->name('elders.medical-conditions.store')
-            ->middleware('permission:elders.manage');
+            ->middleware('can:elders.manage');
         Route::put('elders/{elder}/medical-conditions/{condition}', [ElderMedicalConditionController::class, 'update'])
             ->name('elders.medical-conditions.update')
-            ->middleware('permission:elders.manage');
+            ->middleware('can:elders.manage');
         Route::delete('elders/{elder}/medical-conditions/{condition}', [ElderMedicalConditionController::class, 'destroy'])
             ->name('elders.medical-conditions.destroy')
-            ->middleware('permission:elders.manage');
+            ->middleware('can:elders.manage');
 
         Route::post('elders/{elder}/medications', [ElderMedicationController::class, 'store'])
             ->name('elders.medications.store')
-            ->middleware('permission:elders.manage');
+            ->middleware('can:elders.manage');
         Route::put('elders/{elder}/medications/{medication}', [ElderMedicationController::class, 'update'])
             ->name('elders.medications.update')
-            ->middleware('permission:elders.manage');
+            ->middleware('can:elders.manage');
         Route::delete('elders/{elder}/medications/{medication}', [ElderMedicationController::class, 'destroy'])
             ->name('elders.medications.destroy')
-            ->middleware('permission:elders.manage');
+            ->middleware('can:elders.manage');
 
         // Case Notes Routes
         Route::get('elders/{elder}/case-notes', [CaseNoteController::class, 'index'])
             ->name('elders.case-notes.index')
-            ->middleware('permission:elders.view_case_notes');
+            ->middleware('can:elders.view_case_notes');
             
         Route::post('elders/{elder}/case-notes', [CaseNoteController::class, 'store'])
             ->name('elders.case-notes.store')
-            ->middleware('permission:elders.manage_case_notes');
+            ->middleware('can:elders.manage_case_notes');
             
         Route::put('elders/{elder}/case-notes/{case_note}', [CaseNoteController::class, 'update'])
             ->name('elders.case-notes.update')
-            ->middleware('permission:elders.manage_case_notes');
+            ->middleware('can:elders.manage_case_notes');
             
         Route::delete('elders/{elder}/case-notes/{case_note}', [CaseNoteController::class, 'destroy'])
             ->name('elders.case-notes.destroy')
-            ->middleware('permission:elders.manage_case_notes');
+            ->middleware('can:elders.manage_case_notes');
             
         Route::put('elders/{elder}/case-notes/{case_note}/restore', [CaseNoteController::class, 'restore'])
             ->name('elders.case-notes.restore')
-            ->middleware('permission:elders.manage_case_notes');
+            ->middleware('can:elders.manage_case_notes');
 
         Route::get('sponsorships/export', [SponsorshipController::class, 'export'])->name('sponsorships.export');
 
         Route::resource('sponsorships', SponsorshipController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
-            ->middleware('permission:sponsorships.manage');
+            ->middleware('can:sponsorships.manage');
 
         Route::get('visits/export', [VisitController::class, 'export'])->name('visits.export');
 
         Route::resource('visits', VisitController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
-            ->middleware('permission:visits.manage');
+            ->middleware('can:visits.manage');
 
         Route::resource('campaigns', CampaignController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
-            ->middleware('permission:campaigns.manage');
+            ->middleware('can:campaigns.manage');
 
         Route::get('reports', [ReportController::class, 'index'])
             ->name('reports.index')
-            ->middleware('permission:reports.view');
+            ->middleware('can:reports.view');
 
         Route::get('reports/donations', [ReportController::class, 'donationsReport'])
             ->name('reports.donations')
-            ->middleware('permission:reports.view');
+            ->middleware('can:reports.view');
 
         // Detailed report routes for dashboard drill-down
         Route::get('reports/detailed', [ReportController::class, 'detailedReport'])
             ->name('reports.detailed')
-            ->middleware('permission:reports.view');
+            ->middleware('can:reports.view');
 
         Route::get('reports/activity', [ReportController::class, 'activityReport'])
             ->name('reports.activity')
-            ->middleware('permission:reports.view');
+            ->middleware('can:reports.view');
 
         Route::get('reports/export', [ReportController::class, 'exportReport'])
             ->name('reports.export')
-            ->middleware('permission:reports.view');
+            ->middleware('can:reports.view');
 
         // New route for Impact Book generation
         Route::get('reports/impact-book', [ReportController::class, 'generateImpactBook'])
@@ -218,15 +220,15 @@ Route::middleware('auth')->group(function () {
         if (app()->environment('local')) {
             Route::get('mailbox', [MailboxController::class, 'index'])
                 ->name('mailbox.index')
-                ->middleware('permission:mailbox.view');
+                ->middleware('can:mailbox.view');
 
             Route::get('mailbox/{message}', [MailboxController::class, 'show'])
                 ->name('mailbox.show')
-                ->middleware('permission:mailbox.view');
+                ->middleware('can:mailbox.view');
 
             Route::post('mailbox/{message}/process', [MailboxController::class, 'process'])
                 ->name('mailbox.process')
-                ->middleware('permission:mailbox.process');
+                ->middleware('can:mailbox.process');
         }
 
         Route::get('exports', [DataExportController::class, 'index'])->name('exports.index');
@@ -245,36 +247,36 @@ Route::middleware('auth')->group(function () {
         Route::post('/two-factor-email-recovery/send', [TwoFactorEmailRecoveryController::class, 'sendRecoveryCode'])->name('two-factor-email-recovery.send');
         Route::post('/two-factor-email-recovery/verify', [TwoFactorEmailRecoveryController::class, 'verifyRecoveryCode'])->name('two-factor-email-recovery.verify');
 
-        Route::middleware('permission:staff.view')->group(function () {
+        Route::middleware('can:staff.view')->group(function () {
             Route::get('staff', [StaffController::class, 'index'])->name('staff.index');
             Route::get('staff/export', [StaffController::class, 'export'])->name('staff.export');
         });
 
         Route::get('staff/create', [StaffController::class, 'create'])
             ->name('staff.create')
-            ->middleware('permission:staff.create');
+            ->middleware('can:staff.create');
 
         Route::post('staff', [StaffController::class, 'store'])
             ->name('staff.store')
-            ->middleware('permission:staff.create');
+            ->middleware('can:staff.create');
 
         Route::get('staff/{staff}', [StaffController::class, 'show'])
             ->name('staff.show')
-            ->middleware('permission:staff.view');
+            ->middleware('can:staff.view');
 
         Route::get('staff/{staff}/edit', [StaffController::class, 'edit'])
             ->name('staff.edit')
-            ->middleware('permission:staff.update');
+            ->middleware('can:staff.update');
 
         Route::put('staff/{staff}', [StaffController::class, 'update'])
             ->name('staff.update')
-            ->middleware('permission:staff.update');
+            ->middleware('can:staff.update');
 
         Route::delete('staff/{staff}', [StaffController::class, 'destroy'])
             ->name('staff.destroy')
-            ->middleware('permission:staff.delete');
+            ->middleware('can:staff.delete');
 
-        Route::middleware('permission:users.manage')->group(function () {
+        Route::middleware('can:users.manage')->group(function () {
             Route::get('users/export', [UserManagementController::class, 'export'])->name('users.export');
             Route::get('users', [UserManagementController::class, 'index'])->name('users.index');
             Route::get('users/create', [UserManagementController::class, 'create'])->name('users.create');
@@ -293,7 +295,7 @@ Route::middleware('auth')->group(function () {
             Route::get('users/{user}/warnings', [UserManagementController::class, 'showWarnings'])->name('users.warnings.index');
         });
 
-        Route::middleware('permission:roles.manage|users.manage')->group(function () {
+        Route::middleware('can:users.manage')->group(function () {
             Route::resource('roles', RoleManagementController::class)->only([
                 'index',
                 'create',

@@ -132,142 +132,80 @@ class RolePermissionSeeder extends Seeder
                 'guard_name' => 'web'
             ]);
         }
+        
+        // Define wildcard permissions
+        $wildcardPermissions = [
+            'users.*',
+            'staff.*',
+            'roles.*',
+            'permissions.*',
+            'branches.*',
+            'elders.*',
+            'sponsorships.*',
+            'donations.*',
+            'visits.*',
+            'reports.*',
+            'campaigns.*',
+            'mailbox.*',
+            'activity_logs.*',
+            'data_exports.*',
+            'system.*',
+            'timeline.*',
+        ];
+
+        foreach ($wildcardPermissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        }
 
         // Define roles with their permissions
         $roles = [
             'Super Admin' => [
-                // All permissions
-                '*'
+                'users.*', 'staff.*', 'roles.*', 'permissions.*', 'branches.*', 'elders.*',
+                'sponsorships.*', 'donations.*', 'visits.*', 'reports.*', 'campaigns.*',
+                'mailbox.*', 'activity_logs.*', 'data_exports.*', 'system.*', 'timeline.*',
             ],
             'Admin' => [
-                'users.*',
-                'staff.*',
-                'roles.view',
-                'roles.update',
-                'permissions.view',
-                'branches.*',
-                'elders.*',
-                'sponsorships.*',
-                'donations.*',
-                'visits.*',
-                'reports.*',
-                'mailbox.*',
-                'activity_logs.*',
-                'data_exports.*',
-                'system.*',
+                'users.*', 'staff.*', 'roles.view', 'roles.update', 'permissions.view',
+                'branches.*', 'elders.*', 'sponsorships.*', 'donations.*', 'visits.*',
+                'reports.*', 'mailbox.*', 'activity_logs.*', 'data_exports.*', 'system.*',
                 'timeline.*',
             ],
             'Manager' => [
-                'users.view',
-                'staff.*',
-                'branches.view',
-                'elders.*',
-                'sponsorships.*',
-                'donations.*',
-                'visits.*',
-                'reports.view',
-                'reports.generate',
-                'reports.export',
-                'reports.operational',
-                'mailbox.view',
-                'mailbox.send',
-                'activity_logs.view',
-                'timeline.view',
-                'timeline.create',
-                'timeline.update',
+                'users.view', 'staff.*', 'branches.view', 'elders.*', 'sponsorships.*',
+                'donations.*', 'visits.*', 'reports.view', 'reports.generate', 'reports.export',
+                'reports.operational', 'mailbox.view', 'mailbox.send', 'activity_logs.view',
+                'timeline.view', 'timeline.create', 'timeline.update',
             ],
             'Branch Coordinator' => [
-                'users.view',
-                'staff.view',
-                'staff.update',
-                'branches.view',
-                'elders.view',
-                'elders.update',
-                'donations.view',
-                'donations.create',
-                'visits.*',
-                'reports.view',
-                'reports.generate',
-                'timeline.view',
-                'timeline.create',
+                'users.view', 'staff.view', 'staff.update', 'branches.view', 'elders.view',
+                'elders.update', 'donations.view', 'donations.create', 'visits.*', 'reports.view',
+                'reports.generate', 'timeline.view', 'timeline.create',
             ],
             'Field Officer' => [
-                'users.view',
-                'staff.view',
-                'elders.view',
-                'donations.view',
-                'visits.view',
-                'visits.create',
-                'visits.update',
-                'timeline.view',
-                'timeline.create',
+                'users.view', 'staff.view', 'elders.view', 'donations.view', 'visits.view',
+                'visits.create', 'visits.update', 'timeline.view', 'timeline.create',
             ],
             'Finance Officer' => [
-                'users.view',
-                'donations.*',
-                'reports.view',
-                'reports.financial',
-                'reports.generate',
-                'reports.export',
-                'data_exports.view',
-                'data_exports.create',
+                'users.view', 'donations.*', 'reports.view', 'reports.financial',
+                'reports.generate', 'reports.export', 'data_exports.view', 'data_exports.create',
             ],
             'Auditor' => [
-                'users.view',
-                'staff.view',
-                'elders.view',
-                'donations.view',
-                'visits.view',
-                'reports.view',
-                'reports.generate',
-                'activity_logs.view',
-                'data_exports.view',
+                'users.view', 'staff.view', 'elders.view', 'donations.view', 'visits.view',
+                'reports.view', 'reports.generate', 'activity_logs.view', 'data_exports.view',
             ],
             'Reporting Analyst' => [
-                'users.view',
-                'staff.view',
-                'elders.view',
-                'donations.view',
-                'visits.view',
-                'reports.view',
-                'reports.generate',
-                'reports.export',
-                'data_exports.view',
+                'users.view', 'staff.view', 'elders.view', 'donations.view', 'visits.view',
+                'reports.view', 'reports.generate', 'reports.export', 'data_exports.view',
             ],
             'External' => [
-                'users.view', // Can view their own profile
-                'sponsorships.view', // Can view their own pledges
-                'donations.view', // Can view their own donations
-                'reports.view', // Can view public reports
+                'users.view', 'sponsorships.view', 'donations.view', 'reports.view',
             ],
         ];
 
         // Create roles and assign permissions
         foreach ($roles as $roleName => $rolePermissions) {
-            $role = Role::firstOrCreate([
-                'name' => $roleName,
-                'guard_name' => 'web'
-            ]);
-
-            if (in_array('*', $rolePermissions)) {
-                // Super Admin gets all permissions
-                $role->syncPermissions(Permission::all());
-            } else {
-                // Expand wildcard permissions
-                $expandedPermissions = [];
-                foreach ($rolePermissions as $permission) {
-                    if (str_contains($permission, '*')) {
-                        $prefix = str_replace('*', '', $permission);
-                        $matchingPermissions = Permission::where('name', 'like', $prefix . '%')
-                            ->pluck('name')
-                            ->toArray();
-                        $expandedPermissions = array_merge($expandedPermissions, $matchingPermissions);
-                    } else {
-                        $expandedPermissions[] = $permission;
-                    }
-                }
-                $role->syncPermissions(array_unique($expandedPermissions));
-            }
+            $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+            $role->syncPermissions($rolePermissions);
         }
 
         // Clear cache again

@@ -28,6 +28,7 @@ The stubs for these files are located in the `stubs/module` directory.
 
 ## 2. Frontend Architecture & Styling
 
+
 The frontend is built with **Vue 3** and **Inertia.js**. Styling is done with **Tailwind CSS**.
 
 ### Styling Conventions

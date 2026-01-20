@@ -1,4 +1,4 @@
-<script setup lang="js">
+<script setup lang="ts">
 import NavMain from '@/components/NavMain.vue';
 import {
     Sidebar,
@@ -12,31 +12,33 @@ import { dashboard } from '@/routes';
 import { Link, usePage } from '@inertiajs/vue3';
 import {
     BookOpen,
+    ClipboardList,
     Download,
     Folder,
+    Globe2,
     LayoutGrid,
+    MessageCircle,
     ScrollText,
+    Settings,
     Shield,
     UserCog,
     Users,
-    ClipboardList,
-    Globe2,
-    MessageCircle,
-    Settings,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
-defineProps({
-    class: {
-        type: String,
-        default: '',
+withDefaults(
+    defineProps<{
+        class?: string;
+    }>(),
+    {
+        class: '',
     },
-});
+);
 
 const page = usePage();
 
-const iconMap = {
+const iconMap: Record<string, any> = {
     LayoutGrid,
     Download,
     ScrollText,
@@ -51,12 +53,26 @@ const iconMap = {
     Settings,
 };
 
-const hasPermission = (permission, permissions = []) => {
+const hasPermission = (
+    permission: string | null,
+    permissions: string[] = [],
+) => {
     if (!permission) {
         return true;
     }
 
-    return permissions.includes(permission);
+    if (permissions.includes(permission)) {
+        return true;
+    }
+
+    return permissions.some((p) => {
+        if (p === '*') return true;
+        if (p.endsWith('.*')) {
+            const prefix = p.slice(0, -2);
+            return permission.startsWith(`${prefix}.`);
+        }
+        return false;
+    });
 };
 
 const sidebarGroups = computed(() => {

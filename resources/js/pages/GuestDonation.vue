@@ -2,18 +2,23 @@
 import GlassButton from '@/components/GlassButton.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import InputError from '@/components/InputError.vue';
-import { useRoute } from '@/composables/useRoute';
-import AppLayout from '@/layouts/AppLayout.vue';
+import GuestLayout from '@/layouts/GuestLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
 
-const route = useRoute();
+const getQueryParam = (param: string) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+};
 
 const form = useForm({
     amount: 70,
     name: '',
     email: '',
     phone: '',
-    elder_id: null as number | null,
+    elder_id: getQueryParam('elder_id')
+        ? parseInt(getQueryParam('elder_id')!)
+        : (null as number | null),
 });
 
 const submit = () => {
@@ -24,7 +29,7 @@ const submit = () => {
 <template>
     <Head title="Donate a Meal" />
 
-    <AppLayout>
+    <GuestLayout>
         <div class="flex flex-col items-center justify-center py-12">
             <div class="w-full max-w-2xl">
                 <GlassCard>
@@ -139,5 +144,5 @@ const submit = () => {
                 </GlassCard>
             </div>
         </div>
-    </AppLayout>
+    </GuestLayout>
 </template>

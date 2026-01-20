@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\DB;
+
 use App\Models\DailyStat;
 use App\Models\Donation;
 use App\Models\Elder;
@@ -265,24 +267,42 @@ class ReportService
      */
     public function getEnhancedAdminDashboard($branchId = null): array
     {
-        // Include sponsorships with relevant statuses (active, pending, etc.)
-        $query = Sponsorship::query()->whereIn('status', ['active', 'pending', 'fulfilled']);
+        // Base query for sponsorships
+        $sponsorshipQuery = Sponsorship::query()->whereIn('status', ['active', 'pending', 'fulfilled']);
         if ($branchId) {
-            $query->whereHas('elder', fn($q) => $q->where('branch_id', $branchId));
+            $sponsorshipQuery->whereHas('elder', fn($q) => $q->where('branch_id', $branchId));
         }
 
-        $sponsorships = $query->with(['user', 'elder'])->get();
+        // 1. Total Sponsorships
+        $totalSponsorships = (clone $sponsorshipQuery)->count();
 
-        // Get total counts
-        $totalSponsorships = $sponsorships->count();
+        // 2. Relationship Distribution
+        $relationshipDistribution = (clone $sponsorshipQuery)
+            ->select('relationship_type', \DB::raw('count(*) as count'))
+            ->groupBy('relationship_type')
+            ->pluck('count', 'relationship_type');
+
+        // 3. Promise Fulfillment
+        $fulfilledCount = (clone $sponsorshipQuery)->where('promise_kept_last_month', true)->count();
+        $promiseFulfillmentRate = $totalSponsorships > 0 ? ($fulfilledCount / $totalSponsorships) * 100 : 0;
+
+        // 4. Missed Payments
+        $missedPayments = (clone $sponsorshipQuery)->where('promise_kept_last_month', false)->count();
+
+        // 5. Monthly Expenses Covered
+        $monthlyExpensesCovered = (clone $sponsorshipQuery)->sum('amount');
+        
+        // Totals for Elders and Donors
         $totalElders = Elder::when($branchId, fn($q) => $q->where('branch_id', $branchId))->count();
-        $totalDonors = User::whereHas('sponsorships', function($q) {
+        
+        $totalDonors = User::whereHas('sponsorships', function($q) use ($branchId) {
             $q->whereIn('status', ['active', 'pending', 'fulfilled']);
-        })->when($branchId, function($q) use ($branchId) {
-            $q->whereHas('sponsorships.elder', fn($sq) => $sq->where('branch_id', $branchId));
+            if ($branchId) {
+                $q->whereHas('elder', fn($sq) => $sq->where('branch_id', $branchId));
+            }
         })->count();
 
-        // Get recent activity (last 10 activities)
+        // Get recent activity (last 10 activities) - this seems fine as it's limited
         $recentActivity = TimelineEvent::with(['user', 'elder'])
             ->latest()
             ->take(10)
@@ -296,14 +316,14 @@ class ReportService
             });
 
         return [
-            'relationship_distribution' => $sponsorships->groupBy('relationship_type')->map->count(),
-            'promise_fulfillment_rate' => $sponsorships->where('promise_kept_last_month', true)->count() / max($sponsorships->count(), 1) * 100,
-            'missed_payments' => $sponsorships->where('promise_kept_last_month', false)->count(),
+            'relationship_distribution' => $relationshipDistribution,
+            'promise_fulfillment_rate' => $promiseFulfillmentRate,
+            'missed_payments' => $missedPayments,
             'featured_matches' => $this->getFeaturedMatches(),
             'guest_donations_today' => Donation::where('donation_type', '!=', 'pledge')
                 ->whereDate('created_at', today())
                 ->sum('amount'),
-            'monthly_expenses_covered' => $sponsorships->sum('amount'),
+            'monthly_expenses_covered' => $monthlyExpensesCovered,
             'total_sponsorships' => $totalSponsorships,
             'total_elders' => $totalElders,
             'total_donors' => $totalDonors,

@@ -105,7 +105,7 @@ return [
      * See https://spatie.be/docs/laravel-permission/v5/basic-usage/wildcard-permissions
      */
 
-    'enable_wildcard_permission' => false,
+    'enable_wildcard_permission' => true,
 
     'cache' => [
 

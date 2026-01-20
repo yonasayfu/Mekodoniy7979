@@ -15,7 +15,7 @@ index.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see \App/Http/Controllers\CaseNoteController::index
+* @see \App/Http/Controllers/CaseNoteController::index
 * @see app/Http/Controllers/CaseNoteController.php:19
 * @route '/elders/{elder}/case-notes'
 */
@@ -63,6 +63,41 @@ index.get = (args: { elder: number | { id: number } } | [elder: number | { id: n
 * @route '/elders/{elder}/case-notes'
 */
 index.head = (args: { elder: number | { id: number } } | [elder: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+/**
+* @see \App/Http/Controllers\CaseNoteController::index
+* @see app/Http/Controllers/CaseNoteController.php:19
+* @route '/elders/{elder}/case-notes'
+*/
+const indexForm = (args: { elder: number | { id: number } } | [elder: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App/Http/Controllers\CaseNoteController::index
+* @see app/Http/Controllers/CaseNoteController.php:19
+* @route '/elders/{elder}/case-notes'
+*/
+indexForm.get = (args: { elder: number | { id: number } } | [elder: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App/Http/Controllers\CaseNoteController::index
+* @see app/Http/Controllers/CaseNoteController.php:19
+* @route '/elders/{elder}/case-notes'
+*/
+indexForm.head = (args: { elder: number | { id: number } } | [elder: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: index.url(args, {
         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
             _method: 'HEAD',
@@ -174,7 +209,7 @@ updateWithCaseNote.definition = {
 * @see app/Http/Controllers/CaseNoteController.php:59
 * @route '/elders/{elder}/case-notes/{caseNote}'
 */
-update.url = (args: { elder: number | { id: number }, caseNote: number | { id: number } } | [elder: number | { id: number }, caseNote: number | { id: number } ], options?: RouteQueryOptions) => {
+updateWithCaseNote.url = (args: { elder: number | { id: number }, caseNote: number | { id: number } } | [elder: number | { id: number }, caseNote: number | { id: number } ], options?: RouteQueryOptions) => {
     if (Array.isArray(args)) {
         args = {
             elder: args[0],
@@ -200,7 +235,7 @@ update.url = (args: { elder: number | { id: number }, caseNote: number | { id: n
 }
 
 /**
-* @see \App\Http/Controllers\CaseNoteController::update
+* @see \App/Http/Controllers\CaseNoteController::update
 * @see app/Http/Controllers/CaseNoteController.php:59
 * @route '/elders/{elder}/case-notes/{caseNote}'
 */
@@ -282,7 +317,7 @@ update.definition = {
 } satisfies RouteDefinition<["put"]>
 
 /**
-* @see \App\Http/Controllers\CaseNoteController::update
+* @see \App/Http/Controllers\CaseNoteController::update
 * @see app/Http/Controllers/CaseNoteController.php:59
 * @route '/elders/{elder}/case-notes/{case_note}'
 */

@@ -14,7 +14,7 @@ defineProps<{
     <div
         class="flex min-h-svh flex-col items-center justify-center gap-6 bg-slate-100 p-6 transition-colors md:p-10 dark:bg-slate-950"
     >
-        <div class="flex w-full max-w-md flex-col gap-6">
+        <div class="flex w-full max_w-md flex-col gap-6">
             <Link
                 :href="home()"
                 class="flex items-center gap-2 self-center font-medium text-slate-700 transition-colors hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
