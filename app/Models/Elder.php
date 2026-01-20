@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use App\Models\CaseNote;
+use Illuminate\Support\Str;
 
 class Elder extends Model
 {
@@ -44,6 +45,10 @@ class Elder extends Model
         'date_of_birth' => 'date',
         'admitted_at' => 'datetime',
         'deceased_at' => 'datetime',
+    ];
+
+    protected $appends = [
+        'profile_photo_url',
     ];
 
     /**
@@ -133,5 +138,24 @@ class Elder extends Model
     public function getNameAttribute(): string
     {
         return $this->first_name . ' ' . $this->last_name;
+    }
+
+    public function getProfilePhotoUrlAttribute(): string
+    {
+        $path = $this->profile_picture_path;
+
+        if (! $path || Str::contains($path, 'placeholder.com')) {
+            return asset('images/monk-mekodoniya.jpg');
+        }
+
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
+        }
+
+        if (Str::startsWith($path, '/')) {
+            return asset(ltrim($path, '/'));
+        }
+
+        return asset('storage/'.$path);
     }
 }

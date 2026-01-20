@@ -1,21 +1,26 @@
 <script setup lang="ts">
+import GuestLayout from '@/layouts/GuestLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
     CalendarHeart,
     DollarSign,
     Heart,
+    HeartHandshake,
     User,
     UserCheck,
     Users,
 } from 'lucide-vue-next'; // Import User icon
 import { onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
 import { route } from 'ziggy-js';
+import PreSponsorshipForm from '@/components/PreSponsorshipForm.vue';
+
+const preSponsorshipFormRef = ref<InstanceType<typeof PreSponsorshipForm> | null>(null);
 
 interface WallOfLoveEntry {
     donor_name: string;
     elder_name: string;
     elder_id: number;
-    elder_profile_picture: string | null;
+    elder_profile_photo_url: string | null;
     sponsorship_date: string;
 }
 
@@ -28,7 +33,7 @@ interface LiveCounters {
 interface ElderSummary {
     id: number;
     full_name: string;
-    profile_picture_path: string | null;
+    profile_photo_url: string;
     priority_level: 'low' | 'medium' | 'high';
 }
 
@@ -37,6 +42,54 @@ interface PaginationLink {
     label: string;
     active: boolean;
 }
+
+type RelationshipPreset = 'father' | 'mother' | 'brother' | 'sister';
+
+const relationshipCards: Array<{
+    title: string;
+    label: string;
+    description: string;
+    highlight: string;
+    accent: string;
+    relation: RelationshipPreset;
+}> = [
+    {
+        title: 'Become a Father',
+        label: 'Father',
+        description:
+            'Offer protection, mentorship, and monthly essentials to an elder who needs a fatherly hand.',
+        highlight: 'Suggested: 2,000 ETB / month',
+        accent: 'from-blue-500/10 to-blue-500/5',
+        relation: 'father',
+    },
+    {
+        title: 'Become a Mother',
+        label: 'Mother',
+        description:
+            'Provide nourishment, warmth, and companionship much like a caring mother would.',
+        highlight: 'Suggested: 1,800 ETB / month',
+        accent: 'from-rose-500/10 to-rose-500/5',
+        relation: 'mother',
+    },
+    {
+        title: 'Become a Brother',
+        label: 'Brother',
+        description:
+            'Stand beside an elder as a dependable brother—cover visits, medicine, and small joys.',
+        highlight: 'Suggested: 1,200 ETB / month',
+        accent: 'from-emerald-500/10 to-emerald-500/5',
+        relation: 'brother',
+    },
+    {
+        title: 'Become a Sister',
+        label: 'Sister',
+        description:
+            'Share empathy and light as a sister sponsor by funding comfort kits and wellness checks.',
+        highlight: 'Suggested: 1,000 ETB / month',
+        accent: 'from-purple-500/10 to-purple-500/5',
+        relation: 'sister',
+    },
+];
 
 const props = defineProps<{
     wallOfLove: WallOfLoveEntry[];
@@ -62,6 +115,7 @@ const props = defineProps<{
 
 const currentPriority = ref(props.filters.priority || '');
 const currentGender = ref(props.filters.gender || '');
+const heroBackgroundVideo = '/images/6096-188704568_small.mp4';
 
 const priorityOptions = [
     { value: '', label: 'All Priorities' },
@@ -102,6 +156,42 @@ const nextHeroSlide = () => {
 
 const goToHeroSlide = (index: number) => {
     heroCurrentSlide.value = index;
+};
+
+const scrollToAnchor = (selector: string) => {
+    if (!selector.startsWith('#')) {
+        return;
+    }
+
+    const section = document.querySelector(selector);
+    if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+    }
+};
+
+const openRelationshipForm = (type: RelationshipPreset) => {
+    preSponsorshipFormRef.value?.openModal(type);
+};
+
+const handleHeroCTA = () => {
+    const slide = props.heroSlides[heroCurrentSlide.value];
+    if (!slide?.cta_link) {
+        openRelationshipForm('father');
+        return;
+    }
+
+    if (slide.cta_link.startsWith('modal:')) {
+        const relation = slide.cta_link.replace('modal:', '') as RelationshipPreset;
+        openRelationshipForm(relation);
+        return;
+    }
+
+    if (slide.cta_link.startsWith('#')) {
+        scrollToAnchor(slide.cta_link);
+        return;
+    }
+
+    router.visit(slide.cta_link);
 };
 
 onMounted(() => {
@@ -235,9 +325,12 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
             <div
                 class="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8"
             >
-                <Link :href="route('home')" class="flex items-center space-x-2">
+                <Link
+                    :href="route('home', undefined, false)"
+                    class="flex items-center space-x-2"
+                >
                     <img
-                        src="/images/mekodonia-logo.png"
+                        src="/images/mekodonia-logo.svg"
                         alt="Mekodonia Logo"
                         class="h-8 w-auto"
                     />
@@ -249,20 +342,20 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                 <div class="flex items-center space-x-4">
                     <Link
                         v-if="$page.props.auth.user"
-                        :href="route('dashboard')"
+                        :href="route('dashboard', undefined, false)"
                         class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-900"
                     >
                         Dashboard
                     </Link>
                     <template v-else>
                         <Link
-                            :href="route('login')"
+                            :href="route('login', undefined, false)"
                             class="text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                         >
                             Log in
                         </Link>
                         <Link
-                            :href="route('register')"
+                            :href="route('register', undefined, false)"
                             class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-900"
                         >
                             Register
@@ -275,51 +368,144 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
         <main>
             <!-- Hero Section -->
             <section
-                class="relative flex h-screen items-center justify-center bg-cover bg-center text-white"
+                v-if="heroSlides.length"
+                class="relative flex min-h-[90vh] items-center justify-center overflow-hidden bg-cover bg-center text-white"
                 :style="{
                     backgroundImage: `url(${heroSlides[heroCurrentSlide].image})`,
                 }"
             >
-                <div class="absolute inset-0 bg-black/60"></div>
-                <div class="relative z-10 mx-auto max-w-4xl p-8 text-center">
-                    <h1
-                        class="text-5xl leading-tight font-extrabold md:text-6xl"
+                <video
+                    v-if="heroBackgroundVideo"
+                    :src="heroBackgroundVideo"
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                    class="absolute inset-0 h-full w-full object-cover"
+                ></video>
+                <div class="absolute inset-0 bg-black/75"></div>
+                <div
+                    class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
+                ></div>
+                <div class="relative z-10 w-full px-4">
+                    <div
+                        class="mx-auto max-w-3xl rounded-3xl bg-black/60 p-6 text-center shadow-2xl backdrop-blur-sm md:p-10"
                     >
-                        {{ heroSlides[heroCurrentSlide].title }}
-                    </h1>
-                    <p class="mt-4 text-xl md:text-2xl">
-                        {{ heroSlides[heroCurrentSlide].description }}
-                    </p>
-                    <div class="mt-8 flex justify-center space-x-4">
-                        <Link
-                            :href="heroSlides[heroCurrentSlide].cta_link"
-                            class="rounded-lg bg-indigo-600 px-8 py-3 text-lg font-semibold shadow-lg transition-all hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                        <p
+                            class="text-xs uppercase tracking-[0.35em] text-indigo-200"
                         >
-                            {{ heroSlides[heroCurrentSlide].cta_text }}
-                        </Link>
-                        <Link
-                            href="#how-it-works"
-                            class="rounded-lg bg-white px-8 py-3 text-lg font-semibold text-gray-800 shadow-lg transition-all hover:bg-gray-100 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                            Mekodonia Home Connect
+                        </p>
+                        <h1
+                            class="mt-4 text-4xl font-extrabold leading-snug text-white md:text-6xl"
                         >
-                            Learn More
-                        </Link>
+                            {{ heroSlides[heroCurrentSlide].title }}
+                        </h1>
+                        <p
+                            class="mt-4 text-base leading-relaxed text-slate-100 md:text-2xl"
+                        >
+                            {{ heroSlides[heroCurrentSlide].description }}
+                        </p>
+                        <div
+                            class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center"
+                        >
+                            <button
+                                @click="handleHeroCTA"
+                                class="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-8 py-3 text-lg font-semibold text-white shadow-lg transition hover:scale-[1.01] hover:from-indigo-600 hover:to-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none sm:w-auto"
+                            >
+                                {{ heroSlides[heroCurrentSlide].cta_text }}
+                            </button>
+                            <Link
+                                href="#how-it-works"
+                                class="w-full rounded-xl border border-white/30 px-8 py-3 text-lg font-semibold text-white/90 shadow-lg transition hover:bg-white/10 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none sm:w-auto"
+                            >
+                                Learn More
+                            </Link>
+                        </div>
                     </div>
                 </div>
                 <!-- Slider Indicators -->
                 <div
-                    class="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 space-x-2"
+                    class="absolute bottom-6 left-0 right-0 z-10 flex justify-center gap-2"
                 >
                     <button
                         v-for="(_, index) in heroSlides"
                         :key="`dot-${index}`"
                         @click="goToHeroSlide(index)"
                         :class="[
-                            'h-3 w-3 rounded-full transition-colors duration-300',
+                            'h-3 w-3 rounded-full border border-white/40 transition-colors duration-300',
                             heroCurrentSlide === index
-                                ? 'bg-indigo-500'
-                                : 'bg-white/50 hover:bg-white',
+                                ? 'bg-indigo-400'
+                                : 'bg-white/30 hover:bg-white/60',
                         ]"
                     ></button>
+                </div>
+            </section>
+            <section
+                v-else
+                class="flex h-[60vh] items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-600 px-6 text-center text-white"
+            >
+                <div>
+                    <h1 class="text-4xl font-bold">Mekodonia Home Connect</h1>
+                    <p class="mt-4 text-lg">
+                        Add hero slides from the dashboard to welcome donors with live stories.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Relationship CTA Section -->
+            <section
+                id="relationship-cta"
+                class="bg-white py-16 dark:bg-gray-900 shadow-inner"
+            >
+                <div class="container mx-auto px-4">
+                    <div class="text-center">
+                        <h2 class="text-4xl font-bold text-gray-800 dark:text-white">
+                            Choose Your Connection
+                        </h2>
+                        <p class="mt-3 text-lg text-gray-600 dark:text-gray-300">
+                            Select the relationship that resonates with you and start supporting an elder instantly.
+                        </p>
+                    </div>
+                    <div class="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+                        <div
+                            v-for="card in relationshipCards"
+                            :key="card.relation"
+                            class="flex flex-col rounded-2xl border border-gray-100 bg-gradient-to-br p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-700/50 dark:bg-slate-900/70"
+                            :class="card.accent"
+                        >
+                            <div
+                                class="flex size-12 items-center justify-center rounded-xl bg-white/70 text-indigo-600 shadow-inner dark:bg-white/10 dark:text-indigo-300"
+                            >
+                                <HeartHandshake class="size-6" />
+                            </div>
+                            <h3 class="mt-4 text-2xl font-semibold text-gray-900 dark:text-white">
+                                {{ card.title }}
+                            </h3>
+                            <p class="mt-2 flex-1 text-sm text-gray-600 dark:text-gray-300">
+                                {{ card.description }}
+                            </p>
+                            <p class="mt-4 text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-300">
+                                {{ card.highlight }}
+                            </p>
+                            <div class="mt-6 flex flex-col gap-3">
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                                    @click="openRelationshipForm(card.relation)"
+                                >
+                                    Start as a {{ card.label }}
+                                </button>
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center justify-center rounded-lg border border-indigo-200 px-4 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 dark:border-indigo-500/30 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
+                                    @click="scrollToAnchor('#elders-gallery')"
+                                >
+                                    Browse Elders
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -537,20 +723,17 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                                 :key="elder.id"
                                 class="overflow-hidden rounded-xl bg-white shadow-lg transition-all hover:shadow-xl dark:bg-gray-700"
                             >
-                                <Link :href="route('elders.show', elder.id)">
+                                <Link
+                                    :href="
+                                        route('elders.public.show', elder.id, false)
+                                    "
+                                >
                                     <div class="relative h-56 w-full">
                                         <img
-                                            v-if="elder.profile_picture_path"
-                                            :src="`/storage/${elder.profile_picture_path}`"
+                                            :src="elder.profile_photo_url"
                                             class="h-full w-full object-cover"
-                                            alt="Elder"
+                                            alt="Elder profile"
                                         />
-                                        <div
-                                            v-else
-                                            class="flex h-full w-full items-center justify-center bg-gray-200 text-gray-500 dark:bg-gray-600 dark:text-gray-400"
-                                        >
-                                            <User class="size-20" />
-                                        </div>
                                         <div
                                             class="absolute top-4 right-4 rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold text-white uppercase"
                                         >
@@ -658,17 +841,13 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                                     class="relative mx-auto h-32 w-32 overflow-hidden rounded-full border-4 border-indigo-500 shadow-md"
                                 >
                                     <img
-                                        v-if="match.elder_profile_picture"
-                                        :src="`/storage/${match.elder_profile_picture}`"
+                                        :src="
+                                            match.elder_profile_photo_url ??
+                                            '/images/monk-mekodoniya.jpg'
+                                        "
                                         alt="Elder Profile"
                                         class="h-full w-full object-cover"
                                     />
-                                    <div
-                                        v-else
-                                        class="flex h-full w-full items-center justify-center bg-gray-200 text-gray-500 dark:bg-gray-600 dark:text-gray-400"
-                                    >
-                                        <User class="size-16" />
-                                    </div>
                                 </div>
                                 <p
                                     class="mt-6 text-xl font-semibold text-gray-800 dark:text-white"
@@ -744,7 +923,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                             Sponsor an Elder
                         </Link>
                         <Link
-                            href="#guest-donation-form"
+                            :href="route('guest.donation', undefined, false)"
                             class="rounded-lg border border-white px-8 py-3 text-lg font-semibold text-white shadow-lg transition-all hover:bg-white/20 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:outline-none"
                         >
                             Make a One-Time Donation
@@ -838,4 +1017,5 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
             </div>
         </footer>
     </div>
+    <PreSponsorshipForm ref="preSponsorshipFormRef" />
 </template>

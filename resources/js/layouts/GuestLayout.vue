@@ -18,9 +18,12 @@ const user = computed(() => page.props.auth?.user);
             <div
                 class="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8"
             >
-                <Link :href="route('home')" class="flex items-center space-x-2">
+                <Link
+                    :href="route('home', undefined, false)"
+                    class="flex items-center space-x-2"
+                >
                     <img
-                        src="/images/mekodonia-logo.png"
+                        src="/images/mekodonia-logo.svg"
                         alt="Mekodonia Logo"
                         class="h-8 w-auto"
                     />
@@ -32,20 +35,20 @@ const user = computed(() => page.props.auth?.user);
                 <div class="flex items-center space-x-4">
                     <Link
                         v-if="user"
-                        :href="route('dashboard')"
+                        :href="route('dashboard', undefined, false)"
                         class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-900"
                     >
                         Dashboard
                     </Link>
                     <template v-else>
                         <Link
-                            :href="route('login')"
+                            :href="route('login', undefined, false)"
                             class="text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                         >
                             Log in
                         </Link>
                         <Link
-                            :href="route('register')"
+                            :href="route('register', undefined, false)"
                             class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-900"
                         >
                             Register

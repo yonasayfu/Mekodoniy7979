@@ -13,9 +13,11 @@ import { Link, usePage } from '@inertiajs/vue3';
 import {
     BookOpen,
     ClipboardList,
+    DollarSign,
     Download,
     Folder,
     Globe2,
+    Heart,
     LayoutGrid,
     MessageCircle,
     ScrollText,
@@ -51,6 +53,8 @@ const iconMap: Record<string, any> = {
     Globe2,
     MessageCircle,
     Settings,
+    DollarSign,
+    Heart,
 };
 
 const hasPermission = (
@@ -77,7 +81,49 @@ const hasPermission = (
 
 const sidebarGroups = computed(() => {
     const permissions = page.props.auth?.permissions ?? [];
-    const groups = page.props.navigation?.sidebar ?? [];
+    const roles = page.props.auth?.roles ?? [];
+    let groups = page.props.navigation?.sidebar ?? [];
+
+    if (roles.includes('External') || roles.includes('Donor')) {
+        groups = [
+            {
+                id: 'donor-quick',
+                label: 'My Giving',
+                items: [
+                    {
+                        title: 'Donor Dashboard',
+                        href: '/donors/dashboard',
+                        icon: 'Heart',
+                        permission: null,
+                    },
+                    {
+                        title: 'Impact Reports',
+                        href: '/reports',
+                        icon: 'ScrollText',
+                        permission: null,
+                    },
+                    {
+                        title: 'Make a Donation',
+                        href: '/guest-donation',
+                        icon: 'DollarSign',
+                        permission: null,
+                    },
+                ],
+            },
+            {
+                id: 'support',
+                label: 'Support',
+                items: [
+                    {
+                        title: 'Contact Team',
+                        href: '/notifications',
+                        icon: 'MessageCircle',
+                        permission: null,
+                    },
+                ],
+            },
+        ];
+    }
 
     return groups
         .map((group, index) => {

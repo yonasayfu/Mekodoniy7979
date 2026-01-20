@@ -38,7 +38,14 @@ class DonorDashboardController extends Controller
                 ->where('status', 'completed');
         })
             ->select('id', 'first_name', 'last_name', 'profile_picture_path', 'priority_level')
-            ->get();
+            ->get()
+            ->map(fn (Elder $elder) => [
+                'id' => $elder->id,
+                'first_name' => $elder->first_name,
+                'last_name' => $elder->last_name,
+                'priority_level' => $elder->priority_level,
+                'profile_photo_url' => $elder->profile_photo_url,
+            ]);
 
         // Fetch timeline events for the authenticated user
         $timelineEvents = TimelineEvent::where('user_id', $user->id)

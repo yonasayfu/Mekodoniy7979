@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import GlassCard from '@/components/GlassCard.vue';
-import { home } from '@/routes';
 import type { AppPageProps } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 
@@ -24,7 +23,7 @@ defineProps<{
         >
             <div class="absolute inset-0 bg-slate-900/95" />
             <Link
-                :href="home()"
+                :href="route('home')"
                 class="relative z-20 flex items-center text-lg font-medium"
             >
                 <AppLogoIcon class="mr-2 size-8 fill-current text-white" />

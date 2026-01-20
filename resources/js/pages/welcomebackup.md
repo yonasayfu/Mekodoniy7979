@@ -237,7 +237,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
             >
                 <Link :href="route('home')" class="flex items-center space-x-2">
                     <img
-                        src="/images/mekodonia-logo.png"
+                        src="/images/mekodonia-logo.svg"
                         alt="Mekodonia Logo"
                         class="h-8 w-auto"
                     />
@@ -839,4 +839,3 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
         </footer>
     </div>
 </template>
-

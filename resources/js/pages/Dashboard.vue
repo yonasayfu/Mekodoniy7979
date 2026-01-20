@@ -3,14 +3,17 @@ import GlassCard from '@/components/GlassCard.vue';
 import MetricCard from '@/components/dashboard/MetricCard.vue';
 import TrendSparkline from '@/components/dashboard/TrendSparkline.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { useRoute } from '@/composables/useRoute';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItemType } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import {
     AlertTriangle,
     CalendarClock,
+    ClipboardList,
     Clock,
     Download as DownloadIcon,
+    Megaphone,
     ShieldCheck,
     UserCheck,
     Users,
@@ -29,6 +32,16 @@ type Metric = {
     icon?: string;
     href?: string; // Added href prop
 };
+
+type QuickLink = {
+    label: string;
+    description: string;
+    href: string;
+    icon: typeof Users;
+    tone: string;
+};
+
+const route = useRoute();
 
 const props = defineProps<{
     metrics: Metric[];
@@ -75,6 +88,51 @@ const iconRegistry = {
     Download: DownloadIcon,
 } as const;
 
+const quickLinks = computed<QuickLink[]>(() => [
+    {
+        label: 'Manage Elders',
+        description: 'Update profiles, health notes, and priority flags.',
+        href: route('elders.index'),
+        icon: Users,
+        tone: 'text-blue-600 dark:text-blue-300',
+    },
+    {
+        label: 'Review Sponsorships',
+        description: 'Approve matches and monitor commitments.',
+        href: route('sponsorships.index'),
+        icon: ClipboardList,
+        tone: 'text-rose-600 dark:text-rose-300',
+    },
+    {
+        label: 'Plan Visits',
+        description: 'Confirm upcoming visits and send reminders.',
+        href: route('visits.index'),
+        icon: CalendarClock,
+        tone: 'text-emerald-600 dark:text-emerald-300',
+    },
+    {
+        label: 'Campaign Builder',
+        description: 'Launch regional drives and track momentum.',
+        href: route('campaigns.index'),
+        icon: Megaphone,
+        tone: 'text-purple-600 dark:text-purple-300',
+    },
+    {
+        label: 'Team & Roles',
+        description: 'Invite staff and assign permissions safely.',
+        href: route('staff.index'),
+        icon: ShieldCheck,
+        tone: 'text-amber-600 dark:text-amber-300',
+    },
+    {
+        label: 'Reports Hub',
+        description: 'View performance, impact, and cash flow.',
+        href: route('reports.index'),
+        icon: DownloadIcon,
+        tone: 'text-slate-600 dark:text-slate-300',
+    },
+]);
+
 const resolvedMetrics = computed(() =>
     (props.metrics ?? []).map((metric) => ({
         ...metric,
@@ -112,6 +170,27 @@ const maintenanceTone = (priority: string) => {
                     :icon="metric.icon ?? undefined"
                     :href="metric.href ?? undefined"
                 />
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <Link
+                    v-for="link in quickLinks"
+                    :key="link.href"
+                    :href="link.href"
+                    class="flex h-full flex-col rounded-2xl border border-slate-200/60 bg-white/80 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-slate-800/50 dark:bg-slate-900/60"
+                >
+                    <div
+                        class="inline-flex size-10 items-center justify-center rounded-xl bg-slate-100/80 dark:bg-slate-800/80"
+                    >
+                        <component :is="link.icon" class="size-5" :class="link.tone" />
+                    </div>
+                    <h3 class="mt-4 text-lg font-semibold text-slate-900 dark:text-white">
+                        {{ link.label }}
+                    </h3>
+                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                        {{ link.description }}
+                    </p>
+                </Link>
             </div>
 
             <div class="grid gap-4 lg:grid-cols-3">

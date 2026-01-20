@@ -43,6 +43,7 @@ const props = defineProps<{
         phone: string | null;
         bio: string | null;
         profile_picture_path: string | null;
+        profile_photo_url: string | null;
         priority_level: 'low' | 'medium' | 'high';
         health_status: string | null;
         special_needs: string | null;
@@ -75,9 +76,7 @@ const form = useForm({
 });
 
 const existingProfilePictureUrl = ref<string | null>(
-    props.elder.profile_picture_path
-        ? `/storage/${props.elder.profile_picture_path}`
-        : null,
+    props.elder.profile_photo_url ?? null,
 );
 const existingVideoUrl = ref<string | null>(
     props.elder.video_url ? `/storage/${props.elder.video_url}` : null,

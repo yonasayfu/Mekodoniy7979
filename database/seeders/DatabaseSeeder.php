@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             BranchSeeder::class,
             UserSeeder::class,
             MekodoniaSeeder::class,
+            HeroSlideSeeder::class,
             CampaignSeeder::class,
             DonationSeeder::class,
             ElderSeeder::class,
@@ -28,6 +29,7 @@ class DatabaseSeeder extends Seeder
             TimelineEventSeeder::class,
             ActivityLogSeeder::class,
             SponsorshipSeeder::class,
+            PreSponsorshipSeeder::class,
         ]);
     }
 }

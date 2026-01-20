@@ -200,6 +200,11 @@ class RolePermissionSeeder extends Seeder
             'External' => [
                 'users.view', 'sponsorships.view', 'donations.view', 'reports.view',
             ],
+            'Donor' => [
+                'donations.view',
+                'reports.view',
+                'reports.generate',
+            ],
         ];
 
         // Create roles and assign permissions

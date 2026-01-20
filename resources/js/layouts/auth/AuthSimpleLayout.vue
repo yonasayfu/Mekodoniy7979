@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import GlassCard from '@/components/GlassCard.vue';
-import { home } from '@/routes';
 import { Link } from '@inertiajs/vue3';
 
 defineProps<{
@@ -17,7 +16,7 @@ defineProps<{
         <div class="w-full max-w-sm">
             <div class="flex flex-col items-center gap-6">
                 <Link
-                    :href="home()"
+                    :href="route('home')"
                     class="flex items-center gap-2 font-medium text-slate-700 transition-colors hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
                 >
                     <span class="flex h-10 w-10 items-center justify-center">

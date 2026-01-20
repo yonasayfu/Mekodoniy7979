@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRoute } from '@/composables/useRoute';
 import AuthLayout from '@/layouts/AuthLayout.vue';
-import { login } from '@/routes';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 
@@ -73,7 +72,7 @@ const submit = () => {
 
             <div class="space-x-1 text-center text-sm text-muted-foreground">
                 <span>Or, return to</span>
-                <TextLink :href="login()">log in</TextLink>
+                <TextLink :href="route('login')">log in</TextLink>
             </div>
         </div>
     </AuthLayout>

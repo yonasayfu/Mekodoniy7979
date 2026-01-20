@@ -6,6 +6,7 @@ use App\Models\Elder;
 use App\Models\Sponsorship;
 use App\Services\CountersService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,7 +27,7 @@ class WelcomeController extends Controller
                 'donor_name' => $sponsorship->user->name,
                 'elder_name' => $sponsorship->elder->first_name . ' ' . $sponsorship->elder->last_name,
                 'elder_id' => $sponsorship->elder->id,
-                'elder_profile_picture' => $sponsorship->elder->profile_picture_path,
+                'elder_profile_photo_url' => $sponsorship->elder->profile_photo_url,
                 'sponsorship_date' => $sponsorship->created_at->diffForHumans(),
             ]);
 
@@ -49,7 +50,7 @@ class WelcomeController extends Controller
             ->through(fn (Elder $elder) => [
                 'id' => $elder->id,
                 'full_name' => $elder->first_name . ' ' . $elder->last_name,
-                'profile_picture_path' => $elder->profile_picture_path,
+                'profile_photo_url' => $elder->profile_photo_url,
                 'priority_level' => $elder->priority_level,
             ]);
 
@@ -59,7 +60,7 @@ class WelcomeController extends Controller
             ->map(fn ($slide) => [
                 'title' => $slide->title,
                 'description' => $slide->description,
-                'image' => $slide->image,
+                'image' => $this->resolveHeroImage($slide->image),
                 'cta_text' => $slide->cta_text,
                 'cta_link' => $slide->cta_link,
             ]);
@@ -75,5 +76,22 @@ class WelcomeController extends Controller
             'filters' => $request->only(['priority', 'gender']),
             'heroSlides' => $heroSlides,
         ]);
+    }
+
+    private function resolveHeroImage(?string $path): string
+    {
+        if (! $path) {
+            return asset('images/hero-father.svg');
+        }
+
+        if (Str::contains($path, 'placeholder.com')) {
+            return asset('images/hero-father.svg');
+        }
+
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
+        }
+
+        return asset(ltrim($path, '/'));
     }
 }

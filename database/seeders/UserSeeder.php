@@ -19,6 +19,12 @@ class UserSeeder extends Seeder
         // Create default admin user
         $this->createDefaultAdmin();
 
+        // Create a branch coordinator for scoped dashboards
+        $this->createBranchCoordinator();
+
+        // Create a donor/external account for experience testing
+        $this->createDemoDonor();
+
         // Create additional staff users for testing
         $this->createAdditionalStaff();
         
@@ -105,5 +111,47 @@ class UserSeeder extends Seeder
             'job_title' => 'Super Administrator',
             'status' => 'active',
         ]);
+    }
+
+    private function createBranchCoordinator(): void
+    {
+        $branch = Branch::query()->first();
+
+        if (! $branch) {
+            return;
+        }
+
+        $coordinator = User::updateOrCreate(['email' => 'branchadmin@example.com'], [
+            'name' => 'Branch Coordinator',
+            'password' => Hash::make('password'),
+            'account_status' => User::STATUS_ACTIVE,
+            'account_type' => User::TYPE_INTERNAL,
+            'approved_at' => Carbon::now(),
+            'branch_id' => $branch->id,
+        ]);
+
+        $coordinator->assignRole('Branch Coordinator');
+
+        Staff::updateOrCreate(['email' => $coordinator->email], [
+            'user_id' => $coordinator->id,
+            'first_name' => 'Branch',
+            'last_name' => 'Lead',
+            'job_title' => 'Branch Coordinator',
+            'status' => 'active',
+        ]);
+    }
+
+    private function createDemoDonor(): void
+    {
+        $donor = User::updateOrCreate(['email' => 'donor@example.com'], [
+            'name' => 'Demo Donor',
+            'password' => Hash::make('password'),
+            'account_status' => User::STATUS_ACTIVE,
+            'account_type' => User::TYPE_EXTERNAL,
+            'approved_at' => Carbon::now(),
+            'branch_id' => null,
+        ]);
+
+        $donor->syncRoles(['External', 'Donor']);
     }
 }

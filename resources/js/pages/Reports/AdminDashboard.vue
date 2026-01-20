@@ -10,6 +10,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { useRoute } from '@/composables/useRoute';
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
     DollarSign,
@@ -20,6 +21,8 @@ import {
     Users,
 } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
+
+const route = useRoute();
 
 const props = defineProps<{
     stats: {
@@ -52,7 +55,7 @@ const nextSlide = () => {
 
 const applyFilters = () => {
     router.get(
-        '/reports',
+        route('reports.index'),
         {
             branch_id:
                 selectedBranch.value === 'all' ? '' : selectedBranch.value,
@@ -66,10 +69,12 @@ const applyFilters = () => {
 };
 
 const exportReport = (format: string) => {
-    window.open(
-        `/reports/export?format=${format}&branch_id=${selectedBranch.value === 'all' ? '' : selectedBranch.value}&date_range=${selectedRange.value}`,
-        '_blank',
-    );
+    const url = route('reports.export', {
+        format,
+        branch_id: selectedBranch.value === 'all' ? null : selectedBranch.value,
+        date_range: selectedRange.value,
+    });
+    window.open(url, '_blank');
 };
 
 const printReport = () => {
@@ -91,7 +96,7 @@ onMounted(() => {
 
     <AppLayout
         :breadcrumbs="[
-            { title: 'Reports', href: '/reports' },
+            { title: 'Reports', href: route('reports.index') },
             { title: 'Admin Dashboard' },
         ]"
     >
@@ -180,7 +185,7 @@ onMounted(() => {
 
             <!-- Quick Actions -->
             <div class="no-print grid grid-cols-1 gap-6 md:grid-cols-3">
-                <Link href="/elders">
+                <Link :href="route('elders.index')">
                     <GlassCard
                         class="cursor-pointer transition-shadow hover:shadow-lg"
                     >
@@ -199,7 +204,7 @@ onMounted(() => {
                     </GlassCard>
                 </Link>
 
-                <Link href="/sponsorships">
+                <Link :href="route('sponsorships.index')">
                     <GlassCard
                         class="cursor-pointer transition-shadow hover:shadow-lg"
                     >
@@ -220,7 +225,7 @@ onMounted(() => {
                     </GlassCard>
                 </Link>
 
-                <Link href="/reports/donations">
+                <Link :href="route('reports.donations')">
                     <GlassCard
                         class="cursor-pointer transition-shadow hover:shadow-lg"
                     >
@@ -242,7 +247,11 @@ onMounted(() => {
 
             <!-- Key Metrics -->
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Link href="/reports/detailed?metric=promise_fulfillment">
+                <Link
+                    :href="route('reports.detailed', {
+                        metric: 'promise_fulfillment',
+                    })"
+                >
                     <GlassCard
                         class="cursor-pointer transition-shadow hover:shadow-lg"
                     >
@@ -274,7 +283,11 @@ onMounted(() => {
                     </GlassCard>
                 </Link>
 
-                <Link href="/reports/detailed?metric=missed_payments">
+                <Link
+                    :href="route('reports.detailed', {
+                        metric: 'missed_payments',
+                    })"
+                >
                     <GlassCard
                         class="cursor-pointer transition-shadow hover:shadow-lg"
                     >
@@ -301,7 +314,11 @@ onMounted(() => {
                     </GlassCard>
                 </Link>
 
-                <Link href="/reports/detailed?metric=guest_donations">
+                <Link
+                    :href="route('reports.detailed', {
+                        metric: 'guest_donations',
+                    })"
+                >
                     <GlassCard
                         class="cursor-pointer transition-shadow hover:shadow-lg"
                     >
@@ -328,7 +345,11 @@ onMounted(() => {
                     </GlassCard>
                 </Link>
 
-                <Link href="/reports/detailed?metric=monthly_expenses">
+                <Link
+                    :href="route('reports.detailed', {
+                        metric: 'monthly_expenses',
+                    })"
+                >
                     <GlassCard
                         class="cursor-pointer transition-shadow hover:shadow-lg"
                     >
@@ -512,7 +533,7 @@ onMounted(() => {
                             Recent Activity
                         </h3>
                         <Link
-                            href="/reports/activity"
+                            :href="route('reports.activity')"
                             class="text-sm text-blue-600 hover:underline"
                             >View all</Link
                         >

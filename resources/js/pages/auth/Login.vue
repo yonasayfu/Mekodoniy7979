@@ -14,7 +14,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
-import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import { Form, Head, useForm } from '@inertiajs/vue3';
@@ -246,7 +245,7 @@ watch(isDialogOpen, (open) => {
 
             <div class="text-center text-sm text-muted-foreground">
                 Don't have an account?
-                <TextLink :href="register()" :tabindex="5">Sign up</TextLink>
+                <TextLink :href="route('register')" :tabindex="5">Sign up</TextLink>
             </div>
         </Form>
     </AuthBase>

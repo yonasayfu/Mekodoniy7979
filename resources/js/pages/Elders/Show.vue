@@ -45,6 +45,7 @@ const props = defineProps<{
         phone: string | null;
         bio: string | null;
         profile_picture_path: string | null;
+        profile_photo_url: string | null;
         priority_level: 'low' | 'medium' | 'high';
         health_status: string | null;
         special_needs: string | null;
@@ -491,8 +492,8 @@ const printRecord = () => {
                                 class="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950"
                             >
                                 <img
-                                    v-if="elder.profile_picture_path"
-                                    :src="`/storage/${elder.profile_picture_path}`"
+                                    v-if="elder.profile_photo_url"
+                                    :src="elder.profile_photo_url"
                                     :alt="
                                         elder.first_name + ' ' + elder.last_name
                                     "

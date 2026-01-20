@@ -31,7 +31,7 @@ interface ElderSummary {
     id: number;
     first_name: string;
     last_name: string;
-    profile_picture_path: string | null;
+    profile_photo_url: string;
     priority_level: 'low' | 'medium' | 'high';
 }
 
@@ -145,18 +145,10 @@ const trafficLightClass = (priority: string) => {
                                 class="relative h-10 w-10 overflow-hidden rounded-full"
                             >
                                 <img
-                                    v-if="elder.profile_picture_path"
-                                    :src="`/storage/${elder.profile_picture_path}`"
+                                    :src="elder.profile_photo_url"
                                     :alt="`${elder.first_name} ${elder.last_name}`"
                                     class="h-full w-full object-cover"
                                 />
-                                <div
-                                    v-else
-                                    class="flex h-full w-full items-center justify-center bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
-                                >
-                                    {{ elder.first_name.charAt(0)
-                                    }}{{ elder.last_name.charAt(0) }}
-                                </div>
                                 <span
                                     class="absolute right-0 bottom-0 h-3 w-3 rounded-full border border-white dark:border-slate-800"
                                     :class="
@@ -180,7 +172,7 @@ const trafficLightClass = (priority: string) => {
                                 class="flex flex-wrap items-center gap-2 text-xs"
                             >
                                 <Link
-                                    :href="route('elders.show', elder.id)"
+                                    :href="route('elders.public.show', elder.id, false)"
                                     class="text-indigo-600 hover:underline"
                                     >View Profile</Link
                                 >

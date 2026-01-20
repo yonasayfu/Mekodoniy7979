@@ -11,6 +11,8 @@ const getQueryParam = (param: string) => {
     return urlParams.get(param);
 };
 
+const mode = getQueryParam('mode') ?? 'one_time';
+
 const form = useForm({
     amount: 70,
     name: '',
@@ -20,6 +22,8 @@ const form = useForm({
         ? parseInt(getQueryParam('elder_id')!)
         : (null as number | null),
 });
+
+const selectedRelationship = getQueryParam('relationship');
 
 const submit = () => {
     form.post(route('donations.guest.store'));
@@ -44,6 +48,23 @@ const submit = () => {
                     </p>
 
                     <form @submit.prevent="submit" class="mt-8 space-y-6">
+                        <div
+                            v-if="selectedRelationship || mode === 'sponsorship'"
+                            class="rounded-lg border border-indigo-200 bg-indigo-50/60 px-4 py-3 text-sm font-medium text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-200"
+                        >
+                            You’re starting a
+                            <span class="font-semibold">
+                                {{
+                                    selectedRelationship
+                                        ? selectedRelationship
+                                              .charAt(0)
+                                              .toUpperCase() +
+                                          selectedRelationship.slice(1)
+                                        : 'monthly'
+                                }}
+                            </span>
+                            sponsorship. Complete the form below to continue.
+                        </div>
                         <div>
                             <label
                                 class="block text-sm font-medium text-slate-700 dark:text-slate-200"

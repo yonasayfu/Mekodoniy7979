@@ -2,14 +2,15 @@
 import GlassCard from '@/components/GlassCard.vue';
 import GuestLayout from '@/layouts/GuestLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { User } from 'lucide-vue-next';
+import { ArrowLeft } from 'lucide-vue-next';
+import { route } from 'ziggy-js';
 
 const props = defineProps<{
     elder: {
         id: number;
         first_name: string;
         last_name: string;
-        profile_picture_path: string | null;
+        profile_photo_url: string;
         priority_level: string;
         bio: string | null;
         special_needs: string | null;
@@ -18,6 +19,9 @@ const props = defineProps<{
         };
     };
 }>();
+
+const donationHref = route('guest.donation', undefined, false);
+const homeHref = route('home', undefined, false);
 </script>
 
 <template>
@@ -27,20 +31,22 @@ const props = defineProps<{
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <GlassCard>
+                    <div class="mb-6">
+                        <Link
+                            :href="homeHref"
+                            class="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800"
+                        >
+                            <ArrowLeft class="size-4" />
+                            Back to Home
+                        </Link>
+                    </div>
                     <div class="md:flex md:space-x-8">
                         <div class="flex-shrink-0">
                             <img
-                                v-if="props.elder.profile_picture_path"
-                                :src="`/storage/${props.elder.profile_picture_path}`"
+                                :src="props.elder.profile_photo_url"
                                 class="h-64 w-64 rounded-lg object-cover shadow-md"
                                 :alt="props.elder.first_name"
                             />
-                            <div
-                                v-else
-                                class="flex h-64 w-64 items-center justify-center rounded-lg bg-gray-200 text-gray-500 shadow-md dark:bg-gray-700 dark:text-gray-400"
-                            >
-                                <User class="size-32" />
-                            </div>
                         </div>
                         <div class="mt-6 md:mt-0">
                             <div class="flex items-center justify-between">
@@ -105,15 +111,15 @@ const props = defineProps<{
                                 </p>
                             </div>
 
-                            <div class="mt-8 flex space-x-4">
+                            <div class="mt-8 flex flex-wrap gap-3">
                                 <Link
-                                    :href="route('register')"
+                                    :href="`${donationHref}?elder_id=${props.elder.id}&mode=sponsorship`"
                                     class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                                 >
                                     Sponsor This Elder
                                 </Link>
                                 <Link
-                                    :href="route('guest.donation')"
+                                    :href="`${donationHref}?elder_id=${props.elder.id}&mode=one_time`"
                                     class="inline-flex items-center rounded-md border border-gray-300 bg-white px-6 py-3 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
                                 >
                                     One-Time Donation

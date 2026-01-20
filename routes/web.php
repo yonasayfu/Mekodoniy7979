@@ -52,6 +52,9 @@ Route::post('payments/telebirr/webhook', TelebirrWebhookController::class)
     ->withoutMiddleware([ValidateCsrfToken::class])
     ->name('payments.telebirr.webhook');
 
+Route::get('elders/{elder}/public', [ElderController::class, 'publicShow'])
+    ->name('elders.public.show');
+
 Route::get('/guest-donation', function () {
     return Inertia::render('GuestDonation');
 })->name('guest.donation');
@@ -62,7 +65,7 @@ Route::post('/donations', [DonationController::class, 'store'])
     ->middleware('auth')
     ->name('donations.store');
 
-Route::get('/elders/{elder}/public', [ElderController::class, 'publicShow'])->name('elders.public.show');
+Route::post('/pre-sponsorships', [\App\Http\Controllers\PreSponsorshipController::class, 'store'])->name('pre-sponsorships.store');
 
 // Case Notes Routes
 Route::middleware(['auth', 'verified', 'approved'])->group(function () {
@@ -89,14 +92,16 @@ Route::middleware('auth')->group(function () {
 
         // Conditional dashboard route
         Route::get('dashboard', function () {
-            if (Auth::user()->hasRole('External')) {
+            if (Auth::user()->hasAnyRole(['External', 'Donor'])) {
                 return redirect()->route('donors.dashboard');
             }
             return app(DashboardController::class)->__invoke(request());
         })->name('dashboard');
 
         // Donor Dashboard Route
-        Route::get('donors/dashboard', [DonorDashboardController::class, 'index'])->name('donors.dashboard');
+        Route::get('donors/dashboard', [DonorDashboardController::class, 'index'])
+            ->middleware('role:External|Donor')
+            ->name('donors.dashboard');
 
         Route::get('branches/export', [BranchController::class, 'export'])->name('branches.export');
 
