@@ -27,6 +27,19 @@ const props = defineProps<{
     branches: BranchOption[];
 }>();
 
+const translatorOptions = [
+    'Amharic',
+    'Afaan Oromo',
+    'Tigrinya',
+    'English',
+];
+
+const transportOptions = [
+    'Organization van',
+    'Private car',
+    'Ride-share',
+];
+
 const form = useForm({
     user_id: '',
     elder_id: '',
@@ -35,6 +48,11 @@ const form = useForm({
     purpose: '',
     notes: '',
     status: 'pending', // Default to pending
+    needs_translator: false,
+    translator_language: '',
+    needs_transport: false,
+    transport_preference: '',
+    logistics_notes: '',
 });
 
 const submit = () => {
@@ -201,6 +219,103 @@ const submit = () => {
                             :message="form.errors.status"
                             class="mt-2"
                         />
+                    </div>
+
+                    <div class="space-y-4 rounded-2xl border border-slate-200/70 bg-slate-50/80 px-4 py-4 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/40">
+                        <div class="flex flex-col gap-2">
+                            <p class="text-sm font-semibold text-slate-700 dark:text-slate-100">
+                                Logistics
+                            </p>
+                            <p class="text-xs text-slate-500 dark:text-slate-300">
+                                Capture any translator or transport needs plus logistics notes.
+                            </p>
+                        </div>
+                        <div class="grid gap-3 md:grid-cols-2">
+                            <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-600 dark:bg-slate-900/40 dark:text-slate-200">
+                                <input
+                                    type="checkbox"
+                                    v-model="form.needs_translator"
+                                    class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-500"
+                                />
+                                Needs translator
+                            </label>
+                            <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-600 dark:bg-slate-900/40 dark:text-slate-200">
+                                <input
+                                    type="checkbox"
+                                    v-model="form.needs_transport"
+                                    class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-500"
+                                />
+                                Needs transport
+                            </label>
+                        </div>
+                        <div v-if="form.needs_translator" class="space-y-2">
+                            <label
+                                class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                            >
+                                Preferred language
+                            </label>
+                            <select
+                                v-model="form.translator_language"
+                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                            >
+                                <option value="" disabled>
+                                    Select language
+                                </option>
+                                <option
+                                    v-for="language in translatorOptions"
+                                    :key="language"
+                                    :value="language"
+                                >
+                                    {{ language }}
+                                </option>
+                            </select>
+                            <InputError
+                                :message="form.errors.translator_language"
+                                class="mt-1"
+                            />
+                        </div>
+                        <div v-if="form.needs_transport" class="space-y-2">
+                            <label
+                                class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                            >
+                                Transport preference
+                            </label>
+                            <select
+                                v-model="form.transport_preference"
+                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                            >
+                                <option value="" disabled>
+                                    Select transport option
+                                </option>
+                                <option
+                                    v-for="transport in transportOptions"
+                                    :key="transport"
+                                    :value="transport"
+                                >
+                                    {{ transport }}
+                                </option>
+                            </select>
+                            <InputError
+                                :message="form.errors.transport_preference"
+                                class="mt-1"
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <label
+                                class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                            >
+                                Logistics notes
+                            </label>
+                            <textarea
+                                v-model="form.logistics_notes"
+                                rows="3"
+                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                            ></textarea>
+                            <InputError
+                                :message="form.errors.logistics_notes"
+                                class="mt-1"
+                            />
+                        </div>
                     </div>
 
                     <div class="flex items-center justify-end gap-2 pt-2">

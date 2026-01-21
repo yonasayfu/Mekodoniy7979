@@ -11,12 +11,15 @@ import {
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
+import { useLocale } from '@/composables/useLocale';
 
 const props = defineProps<{
     impact: {
         total_donations: number;
         supported_elders_count: number;
         timeline_events: any[];
+        donation_trend?: { label: string; amount: number }[];
+        ethiopian_date?: string;
     };
     filters: {
         range: string;
@@ -39,12 +42,31 @@ watch(
     },
 );
 
+const { translations } = useLocale();
+
 const formattedTotalDonations = computed(() => {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'ETB',
     }).format(props.impact.total_donations);
 });
+
+const ethiopianDate = computed(() => props.impact.ethiopian_date ?? '');
+
+const translate = (key: string, fallback = '') => {
+    const keys = key.split('.');
+    let value: any = translations.value;
+
+    for (const segment of keys) {
+        if (!value) {
+            return fallback;
+        }
+
+        value = value[segment];
+    }
+
+    return value ?? fallback;
+};
 
 const printPage = () => {
     window.print();
@@ -56,7 +78,7 @@ const downloadReport = (pdfPath: string) => {
 </script>
 
 <template>
-    <Head title="My Impact" />
+<Head :title="translate('reports.myImpact', 'My Impact')" />
 
     <AppLayout
         :breadcrumbs="[
@@ -71,10 +93,14 @@ const downloadReport = (pdfPath: string) => {
                         <h1
                             class="text-2xl font-semibold text-slate-900 dark:text-slate-100"
                         >
-                            My Impact
+                            {{ translate('reports.myImpact', 'My Impact') }}
                         </h1>
                         <p class="text-sm text-slate-600 dark:text-slate-300">
-                            Here's a summary of your contributions.
+                            {{ translate('reports.recentActivity', 'Recent Activity') }} overview.
+                        </p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            {{ translate('reports.ethopianDateLabel', 'Ethiopian Calendar (Andegna)') }}:
+                            {{ ethiopianDate || '—' }}
                         </p>
                     </div>
                     <div class="flex items-center gap-2">
@@ -83,12 +109,14 @@ const downloadReport = (pdfPath: string) => {
                                 <SelectValue placeholder="Select a range" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="30">Last 30 days</SelectItem>
-                                <SelectItem value="90">Last 90 days</SelectItem>
-                                <SelectItem value="all">All Time</SelectItem>
+                                <SelectItem value="30">{{ translate('filters.range.30', 'Last 30 days') }}</SelectItem>
+                                <SelectItem value="90">{{ translate('filters.range.90', 'Last 90 days') }}</SelectItem>
+                                <SelectItem value="all">{{ translate('filters.range.all', 'All time') }}</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button @click="printPage">Print</Button>
+                        <Button @click="printPage">
+                            {{ translate('buttons.print', 'Print') }}
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -99,7 +127,7 @@ const downloadReport = (pdfPath: string) => {
                         <h3
                             class="text-sm font-semibold text-slate-600 dark:text-slate-300"
                         >
-                            Total Donations
+                            {{ translate('reports.totalDonations', 'Total Donations') }}
                         </h3>
                         <p
                             class="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100"
@@ -113,7 +141,7 @@ const downloadReport = (pdfPath: string) => {
                         <h3
                             class="text-sm font-semibold text-slate-600 dark:text-slate-300"
                         >
-                            Supported Elders
+                            {{ translate('reports.supportedElders', 'Supported Elders') }}
                         </h3>
                         <p
                             class="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100"
@@ -130,7 +158,7 @@ const downloadReport = (pdfPath: string) => {
                     <h3
                         class="text-lg font-semibold text-slate-900 dark:text-slate-100"
                     >
-                        Your Promise Status
+                        {{ translate('reports.promiseStatus', 'Promise Status') }}
                     </h3>
                     <div class="mt-4 space-y-4">
                         <div
@@ -184,11 +212,11 @@ const downloadReport = (pdfPath: string) => {
             <!-- Annual Impact -->
             <GlassCard v-if="annual_reports && annual_reports.length > 0">
                 <div class="p-6">
-                    <h3
-                        class="text-lg font-semibold text-slate-900 dark:text-slate-100"
-                    >
-                        Your Annual Impact
-                    </h3>
+                <h3
+                    class="text-lg font-semibold text-slate-900 dark:text-slate-100"
+                >
+                    {{ translate('reports.annualImpact', 'Your Annual Impact') }}
+                </h3>
                     <div class="mt-4 space-y-2">
                         <div
                             v-for="report in annual_reports"
@@ -199,10 +227,10 @@ const downloadReport = (pdfPath: string) => {
                                 >{{ report.report_year }} Thank You Report</span
                             >
                             <Button
-                                @click="downloadReport(report.pdf_path)"
+                                @click="downloadReport(report.pdf_url)"
                                 size="sm"
                             >
-                                Download PDF
+                                {{ translate('buttons.downloadPdf', 'Download PDF') }}
                             </Button>
                         </div>
                     </div>
@@ -214,7 +242,7 @@ const downloadReport = (pdfPath: string) => {
                     <h3
                         class="text-lg font-semibold text-slate-900 dark:text-slate-100"
                     >
-                        Recent Activity
+                        {{ translate('reports.recentActivity', 'Recent Activity') }}
                     </h3>
                     <div
                         v-if="impact.timeline_events.length === 0"

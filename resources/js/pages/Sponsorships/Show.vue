@@ -3,7 +3,8 @@ import ActivityTimeline from '@/components/ActivityTimeline.vue';
 import GlassButton from '@/components/GlassButton.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import InputError from '@/components/InputError.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Edit3, Printer } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted } from 'vue';
 
@@ -47,6 +48,9 @@ const props = defineProps<{
     activity: ActivityEntry[];
     breadcrumbs: { title: string; href: string }[];
     print?: boolean;
+    can?: {
+        unmatch?: boolean;
+    };
 }>();
 
 const statusBadgeClass = computed(() => {
@@ -107,6 +111,31 @@ onBeforeUnmount(() => {
 
 const printRecord = () => {
     triggerPrint();
+};
+
+const unmatchForm = useForm({
+    reason: '',
+});
+
+const submitUnmatch = () => {
+    if (!props.can?.unmatch || !props.sponsorship.id) {
+        return;
+    }
+
+    const confirmed = window.confirm(
+        'This will end the sponsorship and return the elder to the public pool. Continue?',
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    unmatchForm.post(route('sponsorships.unmatch', props.sponsorship.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            unmatchForm.reset('reason');
+        },
+    });
 };
 </script>
 
@@ -208,6 +237,46 @@ const printRecord = () => {
                 </p>
                 <hr class="print-divider" />
             </div>
+
+            <GlassCard
+                v-if="props.can?.unmatch"
+                variant="lite"
+                padding="p-5"
+                class="border border-rose-200/70 bg-rose-50/80 dark:border-rose-500/40 dark:bg-rose-500/5"
+            >
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 class="text-base font-semibold text-rose-700 dark:text-rose-200">
+                            Need to unmatch this elder?
+                        </h2>
+                        <p class="text-sm text-rose-600 dark:text-rose-200/80">
+                            Closing the sponsorship will notify the donor and make the elder available again.
+                        </p>
+                    </div>
+                    <div class="flex-1 space-y-3">
+                        <textarea
+                            v-model="unmatchForm.reason"
+                            rows="2"
+                            placeholder="Optional note for the donor"
+                            class="w-full rounded-lg border border-rose-200/70 bg-white/80 px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-rose-400 focus:outline-none focus:ring-rose-200 dark:border-rose-500/40 dark:bg-slate-900/40 dark:text-slate-100"
+                        ></textarea>
+                        <InputError
+                            v-if="unmatchForm.errors.reason"
+                            :message="unmatchForm.errors.reason"
+                        />
+                        <GlassButton
+                            size="sm"
+                            variant="danger"
+                            class="ml-auto flex items-center gap-2"
+                            :disabled="unmatchForm.processing"
+                            @click="submitUnmatch"
+                        >
+                            <span v-if="unmatchForm.processing">Closing…</span>
+                            <span v-else>Unmatch elder</span>
+                        </GlassButton>
+                    </div>
+                </div>
+            </GlassCard>
 
             <GlassCard
                 padding="p-0"

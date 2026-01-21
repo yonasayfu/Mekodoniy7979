@@ -29,5 +29,12 @@ class StoreVisitRequest extends FormRequest
             'purpose' => ['required', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
             'status' => ['required', 'string', 'in:pending,approved,rejected,completed'],
+            'needs_translator' => ['sometimes', 'boolean'],
+            'translator_language' => ['nullable', 'string', 'max:120', 'required_if:needs_translator,true'],
+            'needs_transport' => ['sometimes', 'boolean'],
+            'transport_preference' => ['nullable', 'string', 'max:120'],
+            'logistics_notes' => ['nullable', 'string', 'max:1000'],
+            'approved_by' => ['nullable', 'exists:users,id'],
         ];
-    }}
+    }
+}

@@ -74,6 +74,15 @@ const props = defineProps<{
                                 <span>Edit</span>
                             </Link>
                         </GlassButton>
+                        <GlassButton as="span" size="sm" variant="ghost">
+                            <Link
+                                :href="route('campaigns.landing', { campaign: campaign.slug }, false)"
+                                class="flex items-center gap-2"
+                                target="_blank"
+                            >
+                                <span>View microsite</span>
+                            </Link>
+                        </GlassButton>
                     </div>
                 </div>
             </div>
@@ -149,6 +158,18 @@ const props = defineProps<{
                             class="mt-1 text-sm whitespace-pre-line text-slate-700 dark:text-slate-200"
                         >
                             {{ campaign.description ?? '-' }}
+                        </p>
+                    </div>
+                    <div class="mt-6">
+                        <p
+                            class="text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500"
+                        >
+                            Microsite teaser
+                        </p>
+                        <p
+                            class="mt-1 text-sm whitespace-pre-line text-slate-700 dark:text-slate-200"
+                        >
+                            {{ campaign.short_description ?? '–' }}
                         </p>
                     </div>
                 </div>

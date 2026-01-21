@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\DonorProfile;
 use App\Models\User;
 use App\Models\Staff;
 use App\Models\Branch;
@@ -19,7 +20,8 @@ class UserSeeder extends Seeder
         // Create default admin user
         $this->createDefaultAdmin();
 
-        // Create a branch coordinator for scoped dashboards
+        // Create scoped branch roles
+        $this->createBranchAdmin();
         $this->createBranchCoordinator();
 
         // Create a donor/external account for experience testing
@@ -113,7 +115,7 @@ class UserSeeder extends Seeder
         ]);
     }
 
-    private function createBranchCoordinator(): void
+    private function createBranchAdmin(): void
     {
         $branch = Branch::query()->first();
 
@@ -121,8 +123,36 @@ class UserSeeder extends Seeder
             return;
         }
 
-        $coordinator = User::updateOrCreate(['email' => 'branchadmin@example.com'], [
-            'name' => 'Branch Coordinator',
+        $branchAdmin = User::updateOrCreate(['email' => 'branchadmin@example.com'], [
+            'name' => 'Branch Administrator',
+            'password' => Hash::make('password'),
+            'account_status' => User::STATUS_ACTIVE,
+            'account_type' => User::TYPE_INTERNAL,
+            'approved_at' => Carbon::now(),
+            'branch_id' => $branch->id,
+        ]);
+
+        $branchAdmin->assignRole('Branch Admin');
+
+        Staff::updateOrCreate(['email' => $branchAdmin->email], [
+            'user_id' => $branchAdmin->id,
+            'first_name' => 'Branch',
+            'last_name' => 'Admin',
+            'job_title' => 'Branch Administrator',
+            'status' => 'active',
+        ]);
+    }
+
+    private function createBranchCoordinator(): void
+    {
+        $branch = Branch::query()->skip(1)->first() ?? Branch::query()->first();
+
+        if (! $branch) {
+            return;
+        }
+
+        $coordinator = User::updateOrCreate(['email' => 'coordinator@example.com'], [
+            'name' => 'Field Coordinator',
             'password' => Hash::make('password'),
             'account_status' => User::STATUS_ACTIVE,
             'account_type' => User::TYPE_INTERNAL,
@@ -134,8 +164,8 @@ class UserSeeder extends Seeder
 
         Staff::updateOrCreate(['email' => $coordinator->email], [
             'user_id' => $coordinator->id,
-            'first_name' => 'Branch',
-            'last_name' => 'Lead',
+            'first_name' => 'Field',
+            'last_name' => 'Coordinator',
             'job_title' => 'Branch Coordinator',
             'status' => 'active',
         ]);
@@ -153,5 +183,21 @@ class UserSeeder extends Seeder
         ]);
 
         $donor->syncRoles(['External', 'Donor']);
+
+        DonorProfile::updateOrCreate(
+            ['user_id' => $donor->id],
+            [
+                'relationship_goal' => 'father',
+                'monthly_budget' => 1800,
+                'frequency' => 'monthly',
+                'preferred_contact_method' => 'email',
+                'contact_channels' => ['email', 'sms'],
+                'payment_preference' => 'telebirr_auto',
+                'notes' => 'Seeded profile for demos.',
+                'onboarding_step' => 'payment',
+                'is_completed' => true,
+                'completed_at' => Carbon::now()->subWeek(),
+            ]
+        );
     }
 }

@@ -1,6 +1,6 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
-import axios from 'axios';
+import http from '@/lib/http';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const notifications = ref([]);
@@ -25,7 +25,7 @@ const normaliseNotification = (notification) => ({
 const fetchNotifications = async () => {
     try {
         loading.value = true;
-        const { data } = await axios.get('/notifications/unread');
+        const { data } = await http.get('/notifications/unread');
         notifications.value = Array.isArray(data?.notifications)
             ? data.notifications.map(normaliseNotification)
             : [];
@@ -44,7 +44,7 @@ const fetchNotifications = async () => {
 
 const markAsRead = async (notificationId) => {
     try {
-        await axios.post(`/notifications/${notificationId}/read`);
+        await http.post(`/notifications/${notificationId}/read`);
         await fetchNotifications();
     } catch (error) {
         console.error('Error marking notification as read:', error);
@@ -53,7 +53,7 @@ const markAsRead = async (notificationId) => {
 
 const markAllRead = async () => {
     try {
-        await axios.post('/notifications/read-all');
+        await http.post('/notifications/read-all');
         await fetchNotifications();
     } catch (error) {
         console.error('Error marking all notifications as read:', error);

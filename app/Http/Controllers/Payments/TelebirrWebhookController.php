@@ -8,6 +8,9 @@ use App\Models\Donation;
 use App\Models\PaymentTransaction;
 use App\Models\User;
 use App\Notifications\DonationCompletedStaffNotification;
+use App\Notifications\DonationReceiptNotification;
+use App\Support\Services\DonationReceiptService;
+use App\Support\Services\TelebirrService;
 use App\Support\Services\TimelineEventService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -17,9 +20,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class TelebirrWebhookController extends Controller
 {
-    public function __invoke(Request $request, TimelineEventService $timelineEventService)
+    public function __invoke(Request $request, TimelineEventService $timelineEventService, TelebirrService $telebirrService, DonationReceiptService $receiptService)
     {
         $payload = $request->all();
+
+        if (! $telebirrService->validateCallback($payload, $request->input('sign') ?? $request->header('X-Telebirr-Signature'))) {
+            return response()->json(['message' => 'Invalid Telebirr signature.'], Response::HTTP_FORBIDDEN);
+        }
 
         $gatewayReference = $request->input('outTradeNo')
             ?? $request->input('gateway_reference')
@@ -103,6 +110,12 @@ class TelebirrWebhookController extends Controller
                 }
 
                 Notification::send($recipients, new DonationCompletedStaffNotification($donation));
+
+                if ($donation->user) {
+                    $donation->loadMissing('user');
+                    $receiptPath = $receiptService->ensureReceipt($donation);
+                    $donation->user->notify(new DonationReceiptNotification($donation, $receiptPath));
+                }
 
                 $timelineEventService->createEvent(
                     'donation',

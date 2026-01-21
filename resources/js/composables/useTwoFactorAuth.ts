@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/vue3';
-import axios from 'axios';
+import http from '@/lib/http';
 import { computed, ref } from 'vue';
 
 export function useTwoFactorAuth() {
@@ -20,7 +20,7 @@ export function useTwoFactorAuth() {
     const enableTwoFactorAuthentication = () => {
         enabling.value = true;
 
-        axios.post(route('two-factor.enable')).then(() => {
+        http.post(route('two-factor.enable')).then(() => {
             Promise.all([
                 showQrCode(),
                 showSetupKey(),
@@ -44,25 +44,25 @@ export function useTwoFactorAuth() {
     };
 
     const regenerateRecoveryCodes = () => {
-        axios
+        http
             .post(route('two-factor.recovery-codes'))
             .then(() => showRecoveryCodes());
     };
 
     const showQrCode = () => {
-        return axios.get(route('two-factor.qr-code')).then((response) => {
+        return http.get(route('two-factor.qr-code')).then((response) => {
             qrCode.value = response.data.svg;
         });
     };
 
     const showSetupKey = () => {
-        return axios.get(route('two-factor.secret-key')).then((response) => {
+        return http.get(route('two-factor.secret-key')).then((response) => {
             setupKey.value = response.data.secretKey;
         });
     };
 
     const showRecoveryCodes = () => {
-        return axios
+        return http
             .get(route('two-factor.recovery-codes'))
             .then((response) => {
                 recoveryCodes.value = response.data;

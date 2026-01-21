@@ -5,8 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreDonationRequest;
 use App\Models\Donation;
 use App\Models\Elder;
+use App\Models\User;
 use App\Models\PaymentTransaction;
+use App\Notifications\GuestDonationLoggedNotification;
+use App\Notifications\GuestDonationReceiptNotification;
+use App\Support\Services\DonationReceiptService;
+use App\Support\Services\KycService;
 use App\Support\Services\TelebirrService;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -18,33 +24,49 @@ class DonationController extends Controller
      * @param StoreDonationRequest $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function storeGuest(StoreDonationRequest $request)
+    public function storeGuest(StoreDonationRequest $request, DonationReceiptService $receiptService, KycService $kycService)
     {
         $validatedData = $request->validated();
 
         $elderId = $validatedData['elder_id'] ?? null;
         $elder = $elderId ? Elder::find($elderId) : null;
 
-        $receiptPath = null;
+        $uploadedReceiptPath = null;
         if ($request->hasFile('receipt')) {
-            $receiptPath = $request->file('receipt')->store('receipts', 'public');
+            $uploadedReceiptPath = $request->file('receipt')->store('receipts/manual', 'public');
         }
 
-        Donation::create([
+        $kycRequired = $kycService->shouldRequire($validatedData['amount'], 'ETB');
+        $donation = Donation::create([
             'elder_id' => $elder?->id,
             'branch_id' => $elder?->branch_id,
             'amount' => $validatedData['amount'],
             'guest_name' => $validatedData['name'] ?? null,
             'guest_email' => $validatedData['email'] ?? null,
             'guest_phone' => $validatedData['phone'] ?? null,
-            'receipt_path' => $receiptPath,
+            'receipt_path' => $uploadedReceiptPath,
             'payment_gateway' => 'manual',
             'payment_id' => null,
             'status' => 'pending',
             'currency' => 'ETB', // Default currency
             'donation_type' => 'guest_meal',
             'campaign_id' => $validatedData['campaign_id'] ?? null,
+            'notes' => $validatedData['notes'] ?? null,
+            'kyc_required' => $kycRequired,
+            'kyc_status' => $kycRequired ? 'pending' : 'not_required',
         ]);
+
+        $donation->setRelation('elder', $elder);
+
+        $receiptStoragePath = $receiptService->ensureReceipt($donation);
+        $receiptUrl = $receiptStoragePath ? url(route('receipts.show', $donation->receipt_uuid, false)) : null;
+
+        if ($donation->guest_email && $receiptStoragePath) {
+            Notification::route('mail', $donation->guest_email)
+                ->notify(new GuestDonationReceiptNotification($donation, $receiptStoragePath));
+        }
+
+        $this->notifyBranchTeam($donation, $receiptUrl);
 
         return redirect()->route('home')->with('success', 'Thank you! Your donation is pending confirmation.');
     }
@@ -53,7 +75,7 @@ class DonationController extends Controller
      * Store a newly created resource in storage.
      * This method can be used for authenticated users and integrated payment gateways.
      */
-    public function store(StoreDonationRequest $request, TelebirrService $telebirrService)
+    public function store(StoreDonationRequest $request, TelebirrService $telebirrService, KycService $kycService)
     {
         $validatedData = $request->validated();
 
@@ -62,6 +84,7 @@ class DonationController extends Controller
 
         $gatewayReference = (string) Str::uuid();
 
+        $kycRequired = $kycService->shouldRequire($validatedData['amount'], 'ETB');
         $donation = Donation::create([
             'user_id' => Auth::id(),
             'elder_id' => $elder?->id,
@@ -76,6 +99,8 @@ class DonationController extends Controller
             'currency' => 'ETB',
             'donation_type' => 'guest_one_time',
             'campaign_id' => $validatedData['campaign_id'] ?? null,
+            'kyc_required' => $kycRequired,
+            'kyc_status' => $kycRequired ? 'pending' : 'not_required',
         ]);
 
         PaymentTransaction::create([
@@ -100,5 +125,25 @@ class DonationController extends Controller
         }
 
         return redirect()->away($paymentResponse['redirect_url']);
+    }
+
+    protected function notifyBranchTeam(Donation $donation, ?string $receiptUrl = null): void
+    {
+        $recipients = User::role('Branch Admin')
+            ->when($donation->branch_id, fn($query) => $query->where('branch_id', $donation->branch_id))
+            ->get();
+
+        if ($recipients->isEmpty()) {
+            $recipients = User::role('Admin')->get();
+        }
+
+        if ($recipients->isEmpty()) {
+            return;
+        }
+
+        Notification::send(
+            $recipients,
+            new GuestDonationLoggedNotification($donation, $receiptUrl)
+        );
     }
 }

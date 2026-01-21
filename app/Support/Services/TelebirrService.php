@@ -5,24 +5,31 @@ namespace App\Support\Services;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class TelebirrService
 {
     protected string $appId;
     protected string $appKey;
     protected string $publicKey;
+    protected ?string $merchantId;
+    protected ?string $merchantPrivateKey;
     protected string $notifyUrl;
     protected string $returnUrl;
     protected string $baseUrl;
+    protected bool $simulate;
 
     public function __construct()
     {
         $this->appId = config('services.telebirr.app_id');
         $this->appKey = config('services.telebirr.app_key');
         $this->publicKey = config('services.telebirr.public_key'); // Telebirr's public key
+        $this->merchantId = config('services.telebirr.merchant_id');
+        $this->merchantPrivateKey = $this->formatKey(config('services.telebirr.merchant_private_key'), 'PRIVATE');
         $this->notifyUrl = config('services.telebirr.notify_url');
         $this->returnUrl = config('services.telebirr.return_url');
         $this->baseUrl = config('services.telebirr.base_url', 'https://app.telebirr.com/api/'); // Base URL for Telebirr API
+        $this->simulate = (bool) config('services.telebirr.simulate', true);
     }
 
     /**
@@ -58,29 +65,53 @@ class TelebirrService
     {
         Log::info("TelebirrService: Initiating payment for Order ID: {$orderId}, Amount: {$amount}");
 
-        // --- Real Telebirr Integration Steps (Conceptual) ---
-        // 1. Prepare request parameters as per Telebirr API documentation.
-        // 2. Generate signature using your appKey and Telebirr's public key.
-        //    This often involves a complex signing algorithm (e.g., RSA with SHA256).
-        //    For example: $signedParams = $this->signRequest($params);
-        // 3. Make an HTTP POST request to Telebirr's payment initiation endpoint.
-        //    For example: $response = Http::post($this->baseUrl . 'payment/v1/initiate', $signedParams);
-        // 4. Parse Telebirr's response and extract redirect URL or status.
-        // --- End Real Integration Steps ---
+        if ($this->simulate || ! $this->isConfigured()) {
+            return $this->simulateResponse($orderId, $amount);
+        }
 
-        // Simulate a successful payment initiation response for demonstration
+        $payload = $this->buildRequestPayload($orderId, $amount, $nonce, $subject);
+
         try {
-            // In a real scenario, Telebirr would return a redirect URL
-            // For now, we simulate a direct success for simplified flow
-            $redirectUrl = 'https://telebirr.com/checkout?orderId=' . $orderId . '&amount=' . $amount;
+            $response = Http::baseUrl(rtrim($this->baseUrl, '/').'/')
+                ->timeout(15)
+                ->acceptJson()
+                ->post('merchant/order/create', $payload);
+
+            if (! $response->successful()) {
+                Log::warning('TelebirrService: Non-success HTTP response.', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return [
+                    'status' => 'failed',
+                    'message' => 'Telebirr rejected the payment request.',
+                    'transaction_id' => null,
+                    'redirect_url' => null,
+                ];
+            }
+
+            $body = $response->json();
+            $redirectUrl = data_get($body, 'data.toPayUrl');
+
+            if (! $redirectUrl) {
+                Log::warning('TelebirrService: Missing redirect URL in response.', ['response' => $body]);
+
+                return [
+                    'status' => 'failed',
+                    'message' => 'Telebirr did not return a redirect URL.',
+                    'transaction_id' => data_get($body, 'data.tradeNo'),
+                    'redirect_url' => null,
+                ];
+            }
 
             return [
                 'status' => 'success',
-                'message' => 'Payment initiation successful. Redirect to Telebirr.',
-                'transaction_id' => null, // Real transaction ID would come after callback
+                'message' => data_get($body, 'msg', 'Payment initiation successful.'),
+                'transaction_id' => data_get($body, 'data.tradeNo'),
                 'redirect_url' => $redirectUrl,
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("TelebirrService: Payment initiation failed for Order ID: {$orderId}. Error: {$e->getMessage()}");
             return [
                 'status' => 'failed',
@@ -102,15 +133,23 @@ class TelebirrService
     {
         Log::info("TelebirrService: Handling callback. Request data: ", $request->all());
 
-        // --- Real Telebirr Integration Steps (Conceptual) ---
-        // 1. Verify the signature of the incoming request using Telebirr's public key
-        //    and your appKey to ensure it's not tampered with.
-        //    For example: if (!$this->verifySignature($request->all(), $request->header('Signature'))) { ... }
-        // 2. Parse the notification data (e.g., transaction status, order ID, actual amount paid).
-        // 3. Update your database with the transaction status.
-        // --- End Real Integration Steps ---
+        $payload = $request->all();
 
-        // Simulate callback processing
+        if (! $this->simulate && $this->isConfigured()) {
+            $signature = $request->input('sign') ?? $request->header('X-Telebirr-Signature');
+            if (! $signature || ! $this->verifySignature($payload, $signature)) {
+                Log::warning('TelebirrService: Signature verification failed for callback.', ['payload' => $payload]);
+
+                return [
+                    'status' => 'failed',
+                    'message' => 'Invalid Telebirr signature.',
+                    'order_id' => $request->input('outTradeNo'),
+                    'transaction_id' => null,
+                    'amount' => null,
+                ];
+            }
+        }
+
         $telebirrStatus = $request->input('status', 'success'); // Assume success by default for simulation
         $orderId = $request->input('outTradeNo'); // Your unique order ID
         $telebirrTransactionId = $request->input('tradeNo', 'TEL_' . time()); // Telebirr's transaction ID
@@ -147,39 +186,199 @@ class TelebirrService
     {
         Log::info("TelebirrService: Verifying transaction status for Order ID: {$orderId}");
 
-        // --- Real Telebirr Integration Steps (Conceptual) ---
-        // 1. Prepare query parameters and sign the request.
-        // 2. Make an HTTP GET/POST request to Telebirr's transaction query endpoint.
-        // 3. Parse the response to get the final transaction status.
-        // --- End Real Integration Steps ---
+        if ($this->simulate || ! $this->isConfigured()) {
+            return [
+                'status' => 'completed', // Assume it completed successfully for simulation
+                'message' => 'Transaction verified successfully (simulated).',
+                'transaction_id' => 'TEL_' . time() . '_verified',
+                'amount' => 100.00, // Placeholder amount
+            ];
+        }
 
-        // Simulate verification
-        // For a real scenario, this would query Telebirr for the true status
+        $params = [
+            'appId' => $this->appId,
+            'traceNo' => $orderId,
+            'timestamp' => now()->timestamp,
+            'nonceStr' => Str::random(16),
+        ];
+
+        $params['sign'] = $this->signPayload($params);
+
+        try {
+            $response = Http::baseUrl(rtrim($this->baseUrl, '/').'/')
+                ->timeout(10)
+                ->acceptJson()
+                ->post('merchant/order/query', $params);
+
+            if (! $response->successful()) {
+                Log::warning('TelebirrService: verifyTransactionStatus call failed.', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return [
+                    'status' => 'unknown',
+                    'message' => 'Unable to verify Telebirr status at this time.',
+                    'transaction_id' => null,
+                    'amount' => null,
+                ];
+            }
+
+            $body = $response->json();
+
+            return [
+                'status' => data_get($body, 'data.tradeStatus', 'unknown'),
+                'message' => data_get($body, 'msg', 'Query completed.'),
+                'transaction_id' => data_get($body, 'data.tradeNo'),
+                'amount' => (data_get($body, 'data.totalAmount') ?? 0) / 100,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('TelebirrService: verifyTransactionStatus exception.', ['error' => $e->getMessage()]);
+            return [
+                'status' => 'unknown',
+                'message' => 'Verification failed: '.$e->getMessage(),
+                'transaction_id' => null,
+                'amount' => null,
+            ];
+        }
+    }
+
+    public function shouldVerifyCallback(): bool
+    {
+        return ! $this->simulate && $this->isConfigured();
+    }
+
+    public function validateCallback(array $payload, ?string $signature): bool
+    {
+        if (! $this->shouldVerifyCallback()) {
+            return true;
+        }
+
+        if (! $signature) {
+            return false;
+        }
+
+        return $this->verifySignature($payload, $signature);
+    }
+
+    // --- Internal helpers ---
+
+    protected function buildRequestPayload(string $orderId, float $amount, string $nonce, string $subject): array
+    {
+        $bizContent = [
+            'subject' => $subject,
+            'outTradeNo' => $orderId,
+            'totalAmount' => (int) round($amount * 100),
+            'notifyUrl' => $this->notifyUrl,
+            'returnUrl' => $this->returnUrl,
+            'merchantId' => $this->merchantId,
+        ];
+
+        $signature = $this->signPayload($bizContent);
+
         return [
-            'status' => 'completed', // Assume it completed successfully for simulation
-            'message' => 'Transaction verified successfully (simulated).',
-            'transaction_id' => 'TEL_' . time() . '_verified',
-            'amount' => 100.00, // Placeholder amount
+            'appId' => $this->appId,
+            'appKey' => $this->appKey,
+            'nonceStr' => $nonce,
+            'timestamp' => now()->timestamp,
+            'bizContent' => $bizContent,
+            'sign' => $signature,
         ];
     }
 
-    // --- Placeholder for signature generation and verification methods ---
-    /*
-    protected function signRequest(array $params): array
+    protected function signPayload(array $payload): ?string
     {
-        // Implement Telebirr's specific signing algorithm here (e.g., RSA with SHA256)
-        // This is highly dependent on Telebirr's documentation.
-        // $plainText = $this->formatParamsForSigning($params);
-        // openssl_sign($plainText, $signature, $this->privateKey, OPENSSL_ALGO_SHA256);
-        // $params['sign'] = base64_encode($signature);
-        // return $params;
+        if (! $this->merchantPrivateKey) {
+            return null;
+        }
+
+        $normalized = $this->normalizePayload($payload);
+
+        $signature = null;
+        $privateKey = openssl_pkey_get_private($this->merchantPrivateKey);
+
+        if (! $privateKey) {
+            Log::error('TelebirrService: Unable to load merchant private key.');
+            return null;
+        }
+
+        openssl_sign($normalized, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+
+        return $signature ? base64_encode($signature) : null;
     }
 
-    protected function verifySignature(array $data, string $signature): bool
+    protected function verifySignature(array $payload, string $signature): bool
     {
-        // Implement Telebirr's specific signature verification algorithm here.
-        // This requires Telebirr's public key.
-        // return openssl_verify($data_to_verify, base64_decode($signature), $this->telebirrPublicKey, OPENSSL_ALGO_SHA256);
+        if (! $this->publicKey) {
+            return false;
+        }
+
+        $normalized = $this->normalizePayload(array_filter($payload, fn ($value, $key) => $key !== 'sign', ARRAY_FILTER_USE_BOTH));
+
+        $publicKey = openssl_pkey_get_public($this->formatKey($this->publicKey, 'PUBLIC'));
+
+        if (! $publicKey) {
+            Log::error('TelebirrService: Unable to load Telebirr public key.');
+            return false;
+        }
+
+        return openssl_verify($normalized, base64_decode($signature), $publicKey, OPENSSL_ALGO_SHA256) === 1;
     }
-    */
+
+    protected function normalizePayload(array $payload): string
+    {
+        ksort($payload);
+
+        $segments = [];
+
+        foreach ($payload as $key => $value) {
+            if (is_array($value)) {
+                $value = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            }
+
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $segments[] = $key.'='.$value;
+        }
+
+        return implode('&', $segments);
+    }
+
+    protected function formatKey(?string $key, string $type = 'PRIVATE'): ?string
+    {
+        if (! $key) {
+            return null;
+        }
+
+        if (Str::contains($key, 'BEGIN')) {
+            return $key;
+        }
+
+        $wrapped = chunk_split(str_replace(["\r", "\n", ' '], '', $key), 64, "\n");
+
+        return "-----BEGIN {$type} KEY-----\n{$wrapped}-----END {$type} KEY-----";
+    }
+
+    protected function isConfigured(): bool
+    {
+        return ! empty($this->appId)
+            && ! empty($this->appKey)
+            && ! empty($this->merchantId)
+            && ! empty($this->merchantPrivateKey)
+            && ! empty($this->notifyUrl)
+            && ! empty($this->returnUrl);
+    }
+
+    protected function simulateResponse(string $orderId, float $amount): array
+    {
+        return [
+            'status' => 'success',
+            'message' => 'Payment initiation successful (simulation).',
+            'transaction_id' => null,
+            'redirect_url' => 'https://telebirr-sandbox.test/checkout?orderId='.$orderId.'&amount='.$amount,
+        ];
+    }
+
 }

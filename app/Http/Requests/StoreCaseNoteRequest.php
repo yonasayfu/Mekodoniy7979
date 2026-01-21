@@ -17,7 +17,9 @@ class StoreCaseNoteRequest extends FormRequest
     {
         return [
             'content' => ['required', 'string', 'min:5', 'max:2000'],
-            'visibility' => ['required', 'string', Rule::in(['internal', 'donor_visible'])],
+            'visibility' => ['required', 'string', Rule::in(['internal', 'branch', 'donor_visible'])],
+            'attachments' => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['file', 'max:5120'],
         ];
     }
 

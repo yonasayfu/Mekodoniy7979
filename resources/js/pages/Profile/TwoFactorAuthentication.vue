@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'; // Assuming these components ex
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { router, useForm, usePage } from '@inertiajs/vue3';
-import axios from 'axios'; // Assuming axios is available globally or imported
+import http from '@/lib/http';
 import { computed, ref, watch } from 'vue';
 
 const page = usePage();
@@ -60,19 +60,19 @@ const disableTwoFactorAuthentication = () => {
 };
 
 const showQrCode = () => {
-    axios.get('/user/two-factor-qr-code').then((response) => {
+    http.get('/user/two-factor-qr-code').then((response) => {
         setupKey.value = response.data.svg;
     });
 };
 
 const showRecoveryCodes = () => {
-    axios.get('/user/two-factor-recovery-codes').then((response) => {
+    http.get('/user/two-factor-recovery-codes').then((response) => {
         twoFactorRecoveryCodes.value = response.data;
     });
 };
 
 const regenerateRecoveryCodes = () => {
-    axios.post('/user/two-factor-recovery-codes').then((response) => {
+    http.post('/user/two-factor-recovery-codes').then((response) => {
         showRecoveryCodes();
     });
 };

@@ -22,6 +22,7 @@ class PreSponsorshipController extends Controller
         return redirect()->route('guest.donation', [
             'pre_sponsorship_id' => $preSponsorship->id,
             'relationship' => $preSponsorship->relationship_type,
+            'mode' => 'sponsorship',
         ])->with('success', 'Thank you for your interest! Please complete the donation form.');
     }
 }

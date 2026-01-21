@@ -917,7 +917,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                     </p>
                     <div class="mt-8 space-x-4">
                         <Link
-                            :href="route('register')"
+                            :href="route('register', undefined, false)"
                             class="rounded-lg bg-white px-8 py-3 text-lg font-semibold text-indigo-600 shadow-lg transition-all hover:bg-gray-100 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:outline-none"
                         >
                             Sponsor an Elder

@@ -6,7 +6,17 @@ import { useTableFilters } from '@/composables/useTableFilters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { confirmDialog } from '@/lib/confirm';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Edit3, Eye, Search, Trash2 } from 'lucide-vue-next';
+import {
+    AlertTriangle,
+    BusFront,
+    ChevronLeft,
+    ChevronRight,
+    Edit3,
+    Eye,
+    Languages,
+    Search,
+    Trash2,
+} from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted } from 'vue';
 
 interface VisitSummary {
@@ -21,6 +31,9 @@ interface VisitSummary {
     purpose: string;
     notes: string | null;
     status: 'pending' | 'approved' | 'rejected' | 'completed';
+    needs_translator?: boolean;
+    needs_transport?: boolean;
+    approval_deadline?: string | null;
 }
 
 interface StatCard {
@@ -37,6 +50,40 @@ interface PaginationLink {
 
 interface PaginationMeta {
     from?: number | null;
+}
+
+interface CalendarVisit {
+    id: number;
+    time: string;
+    elder_name: string;
+    visitor_name: string;
+    status: string;
+}
+
+interface CalendarDay {
+    date: string;
+    label: string;
+    isCurrentMonth: boolean;
+    isToday: boolean;
+    visits: CalendarVisit[];
+}
+
+interface CalendarPayload {
+    monthLabel: string;
+    currentMonth: string;
+    previousUrl: string | null;
+    nextUrl: string | null;
+    days: CalendarDay[];
+}
+
+interface SlaAlert {
+    id: number;
+    elder_name: string;
+    visitor_name: string;
+    branch_name: string;
+    deadline: string | null;
+    state: 'warning' | 'breached';
+    deadline_for_humans?: string | null;
 }
 
 const props = defineProps<{
@@ -58,6 +105,8 @@ const props = defineProps<{
         delete: boolean;
     };
     print?: boolean;
+    calendar?: CalendarPayload;
+    slaAlerts?: SlaAlert[];
 }>();
 
 const can = computed(
@@ -166,6 +215,54 @@ const visitList = computed<VisitSummary[]>(() => props.visits?.data ?? []);
 const hasResults = computed<boolean>(() => visitList.value.length > 0);
 const paginationLinks = computed(() => props.visits?.links ?? []);
 const paginationFrom = computed(() => props.visits?.meta?.from ?? 1);
+const calendar = computed<CalendarPayload>(() => {
+    return (
+        props.calendar ?? {
+            monthLabel: '',
+            currentMonth: '',
+            previousUrl: null,
+            nextUrl: null,
+            days: [],
+        }
+    );
+});
+const slaAlerts = computed<SlaAlert[]>(() => props.slaAlerts ?? []);
+const calendarWeekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+});
+const deadlineFormatter = new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+});
+
+const goToCalendarMonth = (url?: string | null) => {
+    if (!url) {
+        return;
+    }
+
+    router.visit(url, {
+        preserveScroll: true,
+        preserveState: true,
+    });
+};
+
+const formatDateTime = (value?: string | null) => {
+    if (!value) {
+        return '—';
+    }
+
+    return dateFormatter.format(new Date(value));
+};
+
+const formatDeadline = (value?: string | null) => {
+    if (!value) {
+        return '—';
+    }
+
+    return deadlineFormatter.format(new Date(value));
+};
 
 const destroy = async (visit: VisitSummary) => {
     const accepted = await confirmDialog({
@@ -197,6 +294,26 @@ const statusTone = (status: string) => {
         default:
             return 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
     }
+};
+
+const deadlineSeverity = (visit: VisitSummary) => {
+    if (visit.status !== 'pending' || !visit.approval_deadline) {
+        return null;
+    }
+
+    const deadline = new Date(visit.approval_deadline).getTime();
+    const now = Date.now();
+    const twelveHours = 1000 * 60 * 60 * 12;
+
+    if (deadline < now) {
+        return 'breached';
+    }
+
+    if (deadline - now <= twelveHours) {
+        return 'warning';
+    }
+
+    return null;
 };
 
 const statTone = (tone?: string) => {
@@ -258,6 +375,168 @@ const statTone = (tone?: string) => {
                     >
                         {{ metric.value }}
                     </p>
+                </GlassCard>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-3 print:hidden">
+                <GlassCard
+                    variant="lite"
+                    padding="px-5 py-5"
+                    class="lg:col-span-2"
+                >
+                    <div
+                        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <div>
+                            <p
+                                class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                            >
+                                Visit calendar
+                            </p>
+                            <h3
+                                class="text-xl font-semibold text-slate-900 dark:text-slate-100"
+                            >
+                                {{ calendar.monthLabel }}
+                            </h3>
+                        </div>
+                        <div class="flex gap-2">
+                            <button
+                                type="button"
+                                class="inline-flex items-center rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800/60"
+                                @click="goToCalendarMonth(calendar.previousUrl)"
+                            >
+                                <ChevronLeft class="mr-1 size-4" />
+                                Prev
+                            </button>
+                            <button
+                                type="button"
+                                class="inline-flex items-center rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800/60"
+                                @click="goToCalendarMonth(calendar.nextUrl)"
+                            >
+                                Next
+                                <ChevronRight class="ml-1 size-4" />
+                            </button>
+                        </div>
+                    </div>
+                    <div
+                        class="mt-4 grid grid-cols-7 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500"
+                    >
+                        <div
+                            v-for="weekday in calendarWeekdays"
+                            :key="weekday"
+                            class="py-1"
+                        >
+                            {{ weekday }}
+                        </div>
+                    </div>
+                    <div class="mt-2 grid grid-cols-7 gap-2">
+                        <div
+                            v-for="day in calendar.days"
+                            :key="day.date"
+                            :class="[
+                                'rounded-2xl border px-2 py-2 text-xs transition',
+                                day.isCurrentMonth
+                                    ? 'border-slate-200 dark:border-slate-700'
+                                    : 'border-transparent bg-slate-50 text-slate-400 dark:bg-slate-900/30',
+                                day.isToday
+                                    ? 'ring-2 ring-indigo-300 dark:ring-indigo-500/60'
+                                    : '',
+                            ]"
+                        >
+                            <div
+                                :class="[
+                                    'inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold',
+                                    day.isToday
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-200',
+                                ]"
+                            >
+                                {{ day.label }}
+                            </div>
+                            <div
+                                v-for="visit in day.visits"
+                                :key="visit.id"
+                                class="mt-2 rounded-xl border border-transparent bg-indigo-50/80 px-2 py-1 text-[11px] text-indigo-900 dark:bg-indigo-500/10 dark:text-indigo-100"
+                            >
+                                <p class="font-semibold">
+                                    {{ visit.time }}
+                                    <span
+                                        class="ml-2 font-normal text-slate-600 dark:text-slate-300"
+                                    >
+                                        {{ visit.elder_name }}
+                                    </span>
+                                </p>
+                                <p class="text-slate-500 dark:text-slate-400">
+                                    {{ visit.visitor_name }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </GlassCard>
+
+                <GlassCard variant="lite" padding="px-5 py-5">
+                    <div class="flex items-center gap-2 text-slate-500">
+                        <AlertTriangle class="size-5 text-amber-500" />
+                        <div>
+                            <p
+                                class="text-xs font-semibold uppercase tracking-wide"
+                            >
+                                Approval SLA
+                            </p>
+                            <p
+                                class="text-sm text-slate-600 dark:text-slate-300"
+                            >
+                                Pending visits needing branch action
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-4 space-y-3">
+                        <div
+                            v-if="!slaAlerts.length"
+                            class="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-4 text-center text-sm text-slate-500 dark:border-slate-800/60 dark:bg-slate-900/60"
+                        >
+                            All caught up. No pending approvals right now.
+                        </div>
+                        <div
+                            v-for="alert in slaAlerts"
+                            v-else
+                            :key="alert.id"
+                            class="rounded-2xl border border-slate-100/70 bg-white/90 px-3 py-3 text-sm shadow-sm dark:border-slate-800/50 dark:bg-slate-900/70"
+                        >
+                            <div class="flex items-center justify-between gap-2">
+                                <p
+                                    class="font-semibold text-slate-900 dark:text-slate-100"
+                                >
+                                    {{ alert.elder_name }}
+                                </p>
+                                <span
+                                    :class="[
+                                        'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                                        alert.state === 'breached'
+                                            ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-100'
+                                            : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-100',
+                                    ]"
+                                >
+                                    {{
+                                        alert.state === 'breached'
+                                            ? 'Breached'
+                                            : 'Due soon'
+                                    }}
+                                </span>
+                            </div>
+                            <p
+                                class="mt-1 text-xs text-slate-500 dark:text-slate-300"
+                            >
+                                {{ alert.visitor_name }} – {{ alert.branch_name }}
+                            </p>
+                            <p
+                                class="mt-1 text-xs font-medium text-slate-600 dark:text-slate-200"
+                            >
+                                Deadline in
+                                {{ alert.deadline_for_humans || 'n/a' }}
+                            </p>
+                        </div>
+                    </div>
                 </GlassCard>
             </div>
 
@@ -353,6 +632,11 @@ const statTone = (tone?: string) => {
                             <th
                                 class="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
                             >
+                                Logistics
+                            </th>
+                            <th
+                                class="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                            >
                                 Status
                             </th>
                             <th
@@ -378,7 +662,12 @@ const statTone = (tone?: string) => {
                             v-for="(visit, index) in visitList"
                             v-else
                             :key="visit.id"
-                            class="hover:bg-slate-50/70 dark:hover:bg-slate-900/50"
+                            :class="[
+                                'hover:bg-slate-50/70 dark:hover:bg-slate-900/50',
+                                deadlineSeverity(visit) === 'breached'
+                                    ? 'bg-red-50/60 dark:bg-red-500/5'
+                                    : '',
+                            ]"
                         >
                             <td
                                 class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300"
@@ -413,24 +702,52 @@ const statTone = (tone?: string) => {
                             <td
                                 class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300"
                             >
-                                {{ visit.visit_date }}
+                                {{ formatDateTime(visit.visit_date) }}
                             </td>
                             <td
                                 class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300"
                             >
                                 {{ visit.purpose }}
                             </td>
+                            <td class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300">
+                                <div class="flex flex-wrap gap-2">
+                                    <span
+                                        v-if="visit.needs_translator"
+                                        class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-200"
+                                    >
+                                        <Languages class="size-3.5" />
+                                        Translator
+                                    </span>
+                                    <span
+                                        v-if="visit.needs_transport"
+                                        class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200"
+                                    >
+                                        <BusFront class="size-3.5" />
+                                        Transport
+                                    </span>
+                                    <span
+                                        v-if="!visit.needs_translator && !visit.needs_transport"
+                                        class="text-xs text-slate-400"
+                                    >
+                                        —
+                                    </span>
+                                </div>
+                            </td>
                             <td
                                 class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300"
                             >
                                 <span
-                                    :class="[
-                                        'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold',
-                                        statusTone(visit.status),
-                                    ]"
+                                    class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
+                                    :class="statusTone(visit.status)"
                                 >
                                     {{ visit.status }}
                                 </span>
+                                <p
+                                    v-if="visit.approval_deadline && visit.status === 'pending'"
+                                    class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    SLA: {{ formatDeadline(visit.approval_deadline) }}
+                                </p>
                             </td>
                             <td
                                 class="px-5 py-4 text-right text-sm print:hidden"

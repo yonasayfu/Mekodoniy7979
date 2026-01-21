@@ -46,6 +46,13 @@ const props = defineProps<{
         purpose: string;
         notes: string | null;
         status: 'pending' | 'approved' | 'rejected' | 'completed';
+        needs_translator?: boolean;
+        translator_language?: string | null;
+        needs_transport?: boolean;
+        transport_preference?: string | null;
+        logistics_notes?: string | null;
+        approval_deadline?: string | null;
+        approved_at?: string | null;
     };
     activity: ActivityEntry[];
     breadcrumbs: { title: string; href: string }[];
@@ -110,6 +117,19 @@ onBeforeUnmount(() => {
 
 const printRecord = () => {
     triggerPrint();
+};
+
+const logisticDateFormatter = new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'long',
+    timeStyle: 'short',
+});
+
+const formatLogisticsDate = (value?: string | null) => {
+    if (!value) {
+        return '—';
+    }
+
+    return logisticDateFormatter.format(new Date(value));
 };
 </script>
 
@@ -333,6 +353,81 @@ const printRecord = () => {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </GlassCard>
+
+            <GlassCard
+                variant="lite"
+                class="print:border print:bg-white print:shadow-none"
+            >
+                <div class="space-y-4 p-6">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p
+                                class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                            >
+                                Logistics & SLA
+                            </p>
+                            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+                                Translator, transport, and approval deadlines
+                            </h3>
+                        </div>
+                        <span
+                            class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-100"
+                        >
+                            {{ props.visit.status.toUpperCase() }}
+                        </span>
+                    </div>
+                    <div class="grid gap-3 md:grid-cols-2">
+                        <div class="space-y-1 rounded-2xl border border-slate-200/60 bg-white/70 px-4 py-3 dark:border-slate-800/60 dark:bg-slate-900/50">
+                            <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                Translator required
+                            </p>
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                {{ props.visit.needs_translator ? 'Yes' : 'No' }}
+                            </p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                Language: {{ props.visit.translator_language ?? 'N/A' }}
+                            </p>
+                        </div>
+                        <div class="space-y-1 rounded-2xl border border-slate-200/60 bg-white/70 px-4 py-3 dark:border-slate-800/60 dark:bg-slate-900/50">
+                            <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                Transport required
+                            </p>
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                {{ props.visit.needs_transport ? 'Yes' : 'No' }}
+                            </p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                Preference: {{ props.visit.transport_preference ?? 'N/A' }}
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                            Logistics notes
+                        </p>
+                        <p class="text-sm font-medium text-slate-900 dark:text-white">
+                            {{ props.visit.logistics_notes ?? '—' }}
+                        </p>
+                    </div>
+                    <div class="grid gap-3 md:grid-cols-2">
+                        <div class="space-y-1">
+                            <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                SLA deadline
+                            </p>
+                            <p class="text-sm font-semibold text-amber-700 dark:text-amber-200">
+                                {{ formatLogisticsDate(props.visit.approval_deadline) }}
+                            </p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                Approved at
+                            </p>
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                {{ formatLogisticsDate(props.visit.approved_at) }}
+                            </p>
                         </div>
                     </div>
                 </div>

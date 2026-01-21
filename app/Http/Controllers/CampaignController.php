@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campaign;
+use App\Models\Elder;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class CampaignController extends Controller
 {
@@ -57,16 +59,30 @@ class CampaignController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:campaigns,slug'],
             'description' => ['nullable', 'string'],
+            'short_description' => ['nullable', 'string', 'max:500'],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'goal_amount' => ['nullable', 'numeric', 'min:0'],
             'goal_currency' => ['nullable', 'string', 'max:10'],
             'status' => ['required', 'string', 'in:draft,active,ended'],
+            'cta_label' => ['nullable', 'string', 'max:120'],
+            'cta_url' => ['nullable', 'url'],
+            'accent_color' => ['nullable', 'string', 'max:20'],
+            'featured_video_url' => ['nullable', 'url'],
+            'hero_image' => ['nullable', 'image', 'max:3072'],
         ]);
 
         $data['slug'] = $data['slug'] ?: Str::slug($data['title']);
         $data['created_by'] = $request->user()?->id;
         $data['goal_currency'] = $data['goal_currency'] ?: 'ETB';
+
+        if ($request->hasFile('hero_image')) {
+            $data['hero_image_path'] = $request->file('hero_image')->store('campaigns/heroes', 'public');
+        }
+
+        $data['cta_label'] = $data['cta_label'] ?: 'Support this campaign';
+        $data['accent_color'] = $data['accent_color'] ?: '#2563eb';
+        unset($data['hero_image']);
 
         Campaign::create($data);
 
@@ -102,11 +118,17 @@ class CampaignController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:campaigns,slug,' . $campaign->id],
             'description' => ['nullable', 'string'],
+            'short_description' => ['nullable', 'string', 'max:500'],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'goal_amount' => ['nullable', 'numeric', 'min:0'],
             'goal_currency' => ['nullable', 'string', 'max:10'],
             'status' => ['required', 'string', 'in:draft,active,ended'],
+            'cta_label' => ['nullable', 'string', 'max:120'],
+            'cta_url' => ['nullable', 'url'],
+            'accent_color' => ['nullable', 'string', 'max:20'],
+            'featured_video_url' => ['nullable', 'url'],
+            'hero_image' => ['nullable', 'image', 'max:3072'],
         ]);
 
         if (empty($data['slug'])) {
@@ -116,6 +138,17 @@ class CampaignController extends Controller
         if (empty($data['goal_currency'])) {
             $data['goal_currency'] = 'ETB';
         }
+
+        if ($request->hasFile('hero_image')) {
+            if ($campaign->hero_image_path) {
+                Storage::disk('public')->delete($campaign->hero_image_path);
+            }
+            $data['hero_image_path'] = $request->file('hero_image')->store('campaigns/heroes', 'public');
+        }
+
+        $data['cta_label'] = $data['cta_label'] ?: 'Support this campaign';
+        $data['accent_color'] = $data['accent_color'] ?: '#2563eb';
+        unset($data['hero_image']);
 
         $campaign->update($data);
 
@@ -127,5 +160,61 @@ class CampaignController extends Controller
         $campaign->delete();
 
         return redirect()->route('campaigns.index')->with('success', 'Campaign deleted successfully.');
+    }
+
+    public function landing(Campaign $campaign)
+    {
+        if ($campaign->status !== 'active') {
+            abort(404);
+        }
+
+        $raisedAmount = $campaign->donations()
+            ->where('status', 'completed')
+            ->sum('amount');
+
+        $donorCount = $campaign->donations()
+            ->where('status', 'completed')
+            ->count();
+
+        $goalAmount = (float) ($campaign->goal_amount ?? 0);
+        $progressPercent = $goalAmount > 0 ? min(100, round(($raisedAmount / $goalAmount) * 100)) : null;
+
+        $urgentElders = Elder::query()
+            ->with('branch')
+            ->where('current_status', 'available')
+            ->orderByRaw("FIELD(priority_level, 'high', 'medium', 'low')")
+            ->take(3)
+            ->get()
+            ->map(fn ($elder) => [
+                'id' => $elder->id,
+                'name' => $elder->name,
+                'priority_level' => $elder->priority_level,
+                'profile_photo_url' => $elder->profile_photo_url,
+                'branch' => $elder->branch?->name,
+            ]);
+
+        return Inertia::render('Campaigns/Landing', [
+            'campaign' => [
+                'id' => $campaign->id,
+                'title' => $campaign->title,
+                'slug' => $campaign->slug,
+                'description' => $campaign->description,
+                'short_description' => $campaign->short_description,
+                'cta_label' => $campaign->cta_label ?? 'Support this campaign',
+                'cta_url' => $campaign->cta_url ?? route('guest.donation', ['campaign_id' => $campaign->id], false),
+                'accent_color' => $campaign->accent_color ?? '#2563eb',
+                'hero_image_url' => $campaign->hero_image_url,
+                'goal_amount' => $campaign->goal_amount,
+                'goal_currency' => $campaign->goal_currency,
+                'raised_amount' => $raisedAmount,
+                'donor_count' => $donorCount,
+                'progress_percent' => $progressPercent,
+                'featured_video_url' => $campaign->featured_video_url,
+            ],
+            'urgentElders' => $urgentElders,
+            'share' => [
+                'url' => route('campaigns.landing', ['campaign' => $campaign->slug], true),
+            ],
+        ]);
     }
 }

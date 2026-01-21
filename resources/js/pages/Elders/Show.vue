@@ -110,10 +110,39 @@ const props = defineProps<{
             active: boolean;
         }>;
     };
+    documents: Array<{
+        id: number;
+        type: string;
+        label: string | null;
+        file_name: string;
+        mime_type: string | null;
+        uploaded_at: string | null;
+        uploader: { id: number; name: string } | null;
+        download_url: string;
+    }>;
+    proposals: Array<{
+        id: number;
+        donor: { id: number; name: string; email: string };
+        proposer: { id: number; name: string } | null;
+        amount: number;
+        frequency: string;
+        relationship_type: string | null;
+        notes: string | null;
+        status: string;
+        expires_at: string | null;
+        responded_at: string | null;
+    }>;
+    donors: Array<{
+        id: number;
+        name: string;
+        email: string;
+    }>;
     can: {
         create_case_notes: boolean;
         update_case_notes: boolean;
         delete_case_notes: boolean;
+        propose_match?: boolean;
+        manage_documents?: boolean;
     };
     breadcrumbs: { title: string; href: string }[];
     print?: boolean;
@@ -354,6 +383,140 @@ const priorityBadgeClass = computed(() => {
             return 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
     }
 });
+
+const statusTimelineEntries = computed(() =>
+    props.statusEvents.map((event) => ({
+        id: event.id,
+        action: `${event.from_status} → ${event.to_status}`,
+        description:
+            event.reason ??
+            `${event.from_status} → ${event.to_status}`,
+        created_at: event.occurred_at,
+        created_at_for_humans: event.created_at ?? event.occurred_at,
+        causer: event.creator
+            ? { id: event.creator.id, name: event.creator.name }
+            : null,
+    })),
+);
+
+const documentFileInput = ref<HTMLInputElement | null>(null);
+const documentForm = useForm({
+    type: 'consent',
+    label: '',
+    file: null as File | null,
+});
+const documentTypes = [
+    { label: 'Consent Form', value: 'consent' },
+    { label: 'Medical Report', value: 'medical_report' },
+    { label: 'ID Document', value: 'id_document' },
+    { label: 'Other', value: 'other' },
+];
+
+const handleDocumentFileChange = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    documentForm.file = target.files?.[0] ?? null;
+};
+
+const resetDocumentForm = () => {
+    documentForm.reset();
+    if (documentFileInput.value) {
+        documentFileInput.value.value = '';
+    }
+};
+
+const submitDocument = () => {
+    if (!documentForm.file) {
+        documentForm.setError('file', 'Please select a file to upload.');
+        return;
+    }
+
+    documentForm.post(
+        route('elders.documents.store', { elder: props.elder.id }),
+        {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => resetDocumentForm(),
+        },
+    );
+};
+
+const destroyDocument = async (id: number) => {
+    const accepted = await confirmDialog({
+        title: 'Remove document?',
+        message: 'This will delete the file permanently.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+    });
+
+    if (!accepted) {
+        return;
+    }
+
+    router.delete(
+        route('elders.documents.destroy', {
+            elder: props.elder.id,
+            document: id,
+        }),
+        { preserveScroll: true },
+    );
+};
+
+const proposalForm = useForm({
+    donor_id: '',
+    amount: '',
+    frequency: 'monthly',
+    relationship_type: '',
+    notes: '',
+    expires_in_hours: 72,
+});
+
+const submitProposal = () => {
+    proposalForm.post(
+        route('elders.proposals.store', { elder: props.elder.id }),
+        {
+            preserveScroll: true,
+            onSuccess: () => proposalForm.reset(),
+        },
+    );
+};
+
+const cancelProposal = async (id: number) => {
+    const accepted = await confirmDialog({
+        title: 'Cancel proposal?',
+        message:
+            'This will withdraw the proposal from the donor and mark it as cancelled.',
+        confirmText: 'Cancel proposal',
+        cancelText: 'Keep',
+    });
+
+    if (!accepted) {
+        return;
+    }
+
+    router.delete(
+        route('elders.proposals.cancel', {
+            elder: props.elder.id,
+            proposal: id,
+        }),
+        { preserveScroll: true },
+    );
+};
+
+const proposalStatusClass = (status: string) => {
+    switch (status) {
+        case 'accepted':
+            return 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-200';
+        case 'pending':
+            return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-200';
+        case 'declined':
+        case 'cancelled':
+            return 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-200';
+        case 'expired':
+            return 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
+        default:
+            return 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
+    }
+};
 
 const printMode = computed(() => props.print ?? false);
 let printTimer: number | undefined;
@@ -866,56 +1029,9 @@ const printRecord = () => {
                                 >
                                     Recent status events
                                 </p>
-                                <div
-                                    v-if="props.statusEvents.length"
-                                    class="space-y-2"
-                                >
-                                    <div
-                                        v-for="event in props.statusEvents"
-                                        :key="event.id"
-                                        class="rounded-lg border border-slate-200/70 bg-white/70 p-3 text-sm dark:border-slate-800/50 dark:bg-slate-900/60"
-                                    >
-                                        <div
-                                            class="flex items-start justify-between gap-3"
-                                        >
-                                            <div>
-                                                <p
-                                                    class="font-medium text-slate-900 dark:text-slate-100"
-                                                >
-                                                    {{ event.from_status }} →
-                                                    {{ event.to_status }}
-                                                </p>
-                                                <p
-                                                    class="text-xs text-slate-500 dark:text-slate-400"
-                                                >
-                                                    {{ event.occurred_at }}
-                                                    <template
-                                                        v-if="
-                                                            event.creator?.name
-                                                        "
-                                                    >
-                                                        · by
-                                                        {{
-                                                            event.creator.name
-                                                        }}</template
-                                                    >
-                                                </p>
-                                                <p
-                                                    v-if="event.reason"
-                                                    class="mt-1 text-xs text-slate-600 dark:text-slate-300"
-                                                >
-                                                    {{ event.reason }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p
-                                    v-else
-                                    class="text-sm text-slate-500 dark:text-slate-400"
-                                >
-                                    No status changes recorded.
-                                </p>
+                                <ActivityTimeline
+                                    :entries="statusTimelineEntries"
+                                />
                             </div>
                         </div>
 
@@ -1660,6 +1776,431 @@ const printRecord = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+            </GlassCard>
+
+            <GlassCard variant="lite" class="print:hidden">
+                <div class="space-y-4">
+                    <div>
+                        <h2
+                            class="text-sm font-semibold text-slate-900 dark:text-slate-100"
+                        >
+                            Consent & Attachments
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            Store signed consent forms, IDs, and other
+                            supporting files for this elder.
+                        </p>
+                    </div>
+
+                    <form
+                        v-if="props.can.manage_documents"
+                        class="space-y-4 rounded-lg border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800/50 dark:bg-slate-900/60"
+                        @submit.prevent="submitDocument"
+                    >
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                    >Document type</label
+                                >
+                                <select
+                                    v-model="documentForm.type"
+                                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                >
+                                    <option
+                                        v-for="option in documentTypes"
+                                        :key="option.value"
+                                        :value="option.value"
+                                    >
+                                        {{ option.label }}
+                                    </option>
+                                </select>
+                                <InputError
+                                    :message="documentForm.errors.type"
+                                    class="mt-2"
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                    >Label (optional)</label
+                                >
+                                <input
+                                    v-model="documentForm.label"
+                                    type="text"
+                                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                />
+                                <InputError
+                                    :message="documentForm.errors.label"
+                                    class="mt-2"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                >File</label
+                            >
+                            <input
+                                ref="documentFileInput"
+                                type="file"
+                                class="mt-1 block w-full text-sm text-slate-700 dark:text-slate-200"
+                                @change="handleDocumentFileChange"
+                            />
+                            <InputError
+                                :message="documentForm.errors.file"
+                                class="mt-2"
+                            />
+                        </div>
+                        <div class="flex items-center justify-end gap-3">
+                            <GlassButton
+                                v-if="documentForm.processing"
+                                size="sm"
+                                variant="ghost"
+                                type="button"
+                                disabled
+                                >Uploading…</GlassButton
+                            >
+                            <GlassButton
+                                v-else
+                                size="sm"
+                                type="submit"
+                                variant="primary"
+                                class="flex items-center gap-2"
+                            >
+                                <Plus class="size-4" />
+                                <span>Upload document</span>
+                            </GlassButton>
+                        </div>
+                    </form>
+
+                    <div
+                        class="rounded-xl border border-slate-200/70 bg-white/70 dark:border-slate-800/50 dark:bg-slate-900/60"
+                    >
+                        <div class="divide-y divide-slate-200 dark:divide-slate-800">
+                            <div
+                                v-if="props.documents.length"
+                                class="divide-y divide-slate-200 dark:divide-slate-800"
+                            >
+                                <div
+                                    v-for="doc in props.documents"
+                                    :key="doc.id"
+                                    class="flex flex-col gap-2 px-4 py-4 text-sm md:flex-row md:items-center md:justify-between"
+                                >
+                                    <div>
+                                        <p
+                                            class="font-medium text-slate-900 dark:text-slate-100"
+                                        >
+                                            {{ doc.label ?? doc.file_name }}
+                                        </p>
+                                        <p
+                                            class="text-xs text-slate-500 dark:text-slate-400"
+                                        >
+                                            {{ doc.type }} ·
+                                            {{ doc.uploaded_at }}
+                                            <span
+                                                v-if="doc.uploader?.name"
+                                            >
+                                                · by {{ doc.uploader.name }}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="flex flex-wrap items-center gap-2"
+                                    >
+                                        <Link
+                                            :href="doc.download_url"
+                                            target="_blank"
+                                            class="text-xs font-medium text-indigo-700 hover:underline dark:text-indigo-200"
+                                        >
+                                            Download
+                                        </Link>
+                                        <button
+                                            v-if="props.can.manage_documents"
+                                            type="button"
+                                            class="inline-flex items-center gap-1 text-xs font-medium text-red-700 hover:underline dark:text-red-200"
+                                            @click="destroyDocument(doc.id)"
+                                        >
+                                            <Trash2 class="size-4" />
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <p
+                                v-else
+                                class="px-4 py-6 text-sm text-slate-500 dark:text-slate-400"
+                            >
+                                No documents uploaded yet.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </GlassCard>
+
+            <GlassCard variant="lite" class="print:hidden">
+                <div class="space-y-6">
+                    <div class="flex flex-col gap-1">
+                        <h2
+                            class="text-sm font-semibold text-slate-900 dark:text-slate-100"
+                        >
+                            Match proposals
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            Share this elder with potential donors and track
+                            responses.
+                        </p>
+                    </div>
+
+                <div class="grid gap-6 lg:grid-cols-2">
+                    <div
+                        v-if="props.can.propose_match"
+                        class="rounded-lg border border-slate-200/70 bg-white/70 p-5 dark:border-slate-800/50 dark:bg-slate-900/60"
+                    >
+                        <form class="space-y-4" @submit.prevent="submitProposal">
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                    >Select donor</label
+                                >
+                                <select
+                                    v-model="proposalForm.donor_id"
+                                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                >
+                                    <option value="" disabled>
+                                        Choose donor
+                                    </option>
+                                    <option
+                                        v-for="donor in props.donors"
+                                        :key="donor.id"
+                                        :value="donor.id"
+                                    >
+                                        {{ donor.name }} · {{ donor.email }}
+                                    </option>
+                                </select>
+                                <InputError
+                                    :message="proposalForm.errors.donor_id"
+                                    class="mt-2"
+                                />
+                            </div>
+
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                        >Relationship</label
+                                    >
+                                    <select
+                                        v-model="proposalForm.relationship_type"
+                                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                    >
+                                        <option value="">Choose…</option>
+                                        <option
+                                            v-for="option in relationshipCards"
+                                            :key="option.relation"
+                                            :value="option.relation"
+                                        >
+                                            {{ option.title }}
+                                        </option>
+                                    </select>
+                                    <InputError
+                                        :message="
+                                            proposalForm.errors
+                                                .relationship_type
+                                        "
+                                        class="mt-2"
+                                    />
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                        >Monthly amount (ETB)</label
+                                    >
+                                    <input
+                                        v-model="proposalForm.amount"
+                                        type="number"
+                                        min="100"
+                                        step="50"
+                                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                    />
+                                    <InputError
+                                        :message="proposalForm.errors.amount"
+                                        class="mt-2"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                        >Frequency</label
+                                    >
+                                    <select
+                                        v-model="proposalForm.frequency"
+                                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                    >
+                                        <option
+                                            v-for="freq in frequencyOptions"
+                                            :key="freq.value"
+                                            :value="freq.value"
+                                            >{{ freq.label }}</option
+                                        >
+                                    </select>
+                                    <InputError
+                                        :message="
+                                            proposalForm.errors.frequency
+                                        "
+                                        class="mt-2"
+                                    />
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                        >Expires in (hours)</label
+                                    >
+                                    <input
+                                        v-model="proposalForm.expires_in_hours"
+                                        type="number"
+                                        min="1"
+                                        max="168"
+                                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                    />
+                                    <InputError
+                                        :message="
+                                            proposalForm.errors
+                                                .expires_in_hours
+                                        "
+                                        class="mt-2"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                    >Notes</label
+                                >
+                                <textarea
+                                    v-model="proposalForm.notes"
+                                    rows="3"
+                                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                ></textarea>
+                                <InputError
+                                    :message="proposalForm.errors.notes"
+                                    class="mt-2"
+                                />
+                            </div>
+
+                            <div class="flex justify-end">
+                                <GlassButton
+                                    size="sm"
+                                    type="submit"
+                                    :disabled="proposalForm.processing"
+                                    variant="primary"
+                                    class="flex items-center gap-2"
+                                >
+                                    <Plus class="size-4" />
+                                    <span>Send proposal</span>
+                                </GlassButton>
+                            </div>
+                        </form>
+                        <p
+                            v-if="!props.donors.length"
+                            class="mt-3 text-xs text-slate-500"
+                        >
+                            No donors available? Invite new donors under the user
+                            management area.
+                        </p>
+                    </div>
+
+                    <div
+                        class="rounded-lg border border-slate-200/70 bg-white/70 p-5 dark:border-slate-800/50 dark:bg-slate-900/60"
+                    >
+                        <h3
+                            class="text-sm font-semibold text-slate-900 dark:text-slate-100"
+                        >
+                            Proposal history
+                        </h3>
+                        <div
+                            v-if="props.proposals.length"
+                            class="mt-4 space-y-3"
+                        >
+                            <div
+                                v-for="proposal in props.proposals"
+                                :key="proposal.id"
+                                class="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800"
+                            >
+                                <div
+                                    class="flex flex-wrap items-center justify-between gap-2"
+                                >
+                                    <div>
+                                        <p
+                                            class="font-medium text-slate-900 dark:text-slate-100"
+                                        >
+                                            {{ proposal.donor.name }}
+                                        </p>
+                                        <p
+                                            class="text-xs text-slate-500 dark:text-slate-400"
+                                        >
+                                            {{
+                                                proposal.relationship_type ||
+                                                'General'
+                                            }} ·
+                                            {{ proposal.amount }} ETB
+                                        </p>
+                                        <p
+                                            class="text-xs text-slate-500 dark:text-slate-400"
+                                        >
+                                            Expires:
+                                            {{
+                                                proposal.expires_at ?? 'N/A'
+                                            }}
+                                        </p>
+                                    </div>
+                                    <span
+                                        class="rounded-full px-3 py-1 text-xs font-semibold"
+                                        :class="
+                                            proposalStatusClass(
+                                                proposal.status,
+                                            )
+                                        "
+                                    >
+                                        {{ proposal.status }}
+                                    </span>
+                                </div>
+                                <p
+                                    v-if="proposal.notes"
+                                    class="mt-2 text-xs text-slate-600 dark:text-slate-300"
+                                >
+                                    {{ proposal.notes }}
+                                </p>
+                                <div
+                                    v-if="
+                                        props.can.propose_match &&
+                                        proposal.status === 'pending'
+                                    "
+                                    class="mt-2 flex gap-3 text-xs"
+                                >
+                                    <button
+                                        type="button"
+                                        class="text-red-600 hover:underline dark:text-red-200"
+                                        @click="cancelProposal(proposal.id)"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <p
+                            v-else
+                            class="mt-4 text-sm text-slate-500 dark:text-slate-400"
+                        >
+                            No proposals recorded yet.
+                        </p>
+                    </div>
+                </div>
                 </div>
             </GlassCard>
 

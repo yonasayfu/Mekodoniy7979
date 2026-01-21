@@ -14,19 +14,28 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\TwoFactorEmailRecoveryController;
 use App\Http\Controllers\PendingApprovalController;
 use App\Http\Controllers\DonationController;
+use App\Http\Controllers\DonationReceiptController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ElderController;
 use App\Http\Controllers\ElderLifecycleController;
 use App\Http\Controllers\ElderHealthAssessmentController;
 use App\Http\Controllers\ElderMedicalConditionController;
+use App\Http\Controllers\ElderDocumentController;
 use App\Http\Controllers\CaseNoteController;
+use App\Http\Controllers\CaseNoteAttachmentController;
+use App\Http\Controllers\OutboundMessageController;
 use App\Http\Controllers\ElderMedicationController;
 use App\Http\Controllers\SponsorshipController;
+use App\Http\Controllers\SponsorshipProposalController;
 use App\Http\Controllers\VisitController;
 use App\Http\Controllers\DonorDashboardController;
+use App\Http\Controllers\DonorOnboardingController;
+use App\Http\Controllers\AnnualReportController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\PaymentReconciliationController;
 use App\Http\Controllers\Payments\TelebirrWebhookController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -55,6 +64,9 @@ Route::post('payments/telebirr/webhook', TelebirrWebhookController::class)
 Route::get('elders/{elder}/public', [ElderController::class, 'publicShow'])
     ->name('elders.public.show');
 
+Route::get('campaign/{campaign:slug}', [CampaignController::class, 'landing'])
+    ->name('campaigns.landing');
+
 Route::get('/guest-donation', function () {
     return Inertia::render('GuestDonation');
 })->name('guest.donation');
@@ -66,6 +78,12 @@ Route::post('/donations', [DonationController::class, 'store'])
     ->name('donations.store');
 
 Route::post('/pre-sponsorships', [\App\Http\Controllers\PreSponsorshipController::class, 'store'])->name('pre-sponsorships.store');
+
+Route::get('receipts/{receiptUuid}', [DonationReceiptController::class, 'show'])
+    ->name('receipts.show');
+Route::get('receipts/annual/{year?}', [DonationReceiptController::class, 'annual'])
+    ->middleware(['auth', 'verified', 'approved'])
+    ->name('receipts.annual');
 
 // Case Notes Routes
 Route::middleware(['auth', 'verified', 'approved'])->group(function () {
@@ -98,10 +116,29 @@ Route::middleware('auth')->group(function () {
             return app(DashboardController::class)->__invoke(request());
         })->name('dashboard');
 
-        // Donor Dashboard Route
-        Route::get('donors/dashboard', [DonorDashboardController::class, 'index'])
-            ->middleware('role:External|Donor')
-            ->name('donors.dashboard');
+        Route::middleware('role:External|Donor')->group(function () {
+            Route::get('donors/onboarding', [DonorOnboardingController::class, 'show'])
+                ->name('donors.onboarding.show');
+            Route::post('donors/onboarding', [DonorOnboardingController::class, 'store'])
+                ->name('donors.onboarding.store');
+
+            Route::get('donors/dashboard', [DonorDashboardController::class, 'index'])
+                ->name('donors.dashboard');
+
+            Route::get('annual-reports/{annualReport}', [AnnualReportController::class, 'download'])
+                ->name('annual-reports.download');
+        });
+
+        Route::prefix('compliance')->name('compliance.')->group(function () {
+            Route::get('export', [ComplianceController::class, 'exportDonorData'])->name('export');
+            Route::post('redact', [ComplianceController::class, 'requestRedaction'])->name('redact');
+            Route::post('donations/{donation}/kyc', [ComplianceController::class, 'updateKycStatus'])
+                ->middleware('can:donations.manage')
+                ->name('donations.kyc.update');
+            Route::post('redaction/{user}/finalize', [ComplianceController::class, 'finalizeRedaction'])
+                ->middleware('can:users.manage')
+                ->name('redaction.finalize');
+        });
 
         Route::get('branches/export', [BranchController::class, 'export'])->name('branches.export');
 
@@ -113,6 +150,16 @@ Route::middleware('auth')->group(function () {
 
         Route::resource('elders', ElderController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
+            ->middleware('can:elders.manage');
+
+        Route::post('elders/{elder}/documents', [ElderDocumentController::class, 'store'])
+            ->name('elders.documents.store')
+            ->middleware('can:elders.manage');
+        Route::delete('elders/{elder}/documents/{document}', [ElderDocumentController::class, 'destroy'])
+            ->name('elders.documents.destroy')
+            ->middleware('can:elders.manage');
+        Route::get('elders/{elder}/documents/{document}/download', [ElderDocumentController::class, 'download'])
+            ->name('elders.documents.download')
             ->middleware('can:elders.manage');
 
         Route::post('elders/{elder}/lifecycle/status', [ElderLifecycleController::class, 'updateStatus'])
@@ -152,35 +199,73 @@ Route::middleware('auth')->group(function () {
         // Case Notes Routes
         Route::get('elders/{elder}/case-notes', [CaseNoteController::class, 'index'])
             ->name('elders.case-notes.index')
-            ->middleware('can:elders.view_case_notes');
-            
+            ->middleware('can:case_notes.view');
+
         Route::post('elders/{elder}/case-notes', [CaseNoteController::class, 'store'])
             ->name('elders.case-notes.store')
-            ->middleware('can:elders.manage_case_notes');
-            
+            ->middleware('can:case_notes.manage');
+
         Route::put('elders/{elder}/case-notes/{case_note}', [CaseNoteController::class, 'update'])
             ->name('elders.case-notes.update')
-            ->middleware('can:elders.manage_case_notes');
-            
+            ->middleware('can:case_notes.manage');
+
         Route::delete('elders/{elder}/case-notes/{case_note}', [CaseNoteController::class, 'destroy'])
             ->name('elders.case-notes.destroy')
-            ->middleware('can:elders.manage_case_notes');
-            
+            ->middleware('can:case_notes.delete');
+
         Route::put('elders/{elder}/case-notes/{case_note}/restore', [CaseNoteController::class, 'restore'])
             ->name('elders.case-notes.restore')
-            ->middleware('can:elders.manage_case_notes');
+            ->middleware('can:case_notes.manage');
+
+        Route::get('case-notes/{case_note}/attachments/{attachment}', [CaseNoteAttachmentController::class, 'download'])
+            ->name('case-notes.attachments.download')
+            ->middleware('can:case_notes.view');
+        Route::delete('case-notes/{case_note}/attachments/{attachment}', [CaseNoteAttachmentController::class, 'destroy'])
+            ->name('case-notes.attachments.destroy')
+            ->middleware('can:case_notes.manage');
 
         Route::get('sponsorships/export', [SponsorshipController::class, 'export'])->name('sponsorships.export');
+
+        Route::post('sponsorships/{sponsorship}/unmatch', [SponsorshipController::class, 'unmatch'])
+            ->name('sponsorships.unmatch')
+            ->middleware('can:sponsorships.manage');
 
         Route::resource('sponsorships', SponsorshipController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
             ->middleware('can:sponsorships.manage');
+
+        Route::post('elders/{elder}/proposals', [SponsorshipProposalController::class, 'store'])
+            ->name('elders.proposals.store')
+            ->middleware('can:sponsorships.manage');
+        Route::delete('elders/{elder}/proposals/{proposal}', [SponsorshipProposalController::class, 'cancel'])
+            ->name('elders.proposals.cancel')
+            ->middleware('can:sponsorships.manage');
+
+        Route::post('proposals/{proposal}/accept', [SponsorshipProposalController::class, 'accept'])
+            ->name('proposals.accept')
+            ->middleware('role:External|Donor');
+        Route::post('proposals/{proposal}/decline', [SponsorshipProposalController::class, 'decline'])
+            ->name('proposals.decline')
+            ->middleware('role:External|Donor');
 
         Route::get('visits/export', [VisitController::class, 'export'])->name('visits.export');
 
         Route::resource('visits', VisitController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
             ->middleware('can:visits.manage');
+
+        Route::middleware('can:donations.manage')->group(function () {
+            Route::get('reconciliation', [PaymentReconciliationController::class, 'index'])
+                ->name('reconciliation.index');
+            Route::post('reconciliation', [PaymentReconciliationController::class, 'store'])
+                ->name('reconciliation.store');
+            Route::get('reconciliation/{import}', [PaymentReconciliationController::class, 'show'])
+                ->name('reconciliation.show');
+            Route::post('reconciliation/{import}/items/{item}/match', [PaymentReconciliationController::class, 'matchItem'])
+                ->name('reconciliation.items.match');
+            Route::post('reconciliation/{import}/items/{item}/ignore', [PaymentReconciliationController::class, 'ignoreItem'])
+                ->name('reconciliation.items.ignore');
+        });
 
         Route::resource('campaigns', CampaignController::class)
             ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'])
@@ -206,6 +291,10 @@ Route::middleware('auth')->group(function () {
         Route::get('reports/export', [ReportController::class, 'exportReport'])
             ->name('reports.export')
             ->middleware('can:reports.view');
+
+        Route::get('outbound', [OutboundMessageController::class, 'index'])
+            ->name('outbound.index')
+            ->middleware('can:notifications.view');
 
         // New route for Impact Book generation
         Route::get('reports/impact-book', [ReportController::class, 'generateImpactBook'])
@@ -247,6 +336,7 @@ Route::middleware('auth')->group(function () {
         Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
 
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('activity-logs/export', [ActivityLogController::class, 'export'])->name('activity-logs.export');
 
         Route::get('/two-factor-email-recovery/codes', [TwoFactorEmailRecoveryController::class, 'getRecoveryCodes'])->name('two-factor-email-recovery.codes');
         Route::post('/two-factor-email-recovery/send', [TwoFactorEmailRecoveryController::class, 'sendRecoveryCode'])->name('two-factor-email-recovery.send');

@@ -49,29 +49,6 @@ const props = defineProps<{
         labels: string[];
         series: number[];
     };
-    maintenance: Array<{
-        id: string;
-        title: string;
-        location?: string;
-        due_on: string;
-        priority: 'Low' | 'Medium' | 'High';
-        status: string;
-    }>;
-    recentExports: Array<{
-        id: string;
-        name: string;
-        type: string;
-        status: string;
-        completed_at: string | null;
-        requested_by?: string | null;
-    }>;
-    recentActivity: Array<{
-        id: number | string;
-        description: string | null;
-        action: string | null;
-        causer: string | null;
-        occurred_at: string | null;
-    }>;
 }>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
@@ -133,13 +110,17 @@ const quickLinks = computed<QuickLink[]>(() => [
     },
 ]);
 
+const suppressedMetrics = ['Team Growth'];
+
 const resolvedMetrics = computed(() =>
-    (props.metrics ?? []).map((metric) => ({
-        ...metric,
-        icon: metric.icon
-            ? (iconRegistry[metric.icon as keyof typeof iconRegistry] ?? Users)
-            : null,
-    })),
+    (props.metrics ?? [])
+        .filter((metric) => !suppressedMetrics.includes(metric.label))
+        .map((metric) => ({
+            ...metric,
+            icon: metric.icon
+                ? (iconRegistry[metric.icon as keyof typeof iconRegistry] ?? Users)
+                : null,
+        })),
 );
 
 const maintenanceTone = (priority: string) => {
@@ -152,6 +133,53 @@ const maintenanceTone = (priority: string) => {
             return 'text-emerald-600 dark:text-emerald-400';
     }
 };
+
+const maintenanceInsights = computed(() => {
+    const items = props.maintenance ?? [];
+    const parseDate = (value?: string | null) => {
+        if (!value) return null;
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const now = new Date();
+    const highPriority = items.filter(
+        (item) => item.priority?.toLowerCase() === 'high',
+    ).length;
+    const overdue = items.filter((item) => {
+        const due = parseDate(item.due_on);
+        return due ? due.getTime() < now.getTime() : false;
+    }).length;
+
+    const upcoming = items
+        .map((item) => ({
+            ...item,
+            parsed_due: parseDate(item.due_on),
+        }))
+        .filter((item) => item.parsed_due && item.parsed_due >= now)
+        .sort((a, b) => (a.parsed_due!.getTime() - b.parsed_due!.getTime()))[0];
+
+    return {
+        stats: [
+            {
+                label: 'High Priority',
+                value: highPriority,
+                caption: 'flagged reviews',
+            },
+            {
+                label: 'Overdue',
+                value: overdue,
+                caption: 'require immediate follow-up',
+            },
+            {
+                label: 'Scheduled',
+                value: items.length,
+                caption: 'tasks this cycle',
+            },
+        ],
+        nextDueLabel: upcoming?.due_on ?? null,
+    };
+});
 </script>
 
 <template>
@@ -352,7 +380,7 @@ const maintenanceTone = (priority: string) => {
                     <div
                         class="border-b border-slate-200/70 px-5 py-4 text-sm font-semibold text-slate-800 dark:border-slate-800/60 dark:text-slate-100"
                     >
-                        Recent Activity
+                        Recent Activity 
                     </div>
                     <div
                         class="divide-y divide-slate-200/70 dark:divide-slate-800/60"

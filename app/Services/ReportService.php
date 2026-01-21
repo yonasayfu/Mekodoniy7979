@@ -2,19 +2,29 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\AnnualReport;
 use App\Models\DailyStat;
 use App\Models\Donation;
 use App\Models\Elder;
 use App\Models\Sponsorship;
-use App\Models\AnnualReport;
-use App\Models\User;
 use App\Models\TimelineEvent;
+use App\Models\User;
+use App\Notifications\AnnualImpactBookReadyNotification;
+use App\Support\Services\ImpactBookGenerator;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 
 class ReportService
 {
+    protected ImpactBookGenerator $impactBookGenerator;
+
+    public function __construct(ImpactBookGenerator $impactBookGenerator)
+    {
+        $this->impactBookGenerator = $impactBookGenerator;
+    }
     /**
      * Get data for the admin dashboard.
      *
@@ -63,6 +73,8 @@ class ReportService
 
         $data['timeline_events'] = $data['keyTimelineEvents'];
         unset($data['keyTimelineEvents']);
+        $data['donation_trend'] = $this->donorMonthlyTrend($user, 6);
+        $data['ethiopian_date'] = ethiopian_date(now());
 
         return array_merge($data, ['supported_elders_count' => $supportedEldersCount]);
     }
@@ -82,7 +94,25 @@ class ReportService
                 ->where('status', 'active');
         })->get();
 
-        return array_merge($commonData, ['supportedElders' => $supportedElders]);
+        return array_merge($commonData, [
+            'supportedElders' => $supportedElders,
+            'donation_trend' => $this->donorMonthlyTrend($user, 12),
+        ]);
+    }
+
+    public function generateImpactBookForUser(User $user, ?int $year = null): AnnualReport
+    {
+        $year ??= now()->year;
+        $impactData = $this->getImpactBookData($user);
+        $impactData['donation_trend'] = $this->donorMonthlyTrend($user, 12);
+        $impactData['ethiopian_date'] = ethiopian_date(now());
+
+        $pdfPath = $this->impactBookGenerator->generate($user, $impactData, $year);
+
+        return AnnualReport::updateOrCreate(
+            ['user_id' => $user->id, 'report_year' => $year],
+            ['impact_data' => $impactData, 'pdf_path' => $pdfPath]
+        );
     }
 
     /**
@@ -175,20 +205,25 @@ class ReportService
      */
     public function generateAnnualReports(int $year): int
     {
-        $consistentDonors = User::whereHas('sponsorships', function($q) use ($year) {
-            $q->where('status', 'active')
-              ->where('consecutive_months_kept', '>=', 12);
-        })->get();
+        $startDate = Carbon::create($year, 1, 1);
+        $endDate = Carbon::create($year, 12, 31);
+
+        $consistentDonors = User::whereHas('sponsorships', function ($q) {
+                $q->where('status', 'active');
+            })
+            ->whereHas('donations', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [$startDate, $endDate])
+                    ->where('status', 'approved');
+            })
+            ->get();
 
         $generated = 0;
         foreach ($consistentDonors as $donor) {
-            $impactData = $this->calculateAnnualImpact($donor, $year);
-            $pdfPath = $this->generateThankYouPDF($donor, $impactData, $year);
+            $annualReport = $this->generateImpactBookForUser($donor, $year);
+            if ($annualReport->wasRecentlyCreated || $annualReport->wasChanged('pdf_path')) {
+                $donor->notify(new AnnualImpactBookReadyNotification($annualReport));
+            }
 
-            AnnualReport::updateOrCreate(
-                ['user_id' => $donor->id, 'report_year' => $year],
-                ['impact_data' => $impactData, 'pdf_path' => $pdfPath]
-            );
             $generated++;
         }
 
@@ -213,30 +248,37 @@ class ReportService
             ->get();
 
         $timelineEvents = TimelineEvent::where('user_id', $user->id)
+            ->with('elder')
             ->whereBetween('occurred_at', [$startDate, $endDate])
-            ->count();
+            ->latest()
+            ->take(10)
+            ->get()
+            ->map(function (TimelineEvent $event) {
+                return [
+                    'id' => $event->id,
+                    'description' => $event->description,
+                    'occurred_at' => $event->occurred_at?->toDateTimeString(),
+                    'elder' => $event->elder ? [
+                        'id' => $event->elder->id,
+                        'name' => $event->elder->name,
+                    ] : null,
+                ];
+            });
 
         return [
             'total_donations' => $totalDonations,
-            'supported_elders_count' => $supportedElders->count(),
-            'timeline_events_count' => $timelineEvents,
-            'supported_elders' => $supportedElders->map(function($sponsorship) {
+            'supportedElders' => $supportedElders,
+            'supported_elders' => $supportedElders->map(function ($sponsorship) {
                 return [
                     'name' => $sponsorship->elder->first_name . ' ' . $sponsorship->elder->last_name,
                     'relationship' => $sponsorship->relationship_type,
                     'months_supported' => $sponsorship->consecutive_months_kept,
                 ];
             }),
+            'supported_elders_count' => $supportedElders->count(),
+            'timeline_events' => $timelineEvents,
+            'timeline_events_count' => $timelineEvents->count(),
         ];
-    }
-
-    /**
-     * Generate thank you PDF (placeholder)
-     */
-    private function generateThankYouPDF(User $user, array $impactData, int $year): string
-    {
-        // TODO: Implement PDF generation
-        return "reports/annual/{$user->id}_{$year}.pdf";
     }
 
     /**
@@ -265,7 +307,24 @@ class ReportService
     /**
      * Get comprehensive admin dashboard data
      */
-    public function getEnhancedAdminDashboard($branchId = null): array
+    public function getEnhancedAdminDashboard($branchId = null, int $dateRange = 30): array
+    {
+        $dateRange = max(7, min($dateRange, 365));
+        $cacheKey = sprintf(
+            'report:enhanced_admin_dashboard:branch:%s:range:%d',
+            $branchId ? $branchId : 'all',
+            $dateRange,
+        );
+
+        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($branchId, $dateRange) {
+            return $this->buildAdminDashboardPayload($branchId, $dateRange);
+        });
+    }
+
+    /**
+     * Construct dashboard payload so it can be cached.
+     */
+    protected function buildAdminDashboardPayload($branchId = null, int $dateRange = 30): array
     {
         // Base query for sponsorships
         $sponsorshipQuery = Sponsorship::query()->whereIn('status', ['active', 'pending', 'fulfilled']);
@@ -303,7 +362,10 @@ class ReportService
         })->count();
 
         // Get recent activity (last 10 activities) - this seems fine as it's limited
+        $startDate = Carbon::now()->subDays($dateRange);
         $recentActivity = TimelineEvent::with(['user', 'elder'])
+            ->when($branchId, fn($query) => $query->whereHas('elder', fn($q) => $q->where('branch_id', $branchId)))
+            ->where('created_at', '>=', $startDate)
             ->latest()
             ->take(10)
             ->get()
@@ -321,14 +383,65 @@ class ReportService
             'missed_payments' => $missedPayments,
             'featured_matches' => $this->getFeaturedMatches(),
             'guest_donations_today' => Donation::where('donation_type', '!=', 'pledge')
+                ->when($branchId, fn($query) => $query->whereHas('elder', fn($q) => $q->where('branch_id', $branchId)))
                 ->whereDate('created_at', today())
                 ->sum('amount'),
             'monthly_expenses_covered' => $monthlyExpensesCovered,
             'total_sponsorships' => $totalSponsorships,
             'total_elders' => $totalElders,
             'total_donors' => $totalDonors,
-            'recent_activity' => $recentActivity
+            'recent_activity' => $recentActivity,
+            'monthly_trend' => $this->monthlyDonationsTrend($branchId, 6),
         ];
+    }
+
+    protected function monthlyDonationsTrend($branchId = null, int $months = 6): array
+    {
+        $months = max(3, min($months, 12));
+        $startMonth = now()->subMonths($months - 1)->startOfMonth();
+        $endMonth = now()->endOfMonth();
+        $baseQuery = Donation::query()
+            ->where('status', 'approved')
+            ->when($branchId, fn($query) => $query->whereHas('elder', fn($q) => $q->where('branch_id', $branchId)));
+
+        $trend = [];
+        foreach (CarbonPeriod::create($startMonth, '1 month', $endMonth) as $date) {
+            $sum = (clone $baseQuery)
+                ->whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->sum('amount');
+
+            $trend[] = [
+                'label' => $date->format('M Y'),
+                'amount' => $sum,
+            ];
+        }
+
+        return $trend;
+    }
+
+    protected function donorMonthlyTrend(User $user, int $months = 6): array
+    {
+        $months = max(3, min($months, 12));
+        $startMonth = now()->subMonths($months - 1)->startOfMonth();
+        $endMonth = now()->endOfMonth();
+
+        $trend = [];
+
+        foreach (CarbonPeriod::create($startMonth, '1 month', $endMonth) as $date) {
+            $amount = Donation::where('user_id', $user->id)
+                ->where('status', 'approved')
+                ->whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->sum('amount');
+
+            $trend[] = [
+                'label' => $date->format('M Y'),
+                'amount' => $amount,
+            ];
+        }
+
+        return $trend;
     }
 
     /**

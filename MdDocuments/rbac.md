@@ -1,64 +1,39 @@
 # RBAC Summary (Role-Based Access Control)
 
-This document outlines the users, roles, and permissions configured in the Mekodonia Home Connect system.
+This document distills the role and permission blueprint for Mekodonia Home Connect. The canonical definition lives in `config/rbac.php`, which drives the `RolePermissionSeeder` so the live database matches the documented matrix.
 
 ## Users & Credentials
 
-All default passwords are set to `password` (for development environments).
+All default passwords are `password` (development only). Seeded accounts include:
 
 | Email | Role | Name | Description |
 | :--- | :--- | :--- | :--- |
-| **`admin@example.com`** | **Super Admin** | System Administrator | Full access to everything. |
-| **`auditor@example.com`** | **Auditor** | Avery Auditor | View-only access to most data + logs. |
-| **`readonly@example.com`** | **Reporting Analyst** | Riley Readonly | Reports and data export access. |
+| `admin@example.com` | Super Admin | System Administrator | Full scope across branches, donors, reports, and infrastructure. |
+| `auditor@example.com` | Auditor | Avery Auditor | Read-only view of data + audit trails. |
+| `readonly@example.com` | Reporting Analyst | Riley Readonly | Generates and exports reports. |
 
-*(Note: Additional random users are created by seeders with the `User::factory()` but do not have fixed emails.)*
+Additional demo users come from `User::factory()` and tie into the `config/rbac.php` matrix as needed.
 
 ## Roles & Permissions
 
-The system uses a hierarchical and functional role structure.
+`config/rbac.php` now exposes:
 
-### 1. Super Admin
-*   **Access:** Full System Access (Wildcard `*`)
-*   **Capabilities:** Can manage all aspects of the system including other admins, system settings, and sensitive data.
-*   **Permissions:** `users.*`, `staff.*`, `roles.*`, `permissions.*`, `branches.*`, `elders.*`, `sponsorships.*`, `donations.*`, `visits.*`, `reports.*`, `campaigns.*`, `mailbox.*`, `activity_logs.*`, `data_exports.*`, `system.*`, `timeline.*`
+1. A catalog of discrete permissions (users, staff, elders, donations, reports, etc.).
+2. A whitelist of wildcard scopes (`users.*`, `donations.*`, etc.) that encapsulate full access to a domain.
+3. A role matrix with friendly labels, descriptions, and curated permission sets so the UI or docs can render it alongside the seeder.
 
-### 2. Admin
-*   **Access:** High-level Operational Access
-*   **Capabilities:** Similar to Super Admin but cannot manage other Admins/Super Admins (restricted `roles.manage`).
-*   **Permissions:** `users.*`, `staff.*`, `branches.*`, `elders.*`, `sponsorships.*`, `donations.*`, `visits.*`, `reports.*`, `mailbox.*`, `activity_logs.*`, `data_exports.*`, `system.*`, `timeline.*` (plus `roles.view`, `roles.update`, `permissions.view`)
+| Role | Label | Responsibilities |
+| --- | --- | --- |
+| **Super Admin** | System Owner | Owns every branch, elder, donation, report, and system setting. Seeded with `*` plus notification visibility. |
+| **Admin** | Operational Admin | Manages users, staff, branches, elders, donations, visits, mailbox, campaigns, reports, and system logs without altering fellow admins. |
+| **Branch Admin** | Branch Leader | Leads a single branch: hires staff, matches donors, approves donations, runs branch reports, and maintains case notes. |
+| **Manager** | Branch Manager | Oversees operational health, reconciliation reports, and case-note governance inside their branch. |
+| **Branch Coordinator** | Operations Lead | Coordinates visits, updates elder profiles, and accelerates match proposals while writing timelines. |
+| **Field Officer** | Field Team | Captures visit data, writes timelines, and logs case notes without handling higher-level system settings. |
+| **Finance Officer** | Finance Analyst | Approves donations, enforces KYC thresholds, and exports financial statements. |
+| **Auditor** | Compliance Auditor | Read-only access to activity logs, donations, visits, and exports to validate controls. |
+| **Reporting Analyst** | Data Analyst | Runs and downloads reports, dashboards, and exports without editing donors or system settings. |
+| **Donor** | Registered Donor | A logged-in donor who sees personal donations, sponsorships, and impact books within the SPA. |
+| **External** | Guest Donor | Browses elders, guest donations, and public reports with minimal access to private data. |
 
-### 3. Manager
-*   **Access:** Branch & Operational Oversight
-*   **Capabilities:** Can manage staff, elders, sponsorships, and view reports. Cannot delete system-level data.
-*   **Permissions:** `users.view`, `staff.*`, `branches.view`, `elders.*`, `sponsorships.*`, `donations.*`, `visits.*`, `reports.view`, `reports.generate`, `reports.export`, `reports.operational`, `mailbox.view`, `mailbox.send`, `activity_logs.view`, `timeline.view`, `timeline.create`, `timeline.update`
-
-### 4. Branch Coordinator
-*   **Access:** Branch Specific Operations
-*   **Capabilities:** Manage elders and staff within their purview.
-*   **Permissions:** `users.view`, `staff.view`, `staff.update`, `branches.view`, `elders.view`, `elders.update`, `donations.view`, `donations.create`, `visits.*`, `reports.view`, `reports.generate`, `timeline.view`, `timeline.create`
-
-### 5. Field Officer
-*   **Access:** On-the-ground Operations
-*   **Capabilities:** View data and manage visits.
-*   **Permissions:** `users.view`, `staff.view`, `elders.view`, `donations.view`, `visits.view`, `visits.create`, `visits.update`, `timeline.view`, `timeline.create`
-
-### 6. Finance Officer
-*   **Access:** Financial Data
-*   **Capabilities:** Manage donations and generate financial reports.
-*   **Permissions:** `users.view`, `donations.*`, `reports.view`, `reports.financial`, `reports.generate`, `reports.export`, `data_exports.view`, `data_exports.create`
-
-### 7. Auditor
-*   **Access:** Compliance & Oversight
-*   **Capabilities:** Read-only access to operational data and activity logs.
-*   **Permissions:** `users.view`, `staff.view`, `elders.view`, `donations.view`, `visits.view`, `reports.view`, `reports.generate`, `activity_logs.view`, `data_exports.view`
-
-### 8. Reporting Analyst
-*   **Access:** Data Analysis
-*   **Capabilities:** Generate and export reports.
-*   **Permissions:** `users.view`, `staff.view`, `elders.view`, `donations.view`, `visits.view`, `reports.view`, `reports.generate`, `reports.export`, `data_exports.view`
-
-### 9. External (Donor)
-*   **Access:** Public/Donor Facing
-*   **Capabilities:** View own sponsorships and donations.
-*   **Permissions:** `users.view`, `sponsorships.view`, `donations.view`, `reports.view`
+These definitions are referenced directly by `RolePermissionSeeder` so any change to `config/rbac.php` automatically flows into the seeded roles.

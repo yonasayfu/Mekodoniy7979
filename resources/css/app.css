@@ -77,6 +77,12 @@
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
     }
+
+    :dir(rtl) body {
+        direction: rtl;
+        font-family: 'Noto Sans Ethiopic', var(--font-sans);
+        text-align: right;
+    }
 }
 
 @layer utilities {

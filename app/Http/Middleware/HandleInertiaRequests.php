@@ -44,8 +44,15 @@ class HandleInertiaRequests extends Middleware
         $impersonator = $isImpersonating ? $impersonateManager->getImpersonator() : null;
         $impersonatedUser = $isImpersonating ? $request->user() : null;
 
+        $locale = app()->getLocale();
+        $rtlLocales = ['ar', 'fa', 'he', 'ur'];
+        $isRtl = in_array($locale, $rtlLocales, true);
+
         return [
             ...parent::share($request),
+            'locale' => $locale,
+            'direction' => $isRtl ? 'rtl' : 'ltr',
+            'translations' => fn () => trans('ui'),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [

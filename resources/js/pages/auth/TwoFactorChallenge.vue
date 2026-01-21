@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useRoute } from '@/composables/useRoute';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import axios from 'axios';
+import http from '@/lib/http';
 import { computed, ref } from 'vue';
 
 const challengeType = ref('app_code'); // 'app_code', 'recovery_code', 'email_recovery_code'
@@ -34,7 +34,7 @@ const submit = () => {
 
 const sendEmailRecoveryCode = async () => {
     try {
-        await axios.post(route('two-factor-email-recovery.send'));
+        await http.post(route('two-factor-email-recovery.send'));
         emailRecoveryCodeSent.value = true;
     } catch (error) {
         console.error('Error sending email recovery codes:', error);

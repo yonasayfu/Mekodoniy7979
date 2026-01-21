@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSponsorshipRequest;
+use App\Http\Requests\UnmatchSponsorshipRequest;
 use App\Http\Requests\UpdateSponsorshipRequest;
 use App\Models\Sponsorship;
 use App\Models\User;
 use App\Models\Elder;
+use App\Notifications\SponsorshipUnmatchedNotification;
+use App\Support\Services\ElderMatchStateService;
 use App\Support\Services\TimelineEventService;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -67,19 +70,21 @@ class SponsorshipController extends Controller
     public function store(StoreSponsorshipRequest $request, TimelineEventService $timelineEventService)
     {
         $sponsorship = Sponsorship::create($request->validated());
+        $sponsorship->loadMissing(['user', 'elder']);
 
-        $timelineEventService->create(
-            $sponsorship,
-            'Sponsorship created',
-            'A new sponsorship has been created.',
+        $timelineEventService->createEvent(
+            'sponsorship_created',
+            sprintf(
+                'Sponsorship for %s created by %s. Amount: %s %s (%s).',
+                optional($sponsorship->elder)->name ?? 'an elder',
+                optional($sponsorship->user)->name ?? 'a donor',
+                number_format((float) $sponsorship->amount, 2),
+                $sponsorship->currency ?? 'ETB',
+                $sponsorship->frequency ?? 'unspecified frequency'
+            ),
+            Carbon::now(),
             $sponsorship->user,
-            $sponsorship->elder,
-            [
-                'amount' => $sponsorship->amount,
-                'frequency' => $sponsorship->frequency,
-                'start_date' => $sponsorship->start_date,
-                'end_date' => $sponsorship->end_date,
-            ]
+            $sponsorship->elder
         );
 
         return redirect()->route('sponsorships.index')->with('success', 'Sponsorship created successfully.');
@@ -114,6 +119,9 @@ class SponsorshipController extends Controller
                 'notes' => $sponsorship->notes,
             ],
             'activity' => $sponsorship->activityLogs,
+            'can' => [
+                'unmatch' => auth()->user()->can('sponsorships.manage'),
+            ],
             'breadcrumbs' => [
                 [
                     'title' => 'Sponsorships',
@@ -162,14 +170,21 @@ class SponsorshipController extends Controller
     public function update(UpdateSponsorshipRequest $request, Sponsorship $sponsorship, TimelineEventService $timelineEventService)
     {
         $sponsorship->update($request->validated());
+        $sponsorship->loadMissing(['user', 'elder']);
 
-        $timelineEventService->create(
-            $sponsorship,
-            'Sponsorship updated',
-            'The sponsorship has been updated.',
+        $timelineEventService->createEvent(
+            'sponsorship_updated',
+            sprintf(
+                'Sponsorship for %s updated by %s. Amount: %s %s (%s).',
+                optional($sponsorship->elder)->name ?? 'an elder',
+                optional($sponsorship->user)->name ?? 'a donor',
+                number_format((float) $sponsorship->amount, 2),
+                $sponsorship->currency ?? 'ETB',
+                $sponsorship->frequency ?? 'unspecified frequency'
+            ),
+            Carbon::now(),
             $sponsorship->user,
-            $sponsorship->elder,
-            $request->validated()
+            $sponsorship->elder
         );
 
         return redirect()->route('sponsorships.index')->with('success', 'Sponsorship updated successfully.');
@@ -190,5 +205,44 @@ class SponsorshipController extends Controller
             'label' => 'Sponsorships Directory',
             'type' => 'sponsorships',
         ]);
+    }
+
+    public function unmatch(
+        UnmatchSponsorshipRequest $request,
+        Sponsorship $sponsorship,
+        TimelineEventService $timelineEventService,
+        ElderMatchStateService $matchStateService
+    ) {
+        if ($sponsorship->status === 'cancelled') {
+            return back()->with('info', 'This sponsorship has already been closed.');
+        }
+
+        $sponsorship->loadMissing(['elder', 'user']);
+
+        $sponsorship->update([
+            'status' => 'cancelled',
+            'end_date' => now(),
+        ]);
+
+        if ($sponsorship->elder) {
+            $matchStateService->sync($sponsorship->elder);
+
+            $timelineEventService->createEvent(
+                'sponsorship_unmatched',
+                'Sponsorship closed by '.$request->user()->name,
+                Carbon::now(),
+                $request->user(),
+                $sponsorship->elder
+            );
+        }
+
+        if ($sponsorship->user) {
+            $sponsorship->user->notify(new SponsorshipUnmatchedNotification(
+                $sponsorship,
+                $request->input('reason')
+            ));
+        }
+
+        return back()->with('success', 'Sponsorship closed and elder returned to the pool.');
     }
 }

@@ -20,7 +20,7 @@ import {
     TrendingUp,
     Users,
 } from 'lucide-vue-next';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 const route = useRoute();
 
@@ -47,10 +47,48 @@ const props = defineProps<{
 const currentSlide = ref(0);
 const selectedBranch = ref(props.filters.branch_id || 'all');
 const selectedRange = ref(props.filters.date_range || '30');
+const featuredMatches = computed(() => props.stats.featured_matches ?? []);
+
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'ETB',
+    maximumFractionDigits: 0,
+});
+
+const summaryCards = computed(() => [
+    {
+        label: 'Total Sponsorships',
+        value: props.stats.total_sponsorships ?? 0,
+        caption: 'Active relationships',
+        icon: Heart,
+        route: route('sponsorships.index'),
+    },
+    {
+        label: 'Registered Elders',
+        value: props.stats.total_elders ?? 0,
+        caption: 'Across all branches',
+        icon: Users,
+        route: route('elders.index'),
+    },
+    {
+        label: 'Monthly Expenses Covered',
+        value: currencyFormatter.format(props.stats.monthly_expenses_covered ?? 0),
+        caption: 'Reported by accounting',
+        icon: DollarSign,
+        route: route('reports.detailed', { metric: 'monthly_expenses' }),
+    },
+    {
+        label: 'Guest Donations Today',
+        value: props.stats.guest_donations_today ?? 0,
+        caption: 'Meals funded',
+        icon: TrendingUp,
+        route: route('reports.detailed', { metric: 'guest_donations' }),
+    },
+]);
 
 const nextSlide = () => {
     currentSlide.value =
-        (currentSlide.value + 1) % (props.stats.featured_matches.length || 1);
+        (currentSlide.value + 1) % (featuredMatches.value.length || 1);
 };
 
 const applyFilters = () => {
@@ -82,13 +120,30 @@ const printReport = () => {
 };
 
 onMounted(() => {
-    if (
-        props.stats.featured_matches &&
-        props.stats.featured_matches.length > 1
-    ) {
+    if (featuredMatches.value.length > 1) {
         setInterval(nextSlide, 5000);
     }
+]);
+
+const monthlyTrend = computed(() => props.stats.monthly_trend ?? []);
+const trendMaxValue = computed(() => {
+    if (!monthlyTrend.value.length) {
+        return 1;
+    }
+
+    return Math.max(
+        ...monthlyTrend.value.map((point) => point.amount ?? 0),
+        1,
+    );
 });
+
+const formattedTrend = (amount: number) =>
+    currencyFormatter.format(amount ?? 0);
+
+const promiseFulfillmentLow = computed(
+    () => Math.round(props.stats.promise_fulfillment_rate ?? 0),
+);
+const missedPayments = computed(() => props.stats.missed_payments ?? 0);
 </script>
 
 <template>
@@ -142,46 +197,192 @@ onMounted(() => {
 
             <!-- Filters -->
             <GlassCard class="no-print">
-                <div class="p-4">
-                    <div class="flex items-center gap-4">
-                        <div class="flex items-center gap-2">
+                <div class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+                        <div class="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
                             <Filter class="h-4 w-4" />
-                            <span class="font-medium">Filters:</span>
+                            Filters
                         </div>
-                        <Select v-model="selectedBranch">
-                            <SelectTrigger class="w-48">
-                                <SelectValue placeholder="All Branches" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all"
-                                    >All Branches</SelectItem
-                                >
-                                <SelectItem
-                                    v-for="branch in branches"
-                                    :key="branch.id"
-                                    :value="branch.id"
-                                >
-                                    {{ branch.name }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select v-model="selectedRange">
-                            <SelectTrigger class="w-32">
-                                <SelectValue placeholder="30 days" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="7">7 days</SelectItem>
-                                <SelectItem value="30">30 days</SelectItem>
-                                <SelectItem value="90">90 days</SelectItem>
-                                <SelectItem value="365">1 year</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+                            <Select v-model="selectedBranch">
+                                <SelectTrigger class="w-full min-w-[12rem]">
+                                    <SelectValue placeholder="All Branches" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Branches</SelectItem>
+                                    <SelectItem
+                                        v-for="branch in branches"
+                                        :key="branch.id"
+                                        :value="branch.id"
+                                    >
+                                        {{ branch.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Select v-model="selectedRange">
+                                <SelectTrigger class="w-full min-w-[8rem]">
+                                    <SelectValue placeholder="30 days" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="7">7 days</SelectItem>
+                                    <SelectItem value="30">30 days</SelectItem>
+                                    <SelectItem value="90">90 days</SelectItem>
+                                    <SelectItem value="365">1 year</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
                         <Button @click="applyFilters" size="sm">
                             Apply Filters
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            @click="
+                                () => {
+                                    selectedBranch.value = 'all';
+                                    selectedRange.value = '30';
+                                }
+                            "
+                        >
+                            Reset
                         </Button>
                     </div>
                 </div>
             </GlassCard>
+
+            <!-- Summary Cards -->
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <Link
+                    v-for="card in summaryCards"
+                    :key="card.label"
+                    :href="card.route"
+                    class="transition-shadow hover:shadow-lg"
+                >
+                    <GlassCard class="flex flex-col gap-3 border border-slate-100/60 dark:border-slate-800/50">
+                        <div
+                            class="inline-flex size-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-100"
+                        >
+                            <component :is="card.icon" class="size-5" />
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.35em] text-slate-500">
+                                {{ card.label }}
+                            </p>
+                            <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                                {{ card.value }}
+                            </p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                {{ card.caption }}
+                            </p>
+                        </div>
+                    </GlassCard>
+                </Link>
+            </div>
+                    <div
+                        class="inline-flex size-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-100"
+                    >
+                        <component :is="card.icon" class="size-5" />
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.35em] text-slate-500">
+                            {{ card.label }}
+                        </p>
+                        <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                            {{ card.value }}
+                        </p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            {{ card.caption }}
+                        </p>
+                    </div>
+                </GlassCard>
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-3">
+                <GlassCard class="lg:col-span-1">
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-slate-400">
+                                Promise health
+                            </p>
+                            <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
+                                Promise fulfillment metrics
+                            </h2>
+                        </div>
+                        <div class="space-y-2">
+                            <p class="text-sm text-slate-600 dark:text-slate-300">
+                                Fulfillment rate measures how many active sponsorships stayed up-to-date this month.
+                            </p>
+                            <div class="flex flex-wrap gap-2">
+                                <Badge variant="outline" class="text-sm">
+                                    Fulfillment {{ promiseFulfillmentLow }}%
+                                </Badge>
+                                <Badge variant="outline" class="text-sm">
+                                    Missed payments {{ missedPayments }}
+                                </Badge>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                Monthly expenses covered
+                            </p>
+                            <p class="text-lg font-semibold text-slate-900 dark:text-white">
+                                {{ currencyFormatter.format(props.stats.monthly_expenses_covered ?? 0) }}
+                            </p>
+                        </div>
+                    </div>
+                </GlassCard>
+
+                <GlassCard class="lg:col-span-2">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-slate-400">
+                                    Donations trend
+                                </p>
+                                <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
+                                    Last 6 months of guest/pledge receipts
+                                </h2>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                Updated every 5 minutes
+                            </p>
+                        </div>
+                        <div
+                            v-if="monthlyTrend.length"
+                            class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6"
+                        >
+                            <div
+                                v-for="point in monthlyTrend"
+                                :key="point.label"
+                                class="flex flex-col items-center gap-2"
+                            >
+                                <div class="flex h-28 w-full items-end justify-center">
+                                    <span
+                                        class="block w-2/3 rounded-full bg-indigo-500 transition-all dark:bg-indigo-400"
+                                        :style="{
+                                            height: `${Math.max(
+                                                8,
+                                                ((point.amount ?? 0) / trendMaxValue) * 100,
+                                            )}px`,
+                                        }"
+                                    ></span>
+                                </div>
+                                <p class="text-xs font-semibold text-slate-900 dark:text-white">
+                                    {{ point.label }}
+                                </p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    {{ formattedTrend(point.amount ?? 0) }}
+                                </p>
+                            </div>
+                        </div>
+                        <div v-else class="rounded-xl border border-dashed border-slate-300 p-4 text-center text-sm text-slate-500 dark:border-slate-600 dark:text-slate-400">
+                            No donation trend data available yet.
+                        </div>
+                    </div>
+                </GlassCard>
+            </div>
 
             <!-- Quick Actions -->
             <div class="no-print grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -441,83 +642,81 @@ onMounted(() => {
 
             <!-- Wall of Love - Featured Matches -->
             <GlassCard>
-                <div class="p-6">
-                    <div class="mb-4 flex items-center justify-between">
-                        <h3
-                            class="text-lg font-semibold text-slate-900 dark:text-slate-100"
-                        >
-                            Wall of Love - Success Stories
-                        </h3>
-                        <Badge variant="outline"
-                            >{{ props.stats.featured_matches.length }} featured
-                            matches</Badge
-                        >
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                                Wall of Love - Success Stories
+                            </h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">
+                                Stories your board can share in reports and campaigns.
+                            </p>
+                        </div>
+                        <Badge variant="outline">
+                            {{ featuredMatches.length }} featured matches
+                        </Badge>
                     </div>
                     <div
-                        v-if="props.stats.featured_matches.length > 0"
-                        class="relative overflow-hidden rounded-lg"
+                        v-if="featuredMatches.length"
+                        class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-50 via-pink-50 to-purple-50 dark:from-rose-900/20 dark:via-pink-900/20 dark:to-purple-900/20"
                     >
-                        <div
-                            class="flex transition-transform duration-500"
-                            :style="{
-                                transform: `translateX(-${currentSlide * 100}%)`,
-                            }"
-                        >
+                        <transition-group name="fade" tag="div">
                             <div
-                                v-for="match in props.stats.featured_matches"
-                                :key="match.id"
-                                class="w-full flex-shrink-0 p-6"
+                                v-for="(match, index) in featuredMatches"
+                                :key="match.id ?? index"
+                                v-show="currentSlide === index"
+                                class="grid grid-cols-1 gap-6 p-8 sm:grid-cols-2"
                             >
-                                <div
-                                    class="rounded-xl bg-gradient-to-r from-rose-50 via-pink-50 to-purple-50 p-8 text-center dark:from-rose-900/20 dark:via-pink-900/20 dark:to-purple-900/20"
-                                >
-                                    <div class="mb-4 text-6xl">💝</div>
-                                    <p
-                                        class="mb-2 text-xl font-medium text-slate-900 dark:text-slate-100"
-                                    >
-                                        {{ match.story }}
+                                <div class="space-y-3">
+                                    <p class="text-xs uppercase tracking-[0.35em] text-slate-500">
+                                        {{ match.branch_name ?? 'Branch Story' }}
                                     </p>
-                                    <p
-                                        class="text-sm text-slate-600 dark:text-slate-400"
-                                    >
-                                        {{ match.donor_name }} &
-                                        {{ match.elder_name }}
+                                    <p class="text-2xl font-semibold text-slate-900 dark:text-white">
+                                        {{ match.donor_name }} + {{ match.elder_name }}
                                     </p>
-                                    <div class="mt-4 flex justify-center gap-2">
-                                        <Badge variant="secondary">{{
-                                            match.relationship
-                                        }}</Badge>
-                                        <Badge variant="outline"
-                                            >{{
-                                                match.months_supported
-                                            }}
-                                            months</Badge
-                                        >
+                                    <p class="text-sm text-slate-600 dark:text-slate-300">
+                                        {{ match.story ?? 'This relationship shows how consistent visits and care change lives.' }}
+                                    </p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <Badge variant="secondary">
+                                            {{ match.relationship ?? 'Sibling' }}
+                                        </Badge>
+                                        <Badge variant="outline">
+                                            {{ match.months_supported ?? 0 }} months
+                                        </Badge>
                                     </div>
                                 </div>
+                                <div class="rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-white/40 dark:bg-slate-900/70 dark:ring-slate-800/60">
+                                    <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                        Monthly Support
+                                    </p>
+                                    <p class="mt-2 text-4xl font-bold text-slate-900 dark:text-white">
+                                        {{ match.monthly_support ?? '—' }} ETB
+                                    </p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                                        Started {{ match.started_at ?? 'recently' }}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                        <!-- Slide indicators -->
-                        <div class="mt-4 flex justify-center gap-2">
+                        </transition-group>
+                        <div class="absolute inset-x-0 bottom-4 flex justify-center gap-2">
                             <button
-                                v-for="(match, index) in props.stats
-                                    .featured_matches"
-                                :key="index"
-                                @click="currentSlide = index"
-                                class="h-2 w-2 rounded-full transition-colors"
-                                :class="
+                                v-for="(_, index) in featuredMatches"
+                                :key="`dot-${index}`"
+                                class="h-2 w-2 rounded-full border border-white/60"
+                                :class="[
                                     currentSlide === index
-                                        ? 'bg-blue-500'
-                                        : 'bg-slate-300 dark:bg-slate-600'
-                                "
+                                        ? 'bg-white'
+                                        : 'bg-white/40',
+                                ]"
+                                @click="currentSlide = index"
                             ></button>
                         </div>
                     </div>
                     <div v-else class="py-12 text-center text-slate-500">
                         <Heart class="mx-auto mb-4 h-16 w-16 text-slate-300" />
                         <p>
-                            No featured matches yet. Mark some elders as
-                            featured to showcase success stories.
+                            No featured matches yet. Mark some elders as featured to showcase success stories.
                         </p>
                     </div>
                 </div>

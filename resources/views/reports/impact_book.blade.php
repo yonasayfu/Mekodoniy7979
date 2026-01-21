@@ -2,161 +2,228 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impact Book - {{ $user->name }}</title>
+    <title>Mekodonia Impact Book</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Instrument Sans', 'Inter', sans-serif;
+            color: #0f172a;
             margin: 0;
             padding: 0;
-            color: #333;
+            background: #01030a;
         }
+
         .container {
+            padding: 32px 48px;
+        }
+
+        .hero {
+            position: relative;
+            min-height: 260px;
+            border-radius: 32px;
+            overflow: hidden;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.95));
+            margin-bottom: 32px;
+            box-shadow: 0 30px 70px rgba(2, 6, 23, 0.45);
+        }
+
+        .hero img.cover {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 420px;
+            object-fit: cover;
+            height: 100%;
+            opacity: 0.65;
+        }
+
+        .hero-content {
+            position: relative;
+            padding: 40px;
+            max-width: 620px;
+        }
+
+        .hero h1 {
+            font-size: 38px;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            color: rgba(255, 255, 255, 0.82);
+            margin-top: 0;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+            margin-bottom: 36px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
+        }
+
+        .grid-table {
+            border-collapse: collapse;
             width: 100%;
-            margin: 0 auto;
+            margin-top: 16px;
+        }
+
+        .grid-table th,
+        .grid-table td {
+            border: 1px solid #e5e7eb;
+            padding: 12px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        .grid-table th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 4px 12px;
+            background: #fef9c3;
+            color: #a16207;
+            font-size: 0.75rem;
+            letter-spacing: 0.04em;
+        }
+
+        .timeline-card {
+            background: #f8fafc;
             padding: 20px;
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+            margin-top: 12px;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
+
+        .timeline-item + .timeline-item {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 12px;
+            margin-top: 12px;
         }
-        .header img {
-            max-width: 100px;
-            margin-bottom: 10px;
-        }
-        .header h1 {
-            color: #4CAF50;
-            margin: 0;
-        }
-        .section {
-            margin-bottom: 20px;
-        }
-        .section h2 {
-            color: #337ab7;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-            margin-bottom: 15px;
-        }
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-        }
-        .stat-item {
-            text-align: center;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            flex: 1;
-            margin: 0 5px;
-        }
-        .stat-item .value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #5cb85c;
-        }
-        .stat-item .label {
-            font-size: 14px;
-            color: #777;
-        }
-        .elder-list, .timeline-list {
-            list-style: none;
-            padding: 0;
-        }
-        .elder-list li, .timeline-list li {
-            background-color: #f9f9f9;
-            margin-bottom: 10px;
-            padding: 10px;
-            border-left: 5px solid #5cb85c;
-            border-radius: 3px;
-        }
-        .elder-list li h3 {
-            margin: 0 0 5px 0;
-            color: #333;
-        }
-        .timeline-list li {
-            border-left: 5px solid #5bc0de;
-        }
-        .timeline-list li strong {
-            color: #333;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 50px;
-            font-size: 12px;
-            color: #777;
+
+        .muted {
+            color: #475569;
         }
     </style>
 </head>
 <body>
+    <div class="hero">
+        <img src="{{ $hero_photo }}" alt="Mekodonia Elder" class="cover">
+        <div class="hero-content">
+            <img src="{{ $hero_logo }}" alt="Mekodonia" width="140" />
+            <h1>Mekodonia Impact Book</h1>
+            <p>Prepared for {{ $user->name }} on {{ now()->format('F j, Y') }} ({{ $andegna_date }})</p>
+            <p class="muted">An annual reflection on how your generosity transforms Mekodonia elders.</p>
+        </div>
+    </div>
+
     <div class="container">
-        <div class="header">
-            @if (file_exists(public_path('images/logo.svg')))
-                <img src="{{ public_path('images/logo.svg') }}" alt="Mekodonia Logo">
-            @endif
-            <h1>Your Mekodonia Impact Book</h1>
-            <p>A summary of your invaluable contributions.</p>
-        </div>
-
-        <div class="section">
-            <h2>Dear {{ $user->name }},</h2>
-            <p>
-                Thank you for your generous spirit and unwavering support for the elders at Mekodonia. Your commitment
-                makes a profound difference in their lives. This Impact Book summarizes your journey with us and the
-                positive change you've helped create.
-            </p>
-        </div>
-
-        <div class="section">
-            <h2>Your Contributions</h2>
-            <div class="stats">
-                <div class="stat-item">
-                    <div class="value">{{ number_format($totalDonations, 2) }} ETB</div>
-                    <div class="label">Total Donations</div>
-                </div>
-                <div class="stat-item">
-                    <div class="value">{{ $supportedElders->count() }}</div>
-                    <div class="label">Elders Supported</div>
-                </div>
+        <div class="metrics">
+            <div class="card">
+                <h2>Total Donations</h2>
+                <p class="muted mb-2">ETB collected in {{ $year }}</p>
+                <p style="font-size: 2rem; font-weight: 600;">{{ number_format($total_donations ?? 0, 2) }} ETB</p>
+            </div>
+            <div class="card">
+                <h2>Supported Elders</h2>
+                <p class="muted mb-2">Sponsorships at year end</p>
+                <p style="font-size: 2rem; font-weight: 600;">{{ ($supportedElders ?? collect())->count() }}</p>
+            </div>
+            <div class="card">
+                <h2>Andegna Snapshot</h2>
+                <p class="muted mb-2">Current Ethiopian date</p>
+                <p style="font-size: 1.6rem; font-weight: 600;">{{ $andegna_date }}</p>
             </div>
         </div>
 
-        @if($supportedElders->count())
         <div class="section">
-            <h2>Elders You Support</h2>
-            <ul class="elder-list">
-                @foreach($supportedElders as $elder)
-                    <li>
-                        <h3>{{ $elder->first_name }} {{ $elder->last_name }}</h3>
-                        <p>Priority: {{ ucfirst($elder->priority_level) }}</p>
-                        <p>Location: {{ $elder->branch->name ?? 'N/A' }}</p>
-                        {{-- Add more elder details if needed --}}
-                    </li>
-                @endforeach
-            </ul>
+            <h2>Supported Elders</h2>
+            @if(($supportedElders ?? collect())->isEmpty())
+                <p class="muted">No active sponsorships recorded yet. Your next pledge will appear here.</p>
+            @else
+                <table class="grid-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Priority</th>
+                            <th>Relationship</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($supportedElders as $elder)
+                            <tr>
+                                <td>{{ $elder->first_name }} {{ $elder->last_name }}</td>
+                                <td><span class="badge">{{ strtoupper($elder->priority_level ?? 'N/A') }}</span></td>
+                                <td>{{ $elder->relationship_type ?? 'N/A' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
         </div>
-        @endif
 
-        @if($keyTimelineEvents->count())
         <div class="section">
-            <h2>Key Moments in Your Timeline</h2>
-            <ul class="timeline-list">
-                @foreach($keyTimelineEvents as $event)
-                    <li>
-                        <strong>{{ \Carbon\Carbon::parse($event->occurred_at)->format('M d, Y') }}:</strong>
-                        {{ $event->description }}
-                        @if($event->elder)
-                            (Related to {{ $event->elder->first_name }} {{ $event->elder->last_name }})
-                        @endif
-                    </li>
-                @endforeach
-            </ul>
+            <h2>Timeline Highlights</h2>
+            <div class="timeline-card">
+                @if(($keyTimelineEvents ?? collect())->isEmpty())
+                    <p class="muted">Timeline events will appear once you begin sponsoring or visiting elders.</p>
+                @else
+                    @foreach($keyTimelineEvents as $event)
+                        <div class="timeline-item">
+                            <p style="margin: 0; font-weight: 600;">
+                                {{ \Illuminate\Support\Carbon::parse($event->occurred_at ?? $event->created_at)->format('M j, Y') }}
+                            </p>
+                            <p style="margin: 4px 0;">{{ $event->description }}</p>
+                            @if($event->elder)
+                                <p class="muted" style="margin: 0;">— {{ $event->elder->first_name }} {{ $event->elder->last_name }}</p>
+                            @endif
+                        </div>
+                    @endforeach
+                @endif
+            </div>
         </div>
-        @endif
 
-        <div class="footer">
-            <p>&copy; {{ date('Y') }} Mekodonia Home Connect. All rights reserved.</p>
-            <p>Generated on {{ date('M d, Y') }}</p>
+        <div class="section">
+            <h2>Donation Trend</h2>
+            @if(($donation_trend ?? collect())->isEmpty())
+                <p class="muted">Donation history will populate once contributions are recorded.</p>
+            @else
+                <table class="grid-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Total (ETB)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($donation_trend as $point)
+                            <tr>
+                                <td>{{ $point['label'] }}</td>
+                                <td>{{ number_format($point['amount'] ?? 0, 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+
+        <div class="section">
+            <h2>Gratitude</h2>
+            <p>
+                Dear {{ $user->name }}, thank you for keeping your promise in {{ $year }}.
+                Your steadfast support ensures Mekodonia elders receive nutrition, healthcare, and daily dignity.
+            </p>
         </div>
     </div>
 </body>

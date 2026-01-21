@@ -2,7 +2,8 @@
 import GlassCard from '@/components/GlassCard.vue';
 import GuestLayout from '@/layouts/GuestLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft } from 'lucide-vue-next';
+import { ArrowLeft, HeartHandshake, MapPin, Shield } from 'lucide-vue-next';
+import { computed } from 'vue';
 import { route } from 'ziggy-js';
 
 const props = defineProps<{
@@ -22,6 +23,28 @@ const props = defineProps<{
 
 const donationHref = route('guest.donation', undefined, false);
 const homeHref = route('home', undefined, false);
+
+const priorityChip = computed(() => {
+    const level = props.elder.priority_level?.toLowerCase() ?? 'medium';
+    const map: Record<string, { label: string; tone: string }> = {
+        high: {
+            label: 'High Priority',
+            tone: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-100',
+        },
+        medium: {
+            label: 'Medium Priority',
+            tone: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-100',
+        },
+        low: {
+            label: 'Low Priority',
+            tone: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-100',
+        },
+    };
+
+    return (
+        map[level] ?? map.medium
+    );
+});
 </script>
 
 <template>
@@ -31,100 +54,112 @@ const homeHref = route('home', undefined, false);
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <GlassCard>
-                    <div class="mb-6">
+                    <div class="mb-6 flex items-center justify-between gap-4">
                         <Link
                             :href="homeHref"
                             class="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800"
                         >
                             <ArrowLeft class="size-4" />
-                            Back to Home
+                            Back to Welcome
                         </Link>
+                        <span
+                            class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase"
+                            :class="priorityChip.tone"
+                        >
+                            {{ priorityChip.label }}
+                        </span>
                     </div>
-                    <div class="md:flex md:space-x-8">
-                        <div class="flex-shrink-0">
-                            <img
-                                :src="props.elder.profile_photo_url"
-                                class="h-64 w-64 rounded-lg object-cover shadow-md"
-                                :alt="props.elder.first_name"
-                            />
-                        </div>
-                        <div class="mt-6 md:mt-0">
-                            <div class="flex items-center justify-between">
-                                <h1
-                                    class="text-3xl font-bold text-gray-900 dark:text-white"
-                                >
-                                    {{ props.elder.first_name }}
-                                    {{ props.elder.last_name }}
-                                </h1>
-                                <span
-                                    class="inline-flex items-center rounded-full px-3 py-0.5 text-sm font-medium"
-                                    :class="{
-                                        'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200':
-                                            props.elder.priority_level ===
-                                            'high',
-                                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200':
-                                            props.elder.priority_level ===
-                                            'medium',
-                                        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
-                                            props.elder.priority_level ===
-                                            'low',
-                                    }"
-                                >
-                                    {{
-                                        props.elder.priority_level.toUpperCase()
-                                    }}
-                                    PRIORITY
-                                </span>
+                    <div class="flex flex-col gap-10 lg:flex-row">
+                        <div class="lg:w-2/5">
+                            <div class="overflow-hidden rounded-3xl bg-white shadow-xl dark:bg-slate-900/60">
+                                <img
+                                    :src="props.elder.profile_photo_url"
+                                    class="h-80 w-full object-cover"
+                                    :alt="props.elder.first_name"
+                                />
+                                <div class="space-y-3 px-6 py-5">
+                                    <div class="flex items-center gap-3">
+                                        <HeartHandshake class="size-5 text-indigo-500" />
+                                        <div>
+                                            <p class="text-xs uppercase tracking-[0.35em] text-slate-500">
+                                                Elder Profile
+                                            </p>
+                                            <h1 class="text-2xl font-semibold text-slate-900 dark:text-white">
+                                                {{ props.elder.first_name }} {{ props.elder.last_name }}
+                                            </h1>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <div class="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                            <MapPin class="mt-0.5 size-4 text-indigo-400" />
+                                            <div>
+                                                <p class="text-xs uppercase tracking-wide text-slate-500">
+                                                    Branch
+                                                </p>
+                                                <p class="font-semibold">
+                                                    {{ props.elder.branch.name }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                            <Shield class="mt-0.5 size-4 text-indigo-400" />
+                                            <div>
+                                                <p class="text-xs uppercase tracking-wide text-slate-500">
+                                                    Priority Need
+                                                </p>
+                                                <p class="font-semibold capitalize">
+                                                    {{ props.elder.priority_level }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <p
-                                class="mt-2 text-sm text-gray-500 dark:text-gray-400"
-                            >
-                                Location: {{ props.elder.branch.name }}
-                            </p>
-
-                            <div class="mt-6">
-                                <h3
-                                    class="text-lg font-medium text-gray-900 dark:text-white"
-                                >
-                                    About
+                        </div>
+                        <div class="flex-1 space-y-8">
+                            <section>
+                                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+                                    Story
                                 </h3>
-                                <p
-                                    class="mt-2 text-gray-600 dark:text-gray-300"
-                                >
+                                <p class="mt-3 text-base leading-relaxed text-slate-600 dark:text-slate-300">
                                     {{
                                         props.elder.bio ||
-                                        'No biography available.'
+                                        'This elder is waiting for a family connection. Their full biography will be added by branch staff soon.'
                                     }}
                                 </p>
-                            </div>
+                            </section>
 
-                            <div class="mt-6" v-if="props.elder.special_needs">
-                                <h3
-                                    class="text-lg font-medium text-gray-900 dark:text-white"
-                                >
-                                    Special Needs
+                            <section v-if="props.elder.special_needs">
+                                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+                                    Current Needs
                                 </h3>
-                                <p
-                                    class="mt-2 text-gray-600 dark:text-gray-300"
-                                >
+                                <div class="mt-3 rounded-2xl border border-amber-100 bg-amber-50/80 p-4 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
                                     {{ props.elder.special_needs }}
-                                </p>
-                            </div>
+                                </div>
+                            </section>
 
-                            <div class="mt-8 flex flex-wrap gap-3">
-                                <Link
-                                    :href="`${donationHref}?elder_id=${props.elder.id}&mode=sponsorship`"
-                                    class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-                                >
-                                    Sponsor This Elder
-                                </Link>
-                                <Link
-                                    :href="`${donationHref}?elder_id=${props.elder.id}&mode=one_time`"
-                                    class="inline-flex items-center rounded-md border border-gray-300 bg-white px-6 py-3 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
-                                >
-                                    One-Time Donation
-                                </Link>
-                            </div>
+                            <section>
+                                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+                                    Choose How to Help
+                                </h3>
+                                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                                    Start a recurring relationship or cover an immediate need.
+                                </p>
+                                <div class="mt-4 flex flex-wrap gap-3">
+                                    <Link
+                                        :href="`${donationHref}?elder_id=${props.elder.id}&mode=sponsorship`"
+                                        class="inline-flex items-center rounded-full bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    >
+                                        Sponsor {{ props.elder.first_name }}
+                                    </Link>
+                                    <Link
+                                        :href="`${donationHref}?elder_id=${props.elder.id}&mode=one_time`"
+                                        class="inline-flex items-center rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800/50"
+                                    >
+                                        Fund a Meal Today
+                                    </Link>
+                                </div>
+                            </section>
                         </div>
                     </div>
                 </GlassCard>

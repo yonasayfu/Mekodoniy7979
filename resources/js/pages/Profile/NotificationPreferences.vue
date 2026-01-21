@@ -1,6 +1,6 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
-import axios from 'axios';
+import http from '@/lib/http';
 import { onMounted, ref } from 'vue';
 
 const props = defineProps({
@@ -38,7 +38,7 @@ onMounted(() => {
 
 const updatePreference = async (type, channel, enabled) => {
     try {
-        await axios.post(route('profile.notification-preferences.update'), {
+        await http.post(route('profile.notification-preferences.update'), {
             notification_type: type,
             channel: channel,
             enabled: enabled,

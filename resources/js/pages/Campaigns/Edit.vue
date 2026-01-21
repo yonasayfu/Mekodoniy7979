@@ -11,11 +11,17 @@ const props = defineProps<{
         title: string;
         slug: string;
         description: string | null;
+        short_description: string | null;
         starts_at: string | null;
         ends_at: string | null;
         goal_amount: number | null;
         goal_currency: string | null;
         status: 'draft' | 'active' | 'ended';
+        cta_label: string | null;
+        cta_url: string | null;
+        accent_color: string | null;
+        featured_video_url: string | null;
+        hero_image_url: string;
     };
     breadcrumbs?: { title: string; href: string }[];
 }>();
@@ -24,15 +30,23 @@ const form = useForm({
     title: props.campaign.title,
     slug: props.campaign.slug ?? '',
     description: props.campaign.description ?? '',
+    short_description: props.campaign.short_description ?? '',
     starts_at: props.campaign.starts_at ?? '',
     ends_at: props.campaign.ends_at ?? '',
     goal_amount: props.campaign.goal_amount,
     goal_currency: props.campaign.goal_currency ?? 'ETB',
     status: props.campaign.status,
+    cta_label: props.campaign.cta_label ?? 'Support this campaign',
+    cta_url: props.campaign.cta_url ?? '',
+    accent_color: props.campaign.accent_color ?? '#2563eb',
+    featured_video_url: props.campaign.featured_video_url ?? '',
+    hero_image: null as File | null,
 });
 
 const submit = () => {
-    form.put(route('campaigns.update', props.campaign.id));
+    form.put(route('campaigns.update', props.campaign.id), {
+        forceFormData: true,
+    });
 };
 </script>
 
@@ -102,6 +116,25 @@ const submit = () => {
                         ></textarea>
                         <InputError
                             :message="form.errors.description"
+                            class="mt-2"
+                        />
+                    </div>
+
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                            >Short spotlight blurb</label
+                        >
+                        <textarea
+                            v-model="form.short_description"
+                            rows="3"
+                            class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                        ></textarea>
+                        <p class="mt-1 text-xs text-slate-500">
+                            Appears on the microsite hero area.
+                        </p>
+                        <InputError
+                            :message="form.errors.short_description"
                             class="mt-2"
                         />
                     </div>
@@ -190,6 +223,106 @@ const submit = () => {
                             :message="form.errors.status"
                             class="mt-2"
                         />
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-3">
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                >CTA Label</label
+                            >
+                            <input
+                                v-model="form.cta_label"
+                                type="text"
+                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                            />
+                            <InputError
+                                :message="form.errors.cta_label"
+                                class="mt-2"
+                            />
+                        </div>
+                        <div class="md:col-span-2">
+                            <label
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                >CTA URL</label
+                            >
+                            <input
+                                v-model="form.cta_url"
+                                type="url"
+                                placeholder="https://"
+                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                            />
+                            <InputError
+                                :message="form.errors.cta_url"
+                                class="mt-2"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-3">
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                >Accent Color</label
+                            >
+                            <input
+                                v-model="form.accent_color"
+                                type="text"
+                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                            />
+                            <InputError
+                                :message="form.errors.accent_color"
+                                class="mt-2"
+                            />
+                        </div>
+                        <div class="md:col-span-2">
+                            <label
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                >Featured video URL</label
+                            >
+                            <input
+                                v-model="form.featured_video_url"
+                                type="url"
+                                placeholder="https://www.youtube.com/embed/..."
+                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                            />
+                            <InputError
+                                :message="form.errors.featured_video_url"
+                                class="mt-2"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                            >Hero image</label
+                        >
+                        <div class="mt-2 flex flex-col gap-4 md:flex-row md:items-center">
+                            <div class="flex-1">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    class="w-full rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                                    @change="
+                                        (event) =>
+                                            (form.hero_image =
+                                                (event.target as HTMLInputElement).files?.[0] ??
+                                                null)
+                                    "
+                                />
+                                <InputError
+                                    :message="form.errors.hero_image"
+                                    class="mt-2"
+                                />
+                            </div>
+                            <img
+                                v-if="campaign.hero_image_url"
+                                :src="campaign.hero_image_url"
+                                alt="Current hero"
+                                class="h-24 w-40 rounded-lg object-cover"
+                            />
+                        </div>
                     </div>
 
                     <div class="flex items-center justify-end gap-2 pt-2">

@@ -59,6 +59,12 @@ return [
                     'permission' => 'sponsorships.manage',
                 ],
                 [
+                    'title' => 'Reconciliation',
+                    'href' => '/reconciliation',
+                    'icon' => 'DollarSign',
+                    'permission' => 'donations.manage',
+                ],
+                [
                     'title' => 'Visits',
                     'href' => '/visits',
                     'icon' => 'BookOpen',
@@ -75,6 +81,12 @@ return [
                     'href' => '/reports',
                     'icon' => 'Folder',
                     'permission' => 'reports.view',
+                ],
+                [
+                    'title' => 'Outbound Log',
+                    'href' => '/outbound',
+                    'icon' => 'ClipboardList',
+                    'permission' => 'notifications.view',
                 ],
             ],
         ],

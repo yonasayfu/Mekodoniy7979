@@ -12,7 +12,7 @@ import { useRoute } from '@/composables/useRoute';
 import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
 import { regenerateRecoveryCodes } from '@/routes/two-factor';
 import { Form } from '@inertiajs/vue3';
-import axios from 'axios';
+import http from '@/lib/http';
 import { Eye, EyeOff, LockKeyhole, Mail, RefreshCw } from 'lucide-vue-next';
 import { nextTick, onMounted, ref } from 'vue';
 
@@ -63,7 +63,7 @@ const toggleEmailRecoveryCodesVisibility = async () => {
 
 const sendEmailRecoveryCodes = async () => {
     try {
-        await axios.post(route('two-factor-email-recovery.send'));
+        await http.post(route('two-factor-email-recovery.send'));
         // Optionally, show a success message
     } catch (error) {
         console.error('Error sending email recovery codes:', error);

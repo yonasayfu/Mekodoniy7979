@@ -31,6 +31,7 @@ class ExportConfig
                     'Email',
                     'Phone',
                     'Job Title',
+                    'Branch',
                     'Status',
                     'Linked User',
                 ],
@@ -41,6 +42,10 @@ class ExportConfig
                     'phone',
                     'job_title',
                     [
+                        'field' => 'user.branch.name',
+                        'default' => '—',
+                    ],
+                    [
                         'field' => 'status',
                         'transform' => fn ($value) => Str::of($value ?? '')->replace('_', ' ')->title(),
                         'default' => 'Inactive',
@@ -50,7 +55,7 @@ class ExportConfig
                         'default' => '—',
                     ],
                 ],
-                'with_relations' => ['user:id,name'],
+                'with_relations' => ['user:id,name,branch_id', 'user.branch:id,name'],
                 'filename_prefix' => 'staff-directory',
             ],
 
@@ -59,13 +64,18 @@ class ExportConfig
                 'document_title' => 'Staff Directory - Full Export',
                 'filename_prefix' => 'staff-directory',
                 'orientation' => 'landscape',
-                'with_relations' => ['user:id,name'],
+                'with_relations' => ['user:id,name,branch_id', 'user.branch:id,name'],
                 'columns' => [
                     ['key' => 'index', 'label' => '#'],
                     ['key' => 'full_name', 'label' => 'Full Name'],
                     ['key' => 'email', 'label' => 'Email'],
                     ['key' => 'phone', 'label' => 'Phone'],
                     ['key' => 'job_title', 'label' => 'Job Title'],
+                    [
+                        'key' => 'user.branch.name',
+                        'label' => 'Branch',
+                        'transform' => fn ($model) => $model->user?->branch?->name ?? '—',
+                    ],
                     ['key' => 'status', 'label' => 'Status'],
                     ['key' => 'user.name', 'label' => 'Linked User'],
                 ],
@@ -76,12 +86,17 @@ class ExportConfig
                 'document_title' => 'Staff Directory - Current View',
                 'filename_prefix' => 'staff-current-view',
                 'orientation' => 'landscape',
-                'with_relations' => ['user:id,name'],
+                'with_relations' => ['user:id,name,branch_id', 'user.branch:id,name'],
                 'columns' => [
                     ['key' => 'index', 'label' => '#'],
                     ['key' => 'full_name', 'label' => 'Full Name'],
                     ['key' => 'email', 'label' => 'Email'],
                     ['key' => 'job_title', 'label' => 'Job Title'],
+                    [
+                        'key' => 'user.branch.name',
+                        'label' => 'Branch',
+                        'transform' => fn ($model) => $model->user?->branch?->name ?? '—',
+                    ],
                     ['key' => 'status', 'label' => 'Status'],
                     ['key' => 'user.name', 'label' => 'Linked User'],
                 ],
@@ -91,12 +106,17 @@ class ExportConfig
                 'view' => 'pdf-layout',
                 'document_title' => 'Staff Profile Summary',
                 'filename_prefix' => 'staff-profile',
-                'with_relations' => ['user:id,name,email'],
+                'with_relations' => ['user:id,name,email,branch_id', 'user.branch:id,name'],
                 'columns' => [
                     ['key' => 'full_name', 'label' => 'Full Name'],
                     ['key' => 'email', 'label' => 'Email'],
                     ['key' => 'phone', 'label' => 'Phone'],
                     ['key' => 'job_title', 'label' => 'Job Title'],
+                    [
+                        'key' => 'user.branch.name',
+                        'label' => 'Branch',
+                        'transform' => fn ($model) => $model->user?->branch?->name ?? '—',
+                    ],
                     ['key' => 'status', 'label' => 'Status'],
                     ['key' => 'hire_date', 'label' => 'Hire Date'],
                     ['key' => 'user.name', 'label' => 'Linked User'],
@@ -297,6 +317,8 @@ class ExportConfig
                     'ID',
                     'Donor',
                     'Elder',
+                    'Elder Priority',
+                    'Branch',
                     'Amount',
                     'Frequency',
                     'Start Date',
@@ -313,13 +335,22 @@ class ExportConfig
                         'field' => 'elder.name',
                         'default' => '—',
                     ],
+                    [
+                        'field' => 'elder.priority_level',
+                        'transform' => fn ($value) => $value ? Str::headline($value) : '—',
+                        'default' => '—',
+                    ],
+                    [
+                        'field' => 'branch.name',
+                        'default' => '—',
+                    ],
                     'amount',
                     'frequency',
                     'start_date',
                     'end_date',
                     'status',
                 ],
-                'with_relations' => ['user:id,name', 'elder:id,first_name,last_name'],
+                'with_relations' => ['user:id,name', 'elder:id,first_name,last_name,priority_level', 'branch:id,name'],
             ],
         ];
     }
@@ -337,6 +368,7 @@ class ExportConfig
                     'Visitor',
                     'Elder',
                     'Branch',
+                    'Elder Priority',
                     'Visit Date',
                     'Purpose',
                     'Notes',
@@ -356,12 +388,69 @@ class ExportConfig
                         'field' => 'branch.name',
                         'default' => '—',
                     ],
+                    [
+                        'field' => 'elder.priority_level',
+                        'transform' => fn ($value) => $value ? Str::headline($value) : '—',
+                        'default' => '—',
+                    ],
                     'visit_date',
                     'purpose',
                     'notes',
                     'status',
                 ],
-                'with_relations' => ['user:id,name', 'elder:id,first_name,last_name', 'branch:id,name'],
+                'with_relations' => ['user:id,name', 'elder:id,first_name,last_name,priority_level', 'branch:id,name'],
+            ],
+        ];
+    }
+
+    public static function activityLogs(): array
+    {
+        return [
+            'label' => 'Activity Log Audit',
+            'type' => 'activity_logs',
+            'filename_prefix' => 'activity-logs',
+            'csv' => [
+                'headers' => [
+                    '#',
+                    'Timestamp',
+                    'Actor',
+                    'Action',
+                    'Description',
+                    'Subject',
+                    'Subject ID',
+                    'Changes',
+                ],
+                'fields' => [
+                    'index',
+                    [
+                        'field' => 'created_at',
+                        'transform' => fn ($value) => optional($value)->format('Y-m-d H:i:s') ?? $value,
+                    ],
+                    [
+                        'field' => 'causer.name',
+                        'default' => 'System',
+                    ],
+                    'action',
+                    [
+                        'field' => 'description',
+                        'default' => '—',
+                    ],
+                    [
+                        'field' => 'subject_type',
+                        'transform' => fn ($value) => $value ? class_basename($value) : '—',
+                        'default' => '—',
+                    ],
+                    [
+                        'field' => 'subject_id',
+                        'default' => '—',
+                    ],
+                    [
+                        'field' => 'changes',
+                        'transform' => fn ($value) => $value ? json_encode($value) : '—',
+                        'default' => '—',
+                    ],
+                ],
+                'with_relations' => ['causer:id,name'],
             ],
         ];
     }

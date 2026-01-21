@@ -7,15 +7,27 @@
             class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/60 print:border print:bg-white"
         >
             <div class="space-y-4">
-                <div>
-                    <h2
-                        class="text-sm font-semibold text-slate-900 dark:text-slate-100"
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h2
+                            class="text-sm font-semibold text-slate-900 dark:text-slate-100"
+                        >
+                            Case Notes
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            Internal notes and observations about the elder.
+                        </p>
+                    </div>
+                    <GlassButton
+                        v-if="can.create"
+                        size="sm"
+                        variant="primary"
+                        class="w-full sm:w-auto"
+                        @click="showForm = true"
                     >
-                        Case Notes
-                    </h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">
-                        Internal notes and observations about the elder.
-                    </p>
+                        <PlusIcon class="mr-2 h-4 w-4" />
+                        Add note
+                    </GlassButton>
                 </div>
 
                 <div class="space-y-4">
@@ -39,15 +51,12 @@
                                                 note.visibility ===
                                                 'donor_visible'
                                                     ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
-                                                    : 'bg-slate-100 text-slate-800 dark:bg-slate-700/50 dark:text-slate-200'
+                                                    : note.visibility === 'branch'
+                                                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+                                                        : 'bg-slate-100 text-slate-800 dark:bg-slate-700/50 dark:text-slate-200'
                                             "
                                         >
-                                            {{
-                                                note.visibility ===
-                                                'donor_visible'
-                                                    ? 'Donor Visible'
-                                                    : 'Internal'
-                                            }}
+                                            {{ visibilityLabel(note.visibility) }}
                                         </span>
                                         <span
                                             class="text-xs text-slate-500 dark:text-slate-400"
@@ -60,6 +69,78 @@
                                     >
                                         {{ note.content }}
                                     </p>
+                                    <div
+                                        v-if="note.attachments?.length"
+                                        class="mt-3 rounded border border-slate-100 bg-slate-50/70 p-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300"
+                                    >
+                                        <p class="font-semibold text-slate-700 dark:text-slate-200">
+                                            Attachments
+                                        </p>
+                                        <ul class="mt-2 space-y-1">
+                                            <li
+                                                v-for="attachment in note.attachments"
+                                                :key="attachment.id"
+                                                class="flex items-center justify-between"
+                                            >
+                                                <div>
+                                                    <a
+                                                        :href="attachment.download_url"
+                                                        target="_blank"
+                                                        class="text-indigo-600 hover:underline"
+                                                    >
+                                                        {{ attachment.file_name }}
+                                                    </a>
+                                                    <span v-if="attachment.uploaded_by" class="ml-2 text-slate-400">
+                                                        · {{ attachment.uploaded_by }}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    v-if="can.update"
+                                                    type="button"
+                                                    class="text-xs text-red-500 hover:underline"
+                                                    @click="removeAttachment(note.id, attachment.id)"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div v-if="note.versions?.length" class="mt-3">
+                                        <button
+                                            type="button"
+                                            class="text-xs font-medium text-indigo-600 hover:underline"
+                                            @click="toggleHistory(note.id)"
+                                        >
+                                            {{
+                                                expandedHistory[note.id]
+                                                    ? 'Hide history'
+                                                    : `Show history (${note.versions.length})`
+                                            }}
+                                        </button>
+                                        <div
+                                            v-if="expandedHistory[note.id]"
+                                            class="mt-2 space-y-2 rounded border border-slate-200/70 bg-white/80 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40"
+                                        >
+                                            <div
+                                                v-for="version in note.versions"
+                                                :key="version.id"
+                                                class="border-b border-slate-100 pb-2 last:border-b-0 last:pb-0"
+                                            >
+                                                <p class="font-semibold text-slate-600 dark:text-slate-300">
+                                                    {{ version.edited_by ?? 'Unknown' }}
+                                                    <span class="ml-2 text-slate-400">
+                                                        {{ formatDate(version.created_at) }}
+                                                    </span>
+                                                </p>
+                                                <p class="text-slate-500">
+                                                    Visibility: {{ visibilityLabel(version.visibility) }}
+                                                </p>
+                                                <p class="mt-1 whitespace-pre-line text-slate-600">
+                                                    {{ version.content }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div
                                     v-if="can.update || can.delete"
@@ -167,6 +248,7 @@
                                 class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:border-slate-600 dark:bg-slate-800/50 dark:text-slate-100"
                             >
                                 <option value="internal">Internal Only</option>
+                                <option value="branch">Branch Staff</option>
                                 <option value="donor_visible">
                                     Visible to Donors
                                 </option>
@@ -175,6 +257,24 @@
                                 :message="form.errors.visibility"
                                 class="mt-2"
                             />
+                        </div>
+
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                                >Attachments</label
+                            >
+                            <input
+                                ref="attachmentsInput"
+                                type="file"
+                                multiple
+                                class="mt-1 block w-full rounded-md border border-dashed border-slate-300 bg-white/80 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50"
+                                @change="handleAttachmentSelection"
+                            />
+                            <p v-if="form.attachments?.length" class="mt-2 text-xs text-slate-500">
+                                {{ form.attachments.length }} file(s) selected.
+                            </p>
+                            <InputError :message="form.errors.attachments" class="mt-2" />
                         </div>
 
                         <div class="flex justify-end space-x-3">
@@ -208,6 +308,7 @@
 
 <script setup lang="ts">
 import ConfirmModal from '@/components/ConfirmModal.vue';
+import GlassButton from '@/components/GlassButton.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import InputError from '@/components/InputError.vue';
 import Pagination from '@/components/Pagination.vue';
@@ -224,9 +325,25 @@ import {
     PlusIcon,
     TrashIcon,
 } from '@heroicons/vue/24/outline';
-import { useForm } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 import { format } from 'date-fns';
-import { nextTick, ref } from 'vue';
+import { nextTick, reactive, ref } from 'vue';
+
+type Attachment = {
+    id: number;
+    file_name: string;
+    download_url: string;
+    uploaded_by?: string | null;
+    uploaded_at?: string | null;
+};
+
+type Version = {
+    id: number;
+    content: string;
+    visibility: string;
+    edited_by?: string | null;
+    created_at?: string | null;
+};
 
 const props = defineProps({
     elder: {
@@ -234,7 +351,18 @@ const props = defineProps({
         required: true,
     },
     notes: {
-        type: Object,
+        type: Object as () => {
+            data: Array<{
+                id: number;
+                content: string;
+                visibility: string;
+                created_at: string;
+                author: { id: number; name: string };
+                attachments: Attachment[];
+                versions: Version[];
+            }>;
+            links: Array<{ url: string | null; label: string; active: boolean }>;
+        },
         required: true,
     },
     can: {
@@ -251,10 +379,13 @@ const showForm = ref(false);
 const showDeleteModal = ref(false);
 const editingNote = ref(null);
 const contentInput = ref(null);
+const attachmentsInput = ref<HTMLInputElement | null>(null);
+const expandedHistory = reactive<Record<number, boolean>>({});
 
 const form = useForm({
     content: '',
     visibility: 'internal',
+    attachments: [] as File[],
 });
 
 const deleteForm = useForm({});
@@ -266,9 +397,11 @@ function formatDate(dateString) {
 function createNote() {
     form.post(route('elders.case-notes.store', props.elder.id), {
         preserveScroll: true,
+        forceFormData: true,
         onSuccess: () => {
             closeForm();
             form.reset();
+            clearAttachmentInput();
         },
     });
 }
@@ -281,9 +414,11 @@ function updateNote() {
         ]),
         {
             preserveScroll: true,
+            forceFormData: true,
             onSuccess: () => {
                 closeForm();
                 form.reset();
+                clearAttachmentInput();
             },
         },
     );
@@ -322,5 +457,43 @@ function closeForm() {
     editingNote.value = null;
     form.clearErrors();
     form.reset();
+    clearAttachmentInput();
+}
+
+function handleAttachmentSelection(event: Event) {
+    const target = event.target as HTMLInputElement;
+    form.attachments = Array.from(target.files ?? []);
+}
+
+function clearAttachmentInput() {
+    form.attachments = [];
+    if (attachmentsInput.value) {
+        attachmentsInput.value.value = '';
+    }
+}
+
+function removeAttachment(noteId: number, attachmentId: number) {
+    router.delete(
+        route('case-notes.attachments.destroy', {
+            case_note: noteId,
+            attachment: attachmentId,
+        }),
+        { preserveScroll: true },
+    );
+}
+
+function toggleHistory(noteId: number) {
+    expandedHistory[noteId] = !expandedHistory[noteId];
+}
+
+function visibilityLabel(value: string) {
+    switch (value) {
+        case 'donor_visible':
+            return 'Donor Visible';
+        case 'branch':
+            return 'Branch Staff';
+        default:
+            return 'Internal';
+    }
 }
 </script>

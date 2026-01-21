@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import axios from 'axios';
+import http from '@/lib/http';
 import { computed } from 'vue';
 
 interface NotificationPayload {
@@ -27,7 +27,7 @@ const props = defineProps<{
 
 const markAsRead = async (notificationId: string) => {
     try {
-        await axios.post(`/notifications/${notificationId}/read`);
+        await http.post(`/notifications/${notificationId}/read`);
         router.reload({ only: ['notifications'] });
     } catch (error) {
         console.error('Error marking notification as read:', error);
@@ -36,7 +36,7 @@ const markAsRead = async (notificationId: string) => {
 
 const markAllAsRead = async () => {
     try {
-        await axios.post('/notifications/read-all');
+        await http.post('/notifications/read-all');
         router.reload({ only: ['notifications'] });
     } catch (error) {
         console.error('Error marking all notifications as read:', error);

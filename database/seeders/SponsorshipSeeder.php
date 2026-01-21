@@ -23,10 +23,24 @@ class SponsorshipSeeder extends Seeder
             Elder::factory(10)->create();
         }
 
-        // Create 50 sponsorships, associating them with existing users and elders
-        Sponsorship::factory(50)->create([
-            'user_id' => User::inRandomOrder()->first()->id,
-            'elder_id' => Elder::inRandomOrder()->first()->id,
-        ]);
+        $users = User::all();
+        $elders = Elder::all();
+
+        if ($users->isEmpty() || $elders->isEmpty()) {
+            return;
+        }
+
+        Sponsorship::factory()
+            ->count(30)
+            ->state(function () use ($users, $elders) {
+                $elder = $elders->random();
+
+                return [
+                    'user_id' => $users->random()->id,
+                    'elder_id' => $elder->id,
+                    'branch_id' => $elder->branch_id,
+                ];
+            })
+            ->create();
     }
 }

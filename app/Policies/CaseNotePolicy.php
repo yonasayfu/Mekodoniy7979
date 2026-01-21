@@ -15,7 +15,7 @@ class CaseNotePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyPermission(['view_case_notes', 'manage_case_notes']);
+        return $user->hasAnyPermission(['case_notes.view', 'case_notes.manage']);
     }
 
     /**
@@ -24,8 +24,11 @@ class CaseNotePolicy
     public function view(User $user, CaseNote $caseNote): bool
     {
         // Users can view if they have permission and the note is from their branch
-        return $user->hasAnyPermission(['view_case_notes', 'manage_case_notes'])
-            && $user->branch_id === $caseNote->branch_id;
+        if (! $user->hasAnyPermission(['case_notes.view', 'case_notes.manage'])) {
+            return false;
+        }
+
+        return $this->userSharesBranch($user, $caseNote);
     }
 
     /**
@@ -33,7 +36,7 @@ class CaseNotePolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('manage_case_notes');
+        return $user->hasPermissionTo('case_notes.manage');
     }
 
     /**
@@ -41,10 +44,16 @@ class CaseNotePolicy
      */
     public function update(User $user, CaseNote $caseNote): bool
     {
-        // Only the author or admin can update
-        return ($user->id === $caseNote->created_by || $user->hasRole('admin'))
-            && $user->hasPermissionTo('manage_case_notes')
-            && $user->branch_id === $caseNote->branch_id;
+        if (! $user->hasPermissionTo('case_notes.manage')) {
+            return false;
+        }
+
+        if ($this->userHasGlobalAccess($user)) {
+            return true;
+        }
+
+        return $user->id === $caseNote->created_by
+            && $this->userSharesBranch($user, $caseNote);
     }
 
     /**
@@ -53,10 +62,16 @@ class CaseNotePolicy
     public function delete(User $user, CaseNote $caseNote): bool
     {
         // Only the author, admin, or users with delete permission can delete
-        return ($user->id === $caseNote->created_by 
-                || $user->hasRole('admin') 
-                || $user->hasPermissionTo('delete_case_notes'))
-            && $user->branch_id === $caseNote->branch_id;
+        if ($this->userHasGlobalAccess($user) && $user->hasPermissionTo('case_notes.manage')) {
+            return true;
+        }
+
+        if (! $this->userSharesBranch($user, $caseNote)) {
+            return false;
+        }
+
+        return $user->id === $caseNote->created_by
+            || $user->hasPermissionTo('case_notes.delete');
     }
 
     /**
@@ -64,9 +79,12 @@ class CaseNotePolicy
      */
     public function restore(User $user, CaseNote $caseNote): bool
     {
-        return $user->hasRole('admin') 
-            || ($user->hasPermissionTo('manage_case_notes') 
-                && $user->branch_id === $caseNote->branch_id);
+        if ($this->userHasGlobalAccess($user)) {
+            return $user->hasPermissionTo('case_notes.manage');
+        }
+
+        return $user->hasPermissionTo('case_notes.manage')
+            && $this->userSharesBranch($user, $caseNote);
     }
 
     /**
@@ -74,6 +92,25 @@ class CaseNotePolicy
      */
     public function forceDelete(User $user, CaseNote $caseNote): bool
     {
-        return $user->hasRole('admin');
+        return $this->userHasGlobalAccess($user)
+            && $user->hasPermissionTo('case_notes.manage');
+    }
+
+    protected function userHasGlobalAccess(User $user): bool
+    {
+        return $user->hasAnyRole(['Super Admin', 'Admin']);
+    }
+
+    protected function userSharesBranch(User $user, CaseNote $caseNote): bool
+    {
+        if ($this->userHasGlobalAccess($user)) {
+            return true;
+        }
+
+        if (! $user->branch_id || ! $caseNote->branch_id) {
+            return false;
+        }
+
+        return $user->branch_id === $caseNote->branch_id;
     }
 }

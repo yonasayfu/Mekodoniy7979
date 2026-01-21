@@ -21,6 +21,7 @@ import {
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type ActivityLog } from '@/types';
 import { Head } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
 import { format, formatDistanceToNow } from 'date-fns';
 import { computed, ref } from 'vue';
 
@@ -200,6 +201,8 @@ const rawChangePayload = computed(() => {
     }
 });
 
+const exportHref = route('activity-logs.export', undefined, false);
+
 const formatExactDate = (value: string) => {
     const date = new Date(value);
 
@@ -215,10 +218,15 @@ const formatExactDate = (value: string) => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <Head title="Activity Logs" />
 
-        <Heading
-            title="Activity Logs"
-            description="View all system and user activity logs."
-        />
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <Heading
+                title="Activity Logs"
+                description="View all system and user activity logs."
+            />
+            <Button as-child variant="outline">
+                <a :href="`${exportHref}?type=csv`">Download CSV</a>
+            </Button>
+        </div>
 
         <div class="mt-6 rounded-lg bg-white p-6 shadow-md">
             <Table>

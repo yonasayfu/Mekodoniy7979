@@ -6,6 +6,8 @@ use App\Http\Requests\StoreElderRequest;
 use App\Http\Requests\UpdateElderRequest;
 use App\Models\Elder;
 use App\Models\Branch; // Import Branch model
+use App\Models\CaseNote;
+use App\Models\User;
 use App\Support\Exports\ExportConfig;
 use App\Support\Exports\HandlesDataExport;
 use Illuminate\Http\Request;
@@ -69,6 +71,11 @@ class ElderController extends Controller
             $validatedData['video_url'] = $request->file('video')->store('elders/videos', 'public');
         }
 
+        if ($request->hasFile('consent_form')) {
+            $validatedData['consent_form_path'] = $request->file('consent_form')->store('elders/consents', 'public');
+            $validatedData['consent_received_at'] = now();
+        }
+
         Elder::create($validatedData);
         return redirect()->route('elders.index')->with('success', 'Elder created successfully.');
     }
@@ -85,6 +92,7 @@ class ElderController extends Controller
             'healthAssessments.creator',
             'medicalConditions',
             'medications',
+            'documents.uploader',
             'caseNotes' => function ($query) {
                 $query->with('author')
                     ->latest()
@@ -93,6 +101,77 @@ class ElderController extends Controller
         ]);
 
         $user = auth()->user();
+
+        $donors = User::role('Donor')
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->take(50)
+            ->get();
+
+        $proposals = $elder->sponsorshipProposals()
+            ->with(['donor:id,name,email', 'proposer:id,name'])
+            ->latest()
+            ->take(20)
+            ->get()
+            ->map(fn ($proposal) => [
+                'id' => $proposal->id,
+                'donor' => [
+                    'id' => $proposal->donor->id,
+                    'name' => $proposal->donor->name,
+                    'email' => $proposal->donor->email,
+                ],
+                'proposer' => $proposal->proposer
+                    ? ['id' => $proposal->proposer->id, 'name' => $proposal->proposer->name]
+                    : null,
+                'amount' => $proposal->amount,
+                'frequency' => $proposal->frequency,
+                'relationship_type' => $proposal->relationship_type,
+                'notes' => $proposal->notes,
+                'status' => $proposal->status,
+                'expires_at' => optional($proposal->expires_at)->toDateTimeString(),
+                'responded_at' => optional($proposal->responded_at)->toDateTimeString(),
+            ]);
+
+        $caseNotes = $elder->caseNotes()
+            ->with([
+                'author:id,name,email',
+                'attachments.uploader:id,name',
+                'versions' => fn ($query) => $query->with('editor:id,name')->latest()->take(5),
+            ])
+            ->latest()
+            ->paginate(10)
+            ->through(function (CaseNote $note) {
+                return [
+                    'id' => $note->id,
+                    'content' => $note->content,
+                    'visibility' => $note->visibility,
+                    'created_at' => optional($note->created_at)->toDateTimeString(),
+                    'updated_at' => optional($note->updated_at)->toDateTimeString(),
+                    'author' => $note->author ? [
+                        'id' => $note->author->id,
+                        'name' => $note->author->name,
+                    ] : null,
+                    'editor' => $note->editor ? [
+                        'id' => $note->editor->id,
+                        'name' => $note->editor->name,
+                    ] : null,
+                    'attachments' => $note->attachments->map(fn ($attachment) => [
+                        'id' => $attachment->id,
+                        'file_name' => $attachment->file_name,
+                        'download_url' => $attachment->download_url,
+                        'uploaded_by' => $attachment->uploader?->name,
+                        'uploaded_at' => optional($attachment->created_at)->toDateTimeString(),
+                    ]),
+                    'versions' => $note->versions->map(fn ($version) => [
+                        'id' => $version->id,
+                        'content' => $version->content,
+                        'visibility' => $version->visibility,
+                        'edited_by' => $version->editor?->name,
+                        'created_at' => optional($version->created_at)->toDateTimeString(),
+                    ]),
+                ];
+            })
+            ->appends(request()->query());
 
         return Inertia::render('Elders/Show', [
             'elder' => $elder,
@@ -115,17 +194,35 @@ class ElderController extends Controller
                 ->latest()
                 ->take(50)
                 ->get(),
-            'caseNotes' => $elder->caseNotes()
-                ->with('author')
+            'documents' => $elder->documents()
+                ->with('uploader')
                 ->latest()
-                ->paginate(10)
-                ->appends(request()->query()),
+                ->take(20)
+                ->get()
+                ->map(fn ($document) => [
+                    'id' => $document->id,
+                    'type' => $document->type,
+                    'label' => $document->label,
+                    'file_name' => $document->file_name,
+                    'mime_type' => $document->mime_type,
+                    'uploaded_at' => optional($document->uploaded_at ?? $document->created_at)->toDateTimeString(),
+                    'uploader' => $document->uploader ? [
+                        'id' => $document->uploader->id,
+                        'name' => $document->uploader->name,
+                    ] : null,
+                    'download_url' => route('elders.documents.download', [$elder, $document]),
+                ]),
+            'proposals' => $proposals,
+            'donors' => $donors,
+            'caseNotes' => $caseNotes,
             'can' => [
                 'update' => auth()->user()->can('update', $elder),
                 'delete' => auth()->user()->can('delete', $elder),
-                'create_case_notes' => $user->can('create', [\App\Models\CaseNote::class, $elder]),
-                'update_case_notes' => $user->can('create', \App\Models\CaseNote::class),
-                'delete_case_notes' => $user->can('create', \App\Models\CaseNote::class),
+                'create_case_notes' => $user->can('create', [CaseNote::class, $elder]),
+                'update_case_notes' => $user->can('case_notes.manage'),
+                'delete_case_notes' => $user->can('case_notes.delete'),
+                'propose_match' => $user->can('sponsorships.manage'),
+                'manage_documents' => $user->can('elders.manage'),
             ],
             'breadcrumbs' => [
                 [
@@ -204,6 +301,16 @@ class ElderController extends Controller
         } else {
             // If no new file and not explicitly removed, retain existing path
             unset($validatedData['video']); // Remove file object from validated data
+        }
+
+        if ($request->hasFile('consent_form')) {
+            if ($elder->consent_form_path) {
+                Storage::disk('public')->delete($elder->consent_form_path);
+            }
+            $validatedData['consent_form_path'] = $request->file('consent_form')->store('elders/consents', 'public');
+            $validatedData['consent_received_at'] = now();
+        } else {
+            unset($validatedData['consent_form']);
         }
 
         $elder->update($validatedData);

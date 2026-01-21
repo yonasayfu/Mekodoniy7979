@@ -3,27 +3,95 @@ import GlassButton from '@/components/GlassButton.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import InputError from '@/components/InputError.vue';
 import GuestLayout from '@/layouts/GuestLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import { route } from 'ziggy-js';
+
+type DonationMode = 'one_time' | 'sponsorship';
 
 const getQueryParam = (param: string) => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
 };
 
-const mode = getQueryParam('mode') ?? 'one_time';
+const relationshipCopy: Record<string, string> = {
+    father:
+        'You’re beginning a Father sponsorship—covering monthly essentials and visits.',
+    mother:
+        'You’re beginning a Mother sponsorship—bringing warmth, meals, and comfort.',
+    brother:
+        'You’re beginning a Brother sponsorship—standing beside an elder with regular support.',
+    sister:
+        'You’re beginning a Sister sponsorship—sharing empathy, wellness checks, and care.',
+};
+
+const relationshipLabelMap: Record<string, string> = {
+    father: 'Father',
+    mother: 'Mother',
+    brother: 'Brother',
+    sister: 'Sister',
+};
+
+const selectedRelationship = getQueryParam('relationship');
+const preSponsorshipId = getQueryParam('pre_sponsorship_id');
+const modeFromQuery = (getQueryParam('mode') as DonationMode | null) ?? null;
+
+const inferredMode: DonationMode =
+    modeFromQuery ??
+    (selectedRelationship ? 'sponsorship' : 'one_time');
+
+const donationMode = ref<DonationMode>(inferredMode);
+
+const inferredNotes = preSponsorshipId
+    ? `Lead #${preSponsorshipId}${
+          selectedRelationship && relationshipLabelMap[selectedRelationship]
+              ? ` (${relationshipLabelMap[selectedRelationship]})`
+              : ''
+      }`
+    : '';
 
 const form = useForm({
     amount: 70,
     name: '',
     email: '',
     phone: '',
+    notes: inferredNotes,
     elder_id: getQueryParam('elder_id')
         ? parseInt(getQueryParam('elder_id')!)
         : (null as number | null),
+    campaign_id: getQueryParam('campaign_id')
+        ? parseInt(getQueryParam('campaign_id')!)
+        : (null as number | null),
 });
 
-const selectedRelationship = getQueryParam('relationship');
+const modePills = [
+    { value: 'one_time', label: 'One-Time Meal' },
+    { value: 'sponsorship', label: 'Monthly Sponsorship' },
+] as const;
+
+const relationshipMessage = computed(() => {
+    if (!selectedRelationship) {
+        return null;
+    }
+    return (
+        relationshipCopy[selectedRelationship] ??
+        'You’re beginning a sponsorship commitment.'
+    );
+});
+
+const leadContext = computed(() => {
+    if (!preSponsorshipId) {
+        return null;
+    }
+
+    return `Pre-sponsorship lead #${preSponsorshipId}${
+        selectedRelationship && relationshipLabelMap[selectedRelationship]
+            ? ` (${relationshipLabelMap[selectedRelationship]})`
+            : ''
+    }`;
+});
+
+const homeHref = route('home', undefined, false);
 
 const submit = () => {
     form.post(route('donations.guest.store'));
@@ -34,37 +102,97 @@ const submit = () => {
     <Head title="Donate a Meal" />
 
     <GuestLayout>
-        <div class="flex flex-col items-center justify-center py-12">
+        <div class="flex flex-col items-center justify-center py-12 px-4">
             <div class="w-full max-w-2xl">
-                <GlassCard>
-                    <h1 class="text-center text-3xl font-bold">
-                        Donate a Meal
-                    </h1>
-                    <p
-                        class="mt-2 text-center text-slate-600 dark:text-slate-400"
+                <div class="mb-4 flex justify-between">
+                    <Link
+                        :href="homeHref"
+                        class="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800"
                     >
-                        Your contribution can make a huge difference in an
-                        elder's life.
-                    </p>
+                        ← Back to Welcome
+                    </Link>
+                </div>
+                <GlassCard>
+                    <div class="text-center">
+                        <p
+                            class="text-xs uppercase tracking-[0.35em] text-indigo-500"
+                        >
+                            Mekodonia Home Connect
+                        </p>
+                        <h1 class="mt-2 text-3xl font-bold">
+                            {{ donationMode === 'sponsorship'
+                                ? 'Sponsor an Elder'
+                                : 'Donate a Meal' }}
+                        </h1>
+                        <p
+                            class="mt-2 text-sm text-slate-600 dark:text-slate-400"
+                        >
+                            {{
+                                donationMode === 'sponsorship'
+                                    ? 'Complete this quick form to lock your monthly promise—our team will follow up to finalize the match.'
+                                    : 'Your contribution can make a huge difference in an elder’s day. Choose an amount and submit securely.'
+                            }}
+                        </p>
+                    </div>
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <button
+                            v-for="pill in modePills"
+                            :key="pill.value"
+                            type="button"
+                            class="flex-1 rounded-full border px-4 py-2 text-sm font-semibold transition"
+                            :class="
+                                donationMode === pill.value
+                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-600 dark:border-indigo-400 dark:bg-indigo-500/10 dark:text-indigo-200'
+                                    : 'border-slate-200 text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:text-slate-300'
+                            "
+                            @click="donationMode = pill.value"
+                        >
+                            {{ pill.label }}
+                        </button>
+                    </div>
 
                     <form @submit.prevent="submit" class="mt-8 space-y-6">
                         <div
-                            v-if="selectedRelationship || mode === 'sponsorship'"
+                            v-if="
+                                selectedRelationship ||
+                                donationMode === 'sponsorship'
+                            "
                             class="rounded-lg border border-indigo-200 bg-indigo-50/60 px-4 py-3 text-sm font-medium text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-200"
                         >
-                            You’re starting a
-                            <span class="font-semibold">
-                                {{
-                                    selectedRelationship
-                                        ? selectedRelationship
-                                              .charAt(0)
-                                              .toUpperCase() +
-                                          selectedRelationship.slice(1)
-                                        : 'monthly'
-                                }}
+                            <span v-if="relationshipMessage">
+                                {{ relationshipMessage }}
                             </span>
-                            sponsorship. Complete the form below to continue.
+                            <span v-else>
+                                You’re about to set up your monthly sponsorship.
+                                Complete the form to confirm your interest.
+                            </span>
                         </div>
+
+                        <div
+                            v-if="leadContext"
+                            class="rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3 text-xs font-medium text-amber-700 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-200"
+                        >
+                            {{ leadContext }}
+                        </div>
+                        <div>
+                            <label
+                                for="phone"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                            >
+                                Your Phone (Optional)
+                            </label>
+                            <input
+                                id="phone"
+                                v-model="form.phone"
+                                type="text"
+                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                            />
+                            <InputError
+                                :message="form.errors.phone"
+                                class="mt-2"
+                            />
+                        </div>
+
                         <div>
                             <label
                                 class="block text-sm font-medium text-slate-700 dark:text-slate-200"
@@ -133,32 +261,49 @@ const submit = () => {
 
                         <div>
                             <label
-                                for="phone"
+                                for="notes"
                                 class="block text-sm font-medium text-slate-700 dark:text-slate-200"
                             >
-                                Your Phone (Optional)
+                                Notes or dedication (Optional)
                             </label>
-                            <input
-                                id="phone"
-                                v-model="form.phone"
-                                type="text"
+                            <textarea
+                                id="notes"
+                                v-model="form.notes"
+                                rows="3"
                                 class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
-                            />
+                                placeholder="Tell us about your intention or leave a dedication message"
+                            ></textarea>
                             <InputError
-                                :message="form.errors.phone"
+                                :message="form.errors.notes"
                                 class="mt-2"
                             />
                         </div>
 
-                        <div class="flex justify-end">
-                            <GlassButton
-                                type="submit"
-                                :disabled="form.processing"
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <span
+                                class="text-xs text-slate-500 dark:text-slate-400"
                             >
-                                <span v-if="form.processing"
-                                    >Processing...</span
-                                >
-                                <span v-else>Proceed to Payment</span>
+                                Need help? Call Mekodonia support or return to
+                                the welcome page.
+                            </span>
+                            <Link
+                                :href="homeHref"
+                                class="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                            >
+                                ← Back to Welcome
+                            </Link>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <GlassButton type="submit" :disabled="form.processing">
+                                <span v-if="form.processing">Processing...</span>
+                                <span v-else>
+                                    {{
+                                        donationMode === 'sponsorship'
+                                            ? 'Submit Sponsorship Request'
+                                            : 'Proceed to Payment'
+                                    }}
+                                </span>
                             </GlassButton>
                         </div>
                     </form>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { useDebounceFn } from '@vueuse/core';
-import axios from 'axios';
+import http from '@/lib/http';
 import { Package, Search, User, Users, X } from 'lucide-vue-next';
 import {
     computed,
@@ -68,7 +68,7 @@ const executeSearch = useDebounceFn(async () => {
     isLoading.value = true;
 
     try {
-        const response = await axios.get('/global-search', {
+        const response = await http.get('/global-search', {
             params: { q: term },
         });
 

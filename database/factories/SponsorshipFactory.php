@@ -29,6 +29,15 @@ class SponsorshipFactory extends Factory
         return [
             'user_id' => User::factory(),
             'elder_id' => Elder::factory(),
+            'branch_id' => function (array $attributes) {
+                if (! isset($attributes['elder_id'])) {
+                    return null;
+                }
+
+                return Elder::withoutGlobalScopes()
+                    ->whereKey($attributes['elder_id'])
+                    ->value('branch_id');
+            },
             'amount' => $this->faker->numberBetween(50, 500),
             'currency' => 'ETB',
             'frequency' => $this->faker->randomElement(['monthly', 'quarterly', 'annually', 'one-time']),
@@ -37,7 +46,14 @@ class SponsorshipFactory extends Factory
             'status' => $this->faker->randomElement(['pending', 'active', 'completed', 'cancelled']),
             'relationship_type' => $this->faker->randomElement(['father', 'mother', 'brother', 'sister']),
             'notes' => $this->faker->optional(0.5)->paragraph(),
-            'subscription_id' => 'sub_' . $this->faker->unique()->lexify('??????????????'),
+            'subscription_id' => $this->faker->boolean(60)
+                ? 'sub_' . $this->faker->unique()->lexify('??????????????')
+                : null,
+            'subscription_gateway' => $this->faker->randomElement(['telebirr', 'cbe']),
+            'subscription_metadata' => [
+                'origin' => 'factory',
+                'msisdn' => $this->faker->phoneNumber(),
+            ],
             'next_billing_date' => $this->faker->dateTimeBetween('now', '+1 month'),
         ];
     }

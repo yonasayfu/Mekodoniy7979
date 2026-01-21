@@ -80,6 +80,9 @@ class User extends Authenticatable
         'muted_at', // Added for mute system
         'muted_until', // Added for mute system
         'mute_reason', // Added for mute system
+        'redaction_requested_at',
+        'data_redacted_at',
+        'redaction_reason',
     ];
 
     /**
@@ -112,6 +115,11 @@ class User extends Authenticatable
     public function warnings(): HasMany
     {
         return $this->hasMany(Warning::class);
+    }
+
+    public function donorProfile(): HasOne
+    {
+        return $this->hasOne(DonorProfile::class);
     }
 
 
@@ -162,9 +170,11 @@ class User extends Authenticatable
             'kicked_until' => 'datetime', // Cast for kick system
             'banned_at' => 'datetime', // Cast for ban system
             'banned_until' => 'datetime', // Cast for ban system
-            'muted_at' => 'datetime', // Cast for mute system
-            'muted_until' => 'datetime', // Cast for mute system
-        ];
+        'muted_at' => 'datetime', // Cast for mute system
+        'muted_until' => 'datetime', // Cast for mute system
+        'redaction_requested_at' => 'datetime',
+        'data_redacted_at' => 'datetime',
+    ];
     }
 
     public function getIsImpersonatingAttribute(): bool
@@ -369,4 +379,3 @@ class User extends Authenticatable
         ]);
     }
 }
-

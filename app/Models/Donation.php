@@ -6,6 +6,7 @@ use App\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class Donation extends Model
 {
@@ -28,9 +29,16 @@ class Donation extends Model
         'currency',
         'payment_gateway',
         'payment_id',
+        'receipt_uuid',
         'receipt_path',
+        'receipt_issued_at',
         'status',
         'notes',
+        'kyc_required',
+        'kyc_status',
+        'kyc_verified_at',
+        'kyc_document_path',
+        'kyc_review_notes',
     ];
 
     /**
@@ -41,6 +49,12 @@ class Donation extends Model
     protected static function booted()
     {
         static::addGlobalScope(new BranchScope);
+
+        static::creating(function (Donation $donation) {
+            if (! $donation->receipt_uuid) {
+                $donation->receipt_uuid = (string) Str::uuid();
+            }
+        });
     }
 
     /**
@@ -75,5 +89,14 @@ class Donation extends Model
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'receipt_issued_at' => 'datetime',
+            'kyc_verified_at' => 'datetime',
+            'kyc_required' => 'boolean',
+        ];
     }
 }

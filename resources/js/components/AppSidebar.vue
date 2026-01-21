@@ -79,6 +79,41 @@ const hasPermission = (
     });
 };
 
+const currentUrl = computed(() => page.url ?? '/');
+
+const normalizePath = (value: string) => {
+    if (! value) {
+        return '/';
+    }
+
+    if (! value.startsWith('/')) {
+        return value;
+    }
+
+    return value.replace(/\/+$/, '') || '/';
+};
+
+const resolveHref = (href: string | null | undefined) => {
+    if (! href) return '#';
+
+    if (href === '/dashboard') {
+        return dashboard().url ?? '/dashboard';
+    }
+
+    return href;
+};
+
+const isActive = (href: string) => {
+    const target = normalizePath(href);
+    const current = normalizePath(currentUrl.value);
+
+    if (target === '/') {
+        return current === '/';
+    }
+
+    return current === target || current.startsWith(`${target}/`);
+};
+
 const sidebarGroups = computed(() => {
     const permissions = page.props.auth?.permissions ?? [];
     const roles = page.props.auth?.roles ?? [];
@@ -120,6 +155,12 @@ const sidebarGroups = computed(() => {
                         icon: 'MessageCircle',
                         permission: null,
                     },
+                    {
+                        title: 'Outbound Log',
+                        href: '/outbound',
+                        icon: 'ClipboardList',
+                        permission: 'notifications.view',
+                    },
                 ],
             },
         ];
@@ -131,14 +172,19 @@ const sidebarGroups = computed(() => {
                 .filter((item) =>
                     hasPermission(item.permission ?? null, permissions),
                 )
-                .map((item) => ({
-                    ...item,
-                    href: item.href === '/dashboard' ? dashboard() : item.href,
-                    icon:
-                        typeof item.icon === 'string' && iconMap[item.icon]
-                            ? iconMap[item.icon]
-                            : item.icon,
-                }));
+                .map((item) => {
+                    const href = resolveHref(item.href);
+
+                    return {
+                        ...item,
+                        href,
+                        active: isActive(href),
+                        icon:
+                            typeof item.icon === 'string' && iconMap[item.icon]
+                                ? iconMap[item.icon]
+                                : item.icon,
+                    };
+                });
 
             if (!items.length) {
                 return null;
@@ -170,7 +216,7 @@ const sidebarGroups = computed(() => {
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboard()">
+                        <Link :href="dashboard().url ?? '/dashboard'">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>

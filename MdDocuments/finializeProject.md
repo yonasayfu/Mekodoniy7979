@@ -68,8 +68,8 @@
 
 ### Phase 4 – Reporting, Compliance & Performance (Weeks 8‑10)
 
-- Ship admin report exports (PDF/Excel) and donor Impact Book with branded template + CDN assets.
-- Add localized strings, ETB currency helpers, Ethiopian calendar conversions, and Amharic fonts.
-- Introduce caching/queue tuning (Redis), CDN/object storage for media, API performance monitoring, nightly encrypted backups, and data retention policies.
+- Ship admin report exports (PDF/Excel) and donor Impact Book with branded template + CDN assets, including the scheduled `reports:generate-annual` workflow and donor notifications (`app/Support/Services/ImpactBookGenerator.php`, `resources/views/reports/impact_book.blade.php`).
+- Add localized strings, ETB currency helpers, Ethiopian calendar conversions, and Amharic fonts for RTL-safe layouts; share translations via `useLocale` and display Andegna dates on donor dashboards (`resources/lang/*/ui.php`, `resources/js/composables/useLocale.ts`, `resources/js/pages/Reports/DonorImpact.vue`).
+- Introduce compliance guardrails (elder consent uploads, donation KYC flags, compliance export/redaction endpoints) and nightly encrypted backups with retention/purge logic backed by `backups:encrypted` (`database/migrations/2026_02_27_*`, `app/Http/Controllers/ComplianceController.php`, `app/Console/Commands/EncryptedBackupCommand.php`).
 
 Each phase will produce demo-ready increments (deploy scripts + seeders updated accordingly). Once this blueprint is approved we can break it down into executable tickets (`upcomingtasklist.md`) and start implementing in priority order.

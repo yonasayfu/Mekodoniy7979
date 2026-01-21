@@ -34,6 +34,9 @@ class Elder extends Model
         'special_needs',
         'monthly_expenses',
         'video_url',
+        'consent_form_path',
+        'consent_received_at',
+        'consent_notes',
         'health_conditions',
         'sponsorship_status',
         'current_status',
@@ -45,6 +48,7 @@ class Elder extends Model
         'date_of_birth' => 'date',
         'admitted_at' => 'datetime',
         'deceased_at' => 'datetime',
+        'consent_received_at' => 'datetime',
     ];
 
     protected $appends = [
@@ -126,6 +130,16 @@ class Elder extends Model
         return $this->hasMany(ElderMedication::class);
     }
 
+    public function documents(): HasMany
+    {
+        return $this->hasMany(ElderDocument::class);
+    }
+
+    public function sponsorshipProposals(): HasMany
+    {
+        return $this->hasMany(SponsorshipProposal::class);
+    }
+
     /**
      * Get the case notes for the elder.
      */
@@ -142,13 +156,13 @@ class Elder extends Model
 
     public function getProfilePhotoUrlAttribute(): string
     {
-        $path = $this->profile_picture_path;
+        $path = trim((string) $this->profile_picture_path);
 
-        if (! $path || Str::contains($path, 'placeholder.com')) {
+        if ($path === '' || Str::contains($path, 'placeholder.com')) {
             return asset('images/monk-mekodoniya.jpg');
         }
 
-        if (Str::startsWith($path, ['http://', 'https://'])) {
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
             return $path;
         }
 
@@ -156,6 +170,14 @@ class Elder extends Model
             return asset(ltrim($path, '/'));
         }
 
-        return asset('storage/'.$path);
+        if (Str::startsWith($path, 'storage/')) {
+            return asset(ltrim($path, '/'));
+        }
+
+        if (Str::startsWith($path, 'public/')) {
+            return asset(Str::after($path, 'public/'));
+        }
+
+        return asset('storage/'.ltrim($path, '/'));
     }
 }

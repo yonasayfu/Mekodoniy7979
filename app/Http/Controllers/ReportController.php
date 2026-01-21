@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AdminDashboardExport;
 use App\Models\Branch;
 use App\Models\Donation;
 use App\Models\Elder;
 use App\Models\Sponsorship;
 use App\Models\AnnualReport;
+use App\Models\User;
 use App\Services\ReportService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
@@ -34,13 +40,14 @@ class ReportController extends Controller
         // We check if the user has administrative roles to show the "Brain" dashboard
         if ($user->hasRole('Super Admin') || $user->hasRole('Branch Admin') || $user->hasRole('Admin')) {
             $branchId = $user->branch_id;
+            $dateRange = (int) $request->input('date_range', 30);
 
             // If Super Admin, they might want to see global stats (branchId = null)
             if ($user->hasRole('Super Admin')) {
                 $branchId = $request->input('branch_id', null);
             }
 
-            $data = $this->reportService->getEnhancedAdminDashboard($branchId);
+            $data = $this->reportService->getEnhancedAdminDashboard($branchId, $dateRange);
 
             // Get branches for filtering (only for Super Admin)
             $branches = [];
@@ -52,7 +59,7 @@ class ReportController extends Controller
                 'stats' => $data,
                 'filters' => [
                     'branch_id' => $request->input('branch_id'),
-                    'date_range' => $request->input('date_range', '30'),
+                    'date_range' => $dateRange,
                 ],
                 'branches' => $branches,
             ]);
@@ -69,7 +76,15 @@ class ReportController extends Controller
 
         $annualReports = AnnualReport::where('user_id', $user->id)
             ->orderBy('report_year', 'desc')
-            ->get();
+            ->get()
+            ->map(function (AnnualReport $report) {
+                return [
+                    'id' => $report->id,
+                    'report_year' => $report->report_year,
+                    'pdf_url' => Storage::disk('public')->url($report->pdf_path),
+                    'impact_data' => $report->impact_data,
+                ];
+            });
 
         return Inertia::render('Reports/DonorImpact', [
             'impact' => $data,
@@ -103,16 +118,11 @@ class ReportController extends Controller
 
         $this->authorize('generateImpactBook', $targetUser);
 
-        // Fetch data for the Impact Book from the service
-        $impactData = $this->reportService->getImpactBookData($targetUser);
+        $annualReport = $this->reportService->generateImpactBookForUser($targetUser);
 
-        // Pass data to a Blade view for PDF generation
-        $pdf = Pdf::loadView('reports.impact_book', array_merge(['user' => $targetUser], $impactData));
+        $filename = 'Impact_Book_' . str_replace(' ', '_', $targetUser->name) . '_' . now()->format('Ymd') . '.pdf';
 
-        // You can customize the PDF filename
-        $filename = 'Impact_Book_' . $targetUser->name . '_' . now()->format('Ymd') . '.pdf';
-
-        return $pdf->download($filename);
+        return Storage::disk('public')->download($annualReport->pdf_path, $filename);
     }
 
     /**
@@ -194,19 +204,31 @@ class ReportController extends Controller
 
         $format = $request->input('format', 'pdf');
         $branchId = $request->input('branch_id');
-        $dateRange = $request->input('date_range', 30);
+        $dateRange = (int) $request->input('date_range', 30);
 
-        $data = $this->reportService->getEnhancedAdminDashboard($branchId);
+        $stats = $this->reportService->getEnhancedAdminDashboard($branchId, $dateRange);
 
-        // For now, return JSON. In a real implementation, you'd generate PDF/Excel
-        if ($format === 'pdf') {
-            // Generate PDF report
-            return response()->json(['message' => 'PDF export not yet implemented', 'data' => $data]);
-        } elseif ($format === 'excel') {
-            // Generate Excel report
-            return response()->json(['message' => 'Excel export not yet implemented', 'data' => $data]);
+        $filters = [
+            'branch_id' => $branchId,
+            'date_range' => $dateRange,
+        ];
+
+        if ($format === 'excel') {
+            $filename = 'admin_dashboard_' . now()->format('Ymd_His') . '.xlsx';
+
+            return Excel::download(new AdminDashboardExport($stats, $filters), $filename);
         }
 
-        return response()->json($data);
+        $pdf = Pdf::loadView('reports.admin_dashboard_export', [
+            'stats' => $stats,
+            'filters' => $filters,
+            'generatedBy' => $user,
+            'generatedAt' => now(),
+            'trend' => $stats['monthly_trend'] ?? [],
+        ]);
+
+        $filename = 'admin_dashboard_' . now()->format('Ymd_His') . '.pdf';
+
+        return $pdf->download($filename);
     }
 }
