@@ -9,6 +9,23 @@ import { route } from 'ziggy-js';
 
 type DonationMode = 'one_time' | 'sponsorship';
 
+const props = defineProps<{
+    paymentOptions: {
+        telebirr: {
+            account_code: string;
+            receiver_name: string;
+            reference_hint: string;
+        };
+        bankAccounts: {
+            bank: string;
+            branch: string;
+            account_name: string;
+            account_number: string;
+            iban?: string;
+        }[];
+    };
+}>();
+
 const getQueryParam = (param: string) => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
@@ -68,6 +85,15 @@ const modePills = [
     { value: 'one_time', label: 'One-Time Meal' },
     { value: 'sponsorship', label: 'Monthly Sponsorship' },
 ] as const;
+
+const amountSuggestions = [
+    { label: '70 ETB — Breakfast', value: 70 },
+    { label: '150 ETB — Lunch', value: 150 },
+    { label: '250 ETB — Dinner', value: 250 },
+];
+
+const telebirrInfo = computed(() => props.paymentOptions?.telebirr ?? null);
+const bankAccounts = computed(() => props.paymentOptions?.bankAccounts ?? []);
 
 const relationshipMessage = computed(() => {
     if (!selectedRelationship) {
@@ -199,25 +225,30 @@ const submit = () => {
                             >
                                 Donation Amount (ETB)
                             </label>
-                            <div class="mt-2 flex items-center space-x-4">
+                            <div class="mt-2 flex flex-col gap-3">
                                 <input
-                                    type="range"
-                                    min="70"
-                                    max="250"
+                                    type="number"
+                                    min="50"
                                     step="10"
-                                    v-model="form.amount"
-                                    class="w-full"
+                                    v-model.number="form.amount"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40 dark:text-white"
+                                    placeholder="Enter the amount you wish to give"
                                 />
-                                <span class="text-2xl font-bold"
-                                    >{{ form.amount }} ETB</span
-                                >
+                                <div class="flex flex-wrap gap-2 text-[11px] text-slate-500">
+                                    <button
+                                        v-for="item in amountSuggestions"
+                                        :key="item.value"
+                                        type="button"
+                                        @click="form.amount = item.value"
+                                        class="rounded-full border border-slate-300 px-3 py-1 capitalize text-slate-600 transition hover:border-indigo-500 hover:text-indigo-500 dark:border-slate-600 dark:text-slate-300"
+                                    >
+                                        {{ item.label }}
+                                    </button>
+                                </div>
                             </div>
-                            <div
-                                class="mt-2 flex justify-between text-xs text-slate-500 dark:text-slate-400"
-                            >
-                                <span>70 (Breakfast)</span>
-                                <span>150 (Lunch)</span>
-                                <span>250 (Dinner)</span>
+                            <div class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                Enter any amount (minimum 50 ETB). Your support matters,
+                                no matter the size.
                             </div>
                         </div>
 
@@ -277,6 +308,58 @@ const submit = () => {
                                 :message="form.errors.notes"
                                 class="mt-2"
                             />
+                        </div>
+
+                        <div
+                            v-if="telebirrInfo || bankAccounts.length"
+                            class="space-y-4"
+                        >
+                            <div
+                                v-if="telebirrInfo"
+                                class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 shadow-inner dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                            >
+                                <p
+                                    class="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400"
+                                >
+                                    Telebirr transfers
+                                </p>
+                                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-white">
+                                    {{ telebirrInfo.receiver_name }}
+                                </p>
+                                <p class="text-sm">Account code: <strong>{{ telebirrInfo.account_code }}</strong></p>
+                                <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                    Open Telebirr, choose “Send Money,” paste the code above,
+                                    and include this reference: {{ telebirrInfo.reference_hint }}. Once
+                                    the transfer completes, keep the confirmation for us.
+                                </p>
+                            </div>
+                            <div
+                                v-if="bankAccounts.length"
+                                class="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                            >
+                                <p class="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                                    Bank transfers
+                                </p>
+                                <ul class="mt-2 space-y-2 text-[12px]">
+                                    <li
+                                        v-for="bank in bankAccounts"
+                                        :key="bank.account_number"
+                                        class="rounded-lg border border-slate-200 p-3 dark:border-slate-800"
+                                    >
+                                        <p class="font-semibold text-slate-900 dark:text-white">
+                                            {{ bank.bank }} — {{ bank.branch }}
+                                        </p>
+                                        <p>Account: {{ bank.account_number }}</p>
+                                        <p>Account name: {{ bank.account_name }}</p>
+                                        <p v-if="bank.iban">IBAN: {{ bank.iban }}</p>
+                                    </li>
+                                </ul>
+                                <p class="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
+                                    Email your transaction reference to
+                                    <a class="text-indigo-600" href="mailto:support@mekodonia.org">support@mekodonia.org</a>
+                                    so we can confirm your sponsorship quickly.
+                                </p>
+                            </div>
                         </div>
 
                         <div class="flex flex-wrap items-center justify-between gap-3">

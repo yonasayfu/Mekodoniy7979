@@ -18,7 +18,16 @@ class PreSponsorshipController extends Controller
 
         $preSponsorship = PreSponsorship::create($validated);
 
-        // Redirect to guest donation page, possibly with some pre-filled data or a token
+        if ($request->header('X-Inertia') || $request->wantsJson()) {
+            return response()->json([
+                'pre_sponsorship' => $preSponsorship->only([
+                    'id',
+                    'relationship_type',
+                    'created_at',
+                ]),
+            ], 201);
+        }
+
         return redirect()->route('guest.donation', [
             'pre_sponsorship_id' => $preSponsorship->id,
             'relationship' => $preSponsorship->relationship_type,

@@ -68,7 +68,12 @@ Route::get('campaign/{campaign:slug}', [CampaignController::class, 'landing'])
     ->name('campaigns.landing');
 
 Route::get('/guest-donation', function () {
-    return Inertia::render('GuestDonation');
+    return Inertia::render('GuestDonation', [
+        'paymentOptions' => [
+            'telebirr' => config('payments.telebirr'),
+            'bankAccounts' => config('payments.bank_accounts'),
+        ],
+    ]);
 })->name('guest.donation');
 
 Route::post('/donations/guest', [DonationController::class, 'storeGuest'])->name('donations.guest.store');

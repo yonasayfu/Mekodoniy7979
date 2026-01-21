@@ -23,7 +23,8 @@ return [
         'reports' => ['reports.view', 'reports.generate', 'reports.export', 'reports.view_all', 'reports.financial', 'reports.operational', 'reports.impact_book'],
         'campaigns' => ['campaigns.view', 'campaigns.create', 'campaigns.update', 'campaigns.delete', 'campaigns.manage'],
         'mailbox' => ['mailbox.view', 'mailbox.send', 'mailbox.process', 'mailbox.manage'],
-        'notifications' => ['notifications.view'],
+        'notifications' => ['notifications.view', 'notifications.manage'],
+        'reconciliation' => ['reconciliation.view', 'reconciliation.manage', 'reconciliation.match', 'reconciliation.ignore'],
         'activity_logs' => ['activity_logs.view', 'activity_logs.manage'],
         'data_exports' => ['data_exports.view', 'data_exports.create', 'data_exports.manage'],
         'system' => ['system.settings', 'system.backup', 'system.maintenance', 'system.logs'],
@@ -37,25 +38,27 @@ return [
     | For roles that need broad authority we expose wildcard scopes. These
     | should map to the patterns Spatie uses to grant bulk access.
     */
-    'wildcards' => [
-        'users.*',
-        'staff.*',
-        'roles.*',
-        'permissions.*',
-        'branches.*',
-        'elders.*',
-        'sponsorships.*',
-        'donations.*',
-        'visits.*',
-        'reports.*',
-        'campaigns.*',
-        'mailbox.*',
-        'activity_logs.*',
-        'data_exports.*',
-        'system.*',
-        'timeline.*',
-        'case_notes.*',
-    ],
+        'wildcards' => [
+            'users.*',
+            'staff.*',
+            'roles.*',
+            'permissions.*',
+            'branches.*',
+            'elders.*',
+            'sponsorships.*',
+            'donations.*',
+            'visits.*',
+            'reports.*',
+            'campaigns.*',
+            'mailbox.*',
+            'activity_logs.*',
+            'data_exports.*',
+            'system.*',
+            'timeline.*',
+            'case_notes.*',
+            'notifications.*',
+            'reconciliation.*',
+        ],
 
     /*
     |--------------------------------------------------------------------------
@@ -97,6 +100,8 @@ return [
                 'roles.update',
                 'permissions.view',
                 'notifications.view',
+                'notifications.manage',
+                'reconciliation.*',
             ],
         ],
         'Branch Admin' => [
@@ -191,6 +196,7 @@ return [
                 'reports.export',
                 'data_exports.view',
                 'data_exports.create',
+                'reconciliation.*',
             ],
         ],
         'Auditor' => [

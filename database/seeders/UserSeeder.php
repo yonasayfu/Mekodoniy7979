@@ -60,6 +60,33 @@ class UserSeeder extends Seeder
                 'job_title' => 'Reporting Analyst',
                 'status' => 'inactive',
             ],
+            [
+                'role' => 'Manager',
+                'name' => 'Maya Manager',
+                'email' => 'manager@example.com',
+                'first_name' => 'Maya',
+                'last_name' => 'Manager',
+                'job_title' => 'Branch Manager',
+                'status' => 'active',
+            ],
+            [
+                'role' => 'Finance Officer',
+                'name' => 'Faith Finance',
+                'email' => 'finance@example.com',
+                'first_name' => 'Faith',
+                'last_name' => 'Finance',
+                'job_title' => 'Finance Officer',
+                'status' => 'active',
+            ],
+            [
+                'role' => 'Field Officer',
+                'name' => 'Felix Field',
+                'email' => 'field@example.com',
+                'first_name' => 'Felix',
+                'last_name' => 'Field',
+                'job_title' => 'Field Officer',
+                'status' => 'active',
+            ],
         ];
 
         foreach ($additionalStaff as $staff) {

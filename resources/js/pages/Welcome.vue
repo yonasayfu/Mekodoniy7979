@@ -91,6 +91,11 @@ const relationshipCards: Array<{
     },
 ];
 
+const heroQuickActions = [
+    { label: 'Find a Father', relation: 'father' as RelationshipPreset },
+    { label: 'Find a Mother', relation: 'mother' as RelationshipPreset },
+];
+
 const props = defineProps<{
     wallOfLove: WallOfLoveEntry[];
     liveCounters: LiveCounters;
@@ -130,6 +135,8 @@ const genderOptions = [
     { value: 'Female', label: 'Female' },
     { value: 'Other', label: 'Other' },
 ];
+
+const guestDonationHref = route('guest.donation', undefined, false);
 
 const applyFilters = () => {
     router.get(
@@ -369,7 +376,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
             <!-- Hero Section -->
             <section
                 v-if="heroSlides.length"
-                class="relative flex min-h-[90vh] items-center justify-center overflow-hidden bg-cover bg-center text-white"
+                class="relative flex min-h-[90vh] items-end justify-center overflow-hidden bg-cover bg-center text-white"
                 :style="{
                     backgroundImage: `url(${heroSlides[heroCurrentSlide].image})`,
                 }"
@@ -387,39 +394,69 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                 <div
                     class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
                 ></div>
-                <div class="relative z-10 w-full px-4">
+                <div class="relative z-10 w-full px-4 pb-10">
                     <div
-                        class="mx-auto max-w-3xl rounded-3xl bg-black/60 p-6 text-center shadow-2xl backdrop-blur-sm md:p-10"
+                        class="mx-auto max-w-4xl rounded-3xl bg-black/60 p-4 text-white shadow-2xl backdrop-blur-sm md:p-6"
                     >
-                        <p
-                            class="text-xs uppercase tracking-[0.35em] text-indigo-200"
-                        >
-                            Mekodonia Home Connect
-                        </p>
-                        <h1
-                            class="mt-4 text-4xl font-extrabold leading-snug text-white md:text-6xl"
-                        >
-                            {{ heroSlides[heroCurrentSlide].title }}
-                        </h1>
-                        <p
-                            class="mt-4 text-base leading-relaxed text-slate-100 md:text-2xl"
-                        >
-                            {{ heroSlides[heroCurrentSlide].description }}
-                        </p>
                         <div
-                            class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center"
+                            class="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(auto,24rem)] md:items-center md:text-left"
                         >
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.4em] text-indigo-200">
+                                    Mekodonia Home Connect
+                                </p>
+                                <h1 class="mt-2 text-3xl font-extrabold leading-snug text-white md:text-4xl">
+                                    {{ heroSlides[heroCurrentSlide].title }}
+                                </h1>
+                                <p class="mt-2 text-sm leading-relaxed text-slate-100 md:text-base">
+                                    {{ heroSlides[heroCurrentSlide].description }}
+                                </p>
+                            </div>
+                            <div class="flex flex-col gap-3 md:items-end">
+                                <button
+                                    @click="handleHeroCTA"
+                                    class="w-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-3 text-sm font-semibold uppercase tracking-[0.35em] text-white shadow-lg transition hover:scale-[1.01] hover:from-indigo-600 hover:to-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                                >
+                                    {{ heroSlides[heroCurrentSlide].cta_text }}
+                                </button>
+                                <Link
+                                    href="#how-it-works"
+                                    class="w-full rounded-full border border-white/30 px-6 py-3 text-sm font-semibold uppercase tracking-[0.35em] text-white/90 shadow-lg transition hover:bg-white/10 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                                >
+                                    Learn More
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        v-if="heroQuickActions.length"
+                        class="relative z-10 mt-4 flex flex-wrap items-center justify-center gap-3 text-[10px] font-semibold uppercase tracking-[0.5em] text-white"
+                    >
+                        <div class="flex gap-2">
                             <button
-                                @click="handleHeroCTA"
-                                class="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-8 py-3 text-lg font-semibold text-white shadow-lg transition hover:scale-[1.01] hover:from-indigo-600 hover:to-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none sm:w-auto"
+                                v-for="action in heroQuickActions"
+                                :key="action.label"
+                                type="button"
+                                class="rounded-full border border-white/60 bg-white/90 px-3 py-1 text-[10px] font-bold text-slate-900 transition hover:border-white"
+                                @click="openRelationshipForm(action.relation)"
                             >
-                                {{ heroSlides[heroCurrentSlide].cta_text }}
+                                {{ action.label }}
+                            </button>
+                        </div>
+                        <span class="hidden text-white/60 sm:inline">|</span>
+                        <div class="flex gap-2">
+                            <button
+                                type="button"
+                                class="rounded-full border border-white/60 px-3 py-1 text-[10px] uppercase text-white transition hover:bg-white/20"
+                                @click="scrollToAnchor('#elders-gallery')"
+                            >
+                                Browse Elders
                             </button>
                             <Link
-                                href="#how-it-works"
-                                class="w-full rounded-xl border border-white/30 px-8 py-3 text-lg font-semibold text-white/90 shadow-lg transition hover:bg-white/10 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none sm:w-auto"
+                                :href="guestDonationHref"
+                                class="rounded-full border border-white/60 px-3 py-1 text-[10px] uppercase text-white transition hover:bg-white/20"
                             >
-                                Learn More
+                                Donate a Meal
                             </Link>
                         </div>
                     </div>
