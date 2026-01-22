@@ -6,8 +6,9 @@ import { useTableFilters } from '@/composables/useTableFilters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { confirmDialog } from '@/lib/confirm';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
 import { Edit3, Eye, Search, Trash2 } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, onMounted } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 interface SponsorshipSummary {
     id: number;
@@ -39,6 +40,24 @@ interface PaginationMeta {
     from?: number | null;
 }
 
+interface PreSponsorshipSummary {
+    id: number;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    relationship_type: string;
+    amount: number | null;
+    currency: string | null;
+    status: string;
+    elder_id: number | null;
+    elder_name: string | null;
+    branch_id: number | null;
+    created_at: string | null;
+    donation_id: number | null;
+    donation_amount: number | null;
+    donation_currency: string | null;
+}
+
 const props = defineProps<{
     sponsorships: {
         data: SponsorshipSummary[];
@@ -58,6 +77,7 @@ const props = defineProps<{
         delete: boolean;
     };
     print?: boolean;
+    preSponsorships?: PreSponsorshipSummary[];
 }>();
 
 const can = computed(
@@ -165,9 +185,14 @@ const stats = computed<StatCard[]>(() => props.stats ?? []);
 const sponsorshipList = computed<SponsorshipSummary[]>(
     () => props.sponsorships?.data ?? [],
 );
+const preSponsorshipQueue = computed<PreSponsorshipSummary[]>(
+    () => props.preSponsorships ?? [],
+);
+const hasPendingPledges = computed(() => preSponsorshipQueue.value.length > 0);
 const hasResults = computed<boolean>(() => sponsorshipList.value.length > 0);
 const paginationLinks = computed(() => props.sponsorships?.links ?? []);
 const paginationFrom = computed(() => props.sponsorships?.meta?.from ?? 1);
+const promotingId = ref<number | null>(null);
 
 const destroy = async (sponsorship: SponsorshipSummary) => {
     const accepted = await confirmDialog({
@@ -201,6 +226,61 @@ const statusTone = (status: string) => {
     }
 };
 
+const pledgeStatusTone = (status: string) => {
+    switch (status) {
+        case 'pending':
+            return 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-100';
+        case 'confirmed':
+        case 'active':
+            return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-100';
+        default:
+            return 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
+    }
+};
+
+const formatRelationship = (value?: string | null) => {
+    if (!value) {
+        return 'Relationship';
+    }
+
+    return value
+        .split('_')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+};
+
+const pledgeAmountText = (pledge: PreSponsorshipSummary) => {
+    const amountValue = pledge.amount ?? pledge.donation_amount ?? 0;
+    const currency = pledge.currency ?? pledge.donation_currency ?? 'ETB';
+
+    if (!amountValue || amountValue <= 0) {
+        return 'Amount pending';
+    }
+
+    return `${amountValue.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    })} ${currency}`;
+};
+
+const promotePledge = (pledge: PreSponsorshipSummary) => {
+    if (!pledge.id) {
+        return;
+    }
+
+    promotingId.value = pledge.id;
+
+    router.post(
+        route('pre-sponsorships.promote', pledge.id),
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                promotingId.value = null;
+            },
+        },
+    );
+};
 const statTone = (tone?: string) => {
     switch (tone) {
         case 'success':
@@ -263,6 +343,81 @@ const statTone = (tone?: string) => {
                         {{ metric.value }}
                     </p>
                 </GlassCard>
+            </div>
+
+            <div v-if="hasPendingPledges" class="space-y-3 print:hidden">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+                            Guest pledges awaiting approval
+                        </p>
+                        <p class="text-sm text-slate-500 dark:text-slate-300">
+                            Confirm a pledge to promote it into the sponsorship ledger.
+                        </p>
+                    </div>
+                </div>
+                <div class="grid gap-3 md:grid-cols-2">
+                    <GlassCard
+                        v-for="pledge in preSponsorshipQueue"
+                        :key="pledge.id"
+                        variant="border"
+                        padding="px-5 py-4"
+                    >
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-xs uppercase tracking-[0.4em] text-slate-400">
+                                    Pledge #{{ pledge.id }}
+                                </p>
+                                <p class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                                    {{ pledge.name ?? 'Guest sponsor' }}
+                                </p>
+                                <p class="text-sm text-slate-600 dark:text-slate-300">
+                                    {{ formatRelationship(pledge.relationship_type) }}
+                                    · {{ pledgeAmountText(pledge) }}
+                                </p>
+                                <p class="text-sm text-slate-500 dark:text-slate-300">
+                                    {{ pledge.elder_name ?? 'Any elder' }}
+                                </p>
+                                <p
+                                    v-if="!pledge.elder_id"
+                                    class="text-xs font-semibold uppercase tracking-[0.4em] text-amber-600 dark:text-amber-200"
+                                >
+                                    Assign an elder before confirming.
+                                </p>
+                            </div>
+                            <span
+                                class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
+                                :class="pledgeStatusTone(pledge.status)"
+                            >
+                                {{ pledge.status }}
+                            </span>
+                        </div>
+                            <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
+                                <Link
+                                    v-if="pledge.elder_id"
+                                    :href="route('elders.show', pledge.elder_id)"
+                                    class="text-indigo-600 hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200"
+                                >
+                                    View elder profile
+                                </Link>
+                                <Link
+                                    :href="route('pre-sponsorships.edit', pledge.id)"
+                                    class="text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
+                                >
+                                    Edit pledge
+                                </Link>
+                                <button
+                                    type="button"
+                                    class="rounded-full border border-indigo-500 px-4 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-indigo-600 transition hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    :disabled="promotingId === pledge.id || !pledge.elder_id"
+                                @click="promotePledge(pledge)"
+                            >
+                                <span v-if="promotingId === pledge.id">Promoting…</span>
+                                <span v-else>Confirm sponsorship</span>
+                            </button>
+                        </div>
+                    </GlassCard>
+                </div>
             </div>
 
             <div
@@ -387,29 +542,39 @@ const statTone = (tone?: string) => {
                             <td
                                 class="px-5 py-4 text-sm font-medium text-slate-900 dark:text-slate-100"
                             >
-                                <Link
-                                    :href="
-                                        route('users.show', sponsorship.user_id)
-                                    "
-                                    class="transition hover:text-indigo-600 dark:hover:text-indigo-300"
-                                >
+                                <template v-if="sponsorship.user_id">
+                                    <Link
+                                        :href="
+                                            route('users.show', sponsorship.user_id)
+                                        "
+                                        class="transition hover:text-indigo-600 dark:hover:text-indigo-300"
+                                    >
+                                        {{ sponsorship.user_name }}
+                                    </Link>
+                                </template>
+                                <template v-else>
                                     {{ sponsorship.user_name }}
-                                </Link>
+                                </template>
                             </td>
                             <td
                                 class="px-5 py-4 text-sm font-medium text-slate-900 dark:text-slate-100"
                             >
-                                <Link
-                                    :href="
-                                        route(
-                                            'elders.show',
-                                            sponsorship.elder_id,
-                                        )
-                                    "
-                                    class="transition hover:text-indigo-600 dark:hover:text-indigo-300"
-                                >
-                                    {{ sponsorship.elder_full_name }}
-                                </Link>
+                                <template v-if="sponsorship.elder_id">
+                                    <Link
+                                        :href="
+                                            route(
+                                                'elders.show',
+                                                sponsorship.elder_id,
+                                            )
+                                        "
+                                        class="transition hover:text-indigo-600 dark:hover:text-indigo-300"
+                                    >
+                                        {{ sponsorship.elder_full_name ?? '—' }}
+                                    </Link>
+                                </template>
+                                <template v-else>
+                                    {{ sponsorship.elder_full_name ?? '—' }}
+                                </template>
                             </td>
                             <td
                                 class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300"

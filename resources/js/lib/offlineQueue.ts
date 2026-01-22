@@ -38,6 +38,7 @@ async function getDb() {
 export async function queueRequest(payload: Omit<OfflineQueueDB['sync-queue']['value'], 'created_at'>) {
     const db = await getDb();
     const headers = payload.headers ?? {};
+    headers['x-mekodonia-queue'] = '1';
     let body: BodyInit | null = null;
 
     if (payload.body instanceof FormData) {

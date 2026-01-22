@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             ActivityLogSeeder::class,
             SponsorshipSeeder::class,
             PreSponsorshipSeeder::class,
+            GuestPledgeSeeder::class,
         ]);
     }
 }

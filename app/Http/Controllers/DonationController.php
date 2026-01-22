@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\PaymentTransaction;
 use App\Notifications\GuestDonationLoggedNotification;
 use App\Notifications\GuestDonationReceiptNotification;
+use App\Services\PreSponsorshipService;
 use App\Support\Services\DonationReceiptService;
 use App\Support\Services\KycService;
 use App\Support\Services\TelebirrService;
@@ -24,7 +25,7 @@ class DonationController extends Controller
      * @param StoreDonationRequest $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function storeGuest(StoreDonationRequest $request, DonationReceiptService $receiptService, KycService $kycService)
+    public function storeGuest(StoreDonationRequest $request, DonationReceiptService $receiptService, KycService $kycService, PreSponsorshipService $preSponsorshipService)
     {
         $validatedData = $request->validated();
 
@@ -69,6 +70,13 @@ class DonationController extends Controller
         }
 
         $this->notifyBranchTeam($donation, $receiptUrl);
+
+        if ($donationMode === 'sponsorship') {
+            $preSponsorshipService->syncFromDonation(
+                $donation,
+                $validatedData['relationship'] ?? 'sponsorship',
+            );
+        }
 
         return redirect()->route('thank-you')->with('donation_summary', [
             'relationship' => $validatedData['relationship'] ?? 'sponsorship',

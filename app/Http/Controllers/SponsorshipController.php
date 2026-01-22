@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreSponsorshipRequest;
 use App\Http\Requests\UnmatchSponsorshipRequest;
 use App\Http\Requests\UpdateSponsorshipRequest;
+use App\Models\PreSponsorship;
 use App\Models\Sponsorship;
 use App\Models\User;
 use App\Models\Elder;
@@ -17,6 +18,7 @@ use Carbon\Carbon;
 use App\Support\Exports\ExportConfig;
 use App\Support\Exports\HandlesDataExport;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SponsorshipController extends Controller
 {
@@ -25,15 +27,42 @@ class SponsorshipController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $sponsorships = Sponsorship::with(['user:id,name', 'elder:id,first_name,last_name'])->paginate(10)
+        $query = Sponsorship::with(['user:id,name', 'elder:id,first_name,last_name']);
+
+        if ($search = trim((string) $request->query('search', ''))) {
+            $lowerSearch = mb_strtolower($search);
+            $query->where(function ($builder) use ($lowerSearch) {
+                $builder->whereRaw('LOWER(notes) LIKE ?', ["%{$lowerSearch}%"])
+                    ->orWhereHas('user', fn ($userQuery) => $userQuery->whereRaw('LOWER(name) LIKE ?', ["%{$lowerSearch}%"]))
+                    ->orWhereHas('elder', fn ($elderQuery) => $elderQuery->whereRaw('LOWER(CONCAT(first_name, \' \', last_name)) LIKE ?', ["%{$lowerSearch}%"]));
+            });
+        }
+
+        $whitelistedSorts = [
+            'amount' => 'amount',
+            'status' => 'status',
+            'created_at' => 'created_at',
+        ];
+        $sort = $request->query('sort', 'created_at');
+        $direction = $request->query('direction', 'desc');
+        $direction = strtolower($direction) === 'asc' ? 'asc' : 'desc';
+
+        if (isset($whitelistedSorts[$sort])) {
+            $query->orderBy($whitelistedSorts[$sort], $direction);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $perPage = (int) $request->query('per_page', 10);
+        $sponsorships = $query->paginate(max(1, min(100, $perPage)))
             ->through(fn ($sponsorship) => [
                 'id' => $sponsorship->id,
                 'user_id' => $sponsorship->user_id,
-                'user_name' => $sponsorship->user->name,
+                'user_name' => optional($sponsorship->user)->name ?? 'Unknown donor',
                 'elder_id' => $sponsorship->elder_id,
-                'elder_full_name' => $sponsorship->elder->name,
+                'elder_full_name' => optional($sponsorship->elder)->name,
                 'amount' => $sponsorship->amount,
                 'frequency' => $sponsorship->frequency,
                 'start_date' => $sponsorship->start_date,
@@ -41,13 +70,38 @@ class SponsorshipController extends Controller
                 'status' => $sponsorship->status,
                 'notes' => $sponsorship->notes,
             ]);
+
+        $pendingPledges = PreSponsorship::pending()
+            ->with(['elder:id,first_name,last_name', 'donation:id,donation_type,status,amount,currency'])
+            ->orderByDesc('created_at')
+            ->take(6)
+            ->get()
+            ->map(fn (PreSponsorship $pledge) => [
+                'id' => $pledge->id,
+                'name' => $pledge->name,
+                'email' => $pledge->email,
+                'phone' => $pledge->phone,
+                'relationship_type' => $pledge->relationship_type,
+                'amount' => $pledge->amount,
+                'currency' => $pledge->currency,
+                'status' => $pledge->status,
+                'elder_id' => $pledge->elder_id,
+                'elder_name' => optional($pledge->elder)->first_name ? ($pledge->elder->first_name . ' ' . $pledge->elder->last_name) : null,
+                'branch_id' => $pledge->branch_id,
+                'created_at' => $pledge->created_at ? $pledge->created_at->toDateTimeString() : null,
+                'donation_id' => $pledge->donation_id,
+                'donation_amount' => $pledge->donation?->amount,
+                'donation_currency' => $pledge->donation?->currency,
+            ]);
+
         return Inertia::render('Sponsorships/Index', [
             'sponsorships' => $sponsorships,
             'can' => [
                 'create' => true,
                 'edit' => true,
                 'delete' => true,
-            ]
+            ],
+            'preSponsorships' => $pendingPledges,
         ]);
     }
 

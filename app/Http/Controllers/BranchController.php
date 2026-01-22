@@ -17,9 +17,35 @@ class BranchController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $branches = Branch::paginate(10);
+        $query = Branch::query();
+        if ($search = trim((string) $request->query('search', ''))) {
+            $lowerSearch = mb_strtolower($search);
+            $query->where(function ($builder) use ($lowerSearch) {
+                $builder->whereRaw('LOWER(name) LIKE ?', ["%{$lowerSearch}%"])
+                    ->orWhereRaw('LOWER(location) LIKE ?', ["%{$lowerSearch}%"])
+                    ->orWhereRaw('LOWER(contact_person) LIKE ?', ["%{$lowerSearch}%"])
+                    ->orWhereRaw('LOWER(contact_email) LIKE ?', ["%{$lowerSearch}%"])
+                    ->orWhereRaw('LOWER(contact_phone) LIKE ?', ["%{$lowerSearch}%"]);
+            });
+        }
+
+        $sortWhitelist = [
+            'name' => 'name',
+            'location' => 'location',
+            'created_at' => 'created_at',
+        ];
+        $sort = $request->query('sort', 'name');
+        $direction = strtolower($request->query('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+        if (isset($sortWhitelist[$sort])) {
+            $query->orderBy($sortWhitelist[$sort], $direction);
+        } else {
+            $query->orderBy('name', 'asc');
+        }
+
+        $perPage = (int) $request->query('per_page', 10);
+        $branches = $query->paginate(max(1, min(100, $perPage)));
         return Inertia::render('Branches/Index', [
             'branches' => $branches,
             'can' => [

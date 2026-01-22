@@ -24,7 +24,7 @@ class WelcomeController extends Controller
             ->take(10) // Get 10 most recent active sponsorships for the wall of love
             ->get()
             ->map(fn (Sponsorship $sponsorship) => [
-                'donor_name' => $sponsorship->user->name,
+                'donor_name' => optional($sponsorship->user)->name ?? 'Community donor',
                 'elder_name' => $sponsorship->elder->first_name . ' ' . $sponsorship->elder->last_name,
                 'elder_id' => $sponsorship->elder->id,
                 'elder_profile_photo_url' => $sponsorship->elder->profile_photo_url,

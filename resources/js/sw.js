@@ -1,6 +1,6 @@
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
-import { NetworkFirst } from 'workbox-strategies';
+import { NetworkFirst, NetworkOnly } from 'workbox-strategies';
 
 // The __WB_MANIFEST token will be replaced by the list of assets to precache.
 precacheAndRoute(self.__WB_MANIFEST);
@@ -17,6 +17,10 @@ const navigationRoute = new NavigationRoute(
 );
 
 registerRoute(navigationRoute);
+registerRoute(
+    ({ request }) => request.method === 'POST',
+    new NetworkOnly(),
+);
 
 // The 'install' and 'activate' events are handled automatically by Workbox
 // when using precacheAndRoute and cleanupOutdatedCaches.

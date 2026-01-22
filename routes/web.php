@@ -121,7 +121,9 @@ Route::middleware('auth')->group(function () {
                 return redirect()->route('donors.dashboard');
             }
             return app(DashboardController::class)->__invoke(request());
-        })->name('dashboard');
+        })
+            ->middleware('role:Super Admin|Admin|Branch Admin|Manager|Branch Coordinator|Finance Officer|Auditor|Reporting Analyst|Field Officer')
+            ->name('dashboard');
 
         Route::middleware('role:External|Donor')->group(function () {
             Route::get('donors/onboarding', [DonorOnboardingController::class, 'show'])
@@ -254,6 +256,17 @@ Route::middleware('auth')->group(function () {
         Route::post('proposals/{proposal}/decline', [SponsorshipProposalController::class, 'decline'])
             ->name('proposals.decline')
             ->middleware('role:External|Donor');
+
+        Route::prefix('pre-sponsorships')->name('pre-sponsorships.')->middleware('can:sponsorships.manage')->group(function () {
+            Route::get('{pre_sponsorship}/edit', [\App\Http\Controllers\PreSponsorshipController::class, 'edit'])
+                ->name('edit');
+            Route::put('{pre_sponsorship}', [\App\Http\Controllers\PreSponsorshipController::class, 'update'])
+                ->name('update');
+            Route::post('{pre_sponsorship}/reject', [\App\Http\Controllers\PreSponsorshipController::class, 'reject'])
+                ->name('reject');
+            Route::post('{pre_sponsorship}/promote', [\App\Http\Controllers\PreSponsorshipController::class, 'promote'])
+                ->name('promote');
+        });
 
         Route::get('visits/export', [VisitController::class, 'export'])->name('visits.export');
 
