@@ -31,6 +31,18 @@ Mekodonia Home Connect is a web application designed to facilitate connection an
 
 Follow these instructions to set up and run the project locally.
 
+### PostgreSQL setup
+
+The application expects a PostgreSQL server running at `127.0.0.1:5432` (see the `DB_HOST`/`DB_PORT` values in `.env`). If you run into `SQLSTATE[08006] connection to server ... failed: Connection refused`, the database service is either not running or listening on a different port.
+
+- On macOS, install PostgreSQL via Homebrew and start it with `brew services start postgresql`.
+- On Linux, use `sudo systemctl start postgresql` (or whatever init system you rely on).
+- The provided `docker-compose.example.yml` spins up Postgres as `db`; run `docker compose -f docker-compose.example.yml up -d db` and either change the port mapping to `5432:5432` or update `DB_PORT`/`DB_HOST` in `.env` to match the exposed port (`54320` by default).
+
+Verify connectivity with `pg_isready`, `psql -h 127.0.0.1 -U postgres -p 5432`, or `php artisan migrate` once the service is available.
+
+If you'd rather work with SQLite during development, switch `DB_CONNECTION=sqlite` in `.env` and run `touch database/database.sqlite` before running the start-up commands.
+
 ### Prerequisites
 - PHP 8.2 or higher
 - Composer

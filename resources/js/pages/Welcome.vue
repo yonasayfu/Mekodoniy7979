@@ -10,11 +10,8 @@ import {
     UserCheck,
     Users,
 } from 'lucide-vue-next'; // Import User icon
-import { onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
+import { onMounted, onUnmounted, ref, toRefs, watch, computed } from 'vue';
 import { route } from 'ziggy-js';
-import PreSponsorshipForm from '@/components/PreSponsorshipForm.vue';
-
-const preSponsorshipFormRef = ref<InstanceType<typeof PreSponsorshipForm> | null>(null);
 
 interface WallOfLoveEntry {
     donor_name: string;
@@ -120,6 +117,7 @@ const props = defineProps<{
 
 const currentPriority = ref(props.filters.priority || '');
 const currentGender = ref(props.filters.gender || '');
+const currentRelationship = ref(props.filters.relationship || '');
 const heroBackgroundVideo = '/images/6096-188704568_small.mp4';
 
 const priorityOptions = [
@@ -144,13 +142,27 @@ const applyFilters = () => {
         {
             priority: currentPriority.value,
             gender: currentGender.value,
+            relationship: currentRelationship.value,
         },
         {
-            preserveState: true,
             replace: true,
+            preserveState: true,
+            onSuccess: () => {
+                scrollToAnchor('#elders-gallery');
+            },
         },
     );
 };
+
+watch(
+    () => props.filters.relationship,
+    (value) => {
+        currentRelationship.value = value ?? '';
+    },
+);
+
+const isRelationshipActive = (relation: RelationshipPreset) =>
+    currentRelationship.value === relation;
 
 // Hero Slider Logic
 const heroCurrentSlide = ref(0);
@@ -176,20 +188,33 @@ const scrollToAnchor = (selector: string) => {
     }
 };
 
-const openRelationshipForm = (type: RelationshipPreset) => {
-    preSponsorshipFormRef.value?.openModal(type);
+const openRelationshipGallery = (relation: RelationshipPreset = 'father') => {
+    currentRelationship.value = relation;
+    router.get(
+        route('home'),
+        {
+            relationship: relation,
+        },
+        {
+            replace: true,
+            preserveScroll: false,
+            onSuccess: () => {
+                scrollToAnchor('#elders-gallery');
+            },
+        },
+    );
 };
 
 const handleHeroCTA = () => {
     const slide = props.heroSlides[heroCurrentSlide.value];
     if (!slide?.cta_link) {
-        openRelationshipForm('father');
+        openRelationshipGallery('father');
         return;
     }
 
     if (slide.cta_link.startsWith('modal:')) {
         const relation = slide.cta_link.replace('modal:', '') as RelationshipPreset;
-        openRelationshipForm(relation);
+        openRelationshipGallery(relation);
         return;
     }
 
@@ -432,17 +457,17 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                         v-if="heroQuickActions.length"
                         class="relative z-10 mt-4 flex flex-wrap items-center justify-center gap-3 text-[10px] font-semibold uppercase tracking-[0.5em] text-white"
                     >
-                        <div class="flex gap-2">
-                            <button
-                                v-for="action in heroQuickActions"
-                                :key="action.label"
-                                type="button"
-                                class="rounded-full border border-white/60 bg-white/90 px-3 py-1 text-[10px] font-bold text-slate-900 transition hover:border-white"
-                                @click="openRelationshipForm(action.relation)"
-                            >
-                                {{ action.label }}
-                            </button>
-                        </div>
+                            <div class="flex gap-2">
+                                <button
+                                    v-for="action in heroQuickActions"
+                                    :key="action.label"
+                                    type="button"
+                                    class="rounded-full border border-white/60 bg-white/90 px-3 py-1 text-[10px] font-bold text-slate-900 transition hover:border-white"
+                                    @click="openRelationshipGallery(action.relation)"
+                                >
+                                    {{ action.label }}
+                                </button>
+                            </div>
                         <span class="hidden text-white/60 sm:inline">|</span>
                         <div class="flex gap-2">
                             <button
@@ -490,26 +515,75 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                 </div>
             </section>
 
+            <!-- How It Works Section -->
+            <section id="how-it-works" class="bg-white py-20 dark:bg-gray-900">
+                <div class="container mx-auto px-4 text-center">
+                    <h2 class="text-4xl font-bold text-gray-800 dark:text-white">
+                        How It Works
+                    </h2>
+                    <p class="mx-auto mt-4 max-w-3xl text-xl text-gray-600 dark:text-gray-300">
+                        Connecting hearts, changing lives. Simple steps to make
+                        a profound difference.
+                    </p>
+                    <div class="mt-12 grid grid-cols-1 gap-10 md:grid-cols-3">
+                        <div class="flex flex-col items-center rounded-xl bg-gray-50 p-6 shadow-lg dark:bg-gray-800">
+                            <div class="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
+                                <User class="size-10" />
+                            </div>
+                            <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">
+                                1. Browse Elders
+                            </h3>
+                            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                Discover compelling stories of elders needing
+                                support. Filter by location, needs, and more.
+                            </p>
+                        </div>
+                        <div class="flex flex-col items-center rounded-xl bg-gray-50 p-6 shadow-lg dark:bg-gray-800">
+                            <div class="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300">
+                                <Heart class="size-10" />
+                            </div>
+                            <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">
+                                2. Choose Your Relationship
+                            </h3>
+                            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                Decide how you want to support – as a Father,
+                                Mother, Brother, or Sister.
+                            </p>
+                        </div>
+                        <div class="flex flex-col items-center rounded-xl bg-gray-50 p-6 shadow-lg dark:bg-gray-800">
+                            <div class="flex h-20 w-20 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                                <DollarSign class="size-10" />
+                            </div>
+                            <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">
+                                3. Make an Impact
+                            </h3>
+                            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                Set up monthly contributions or make a one-time
+                                donation easily and securely.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Relationship CTA Section -->
             <section
                 id="relationship-cta"
                 class="bg-white py-16 dark:bg-gray-900 shadow-inner"
             >
-                <div class="container mx-auto px-4">
-                    <div class="text-center">
-                        <h2 class="text-4xl font-bold text-gray-800 dark:text-white">
-                            Choose Your Connection
-                        </h2>
-                        <p class="mt-3 text-lg text-gray-600 dark:text-gray-300">
-                            Select the relationship that resonates with you and start supporting an elder instantly.
-                        </p>
-                    </div>
+                <div class="container mx-auto px-4 text-center">
+                    <h2 class="text-4xl font-bold text-gray-800 dark:text-white">
+                        Choose Your Connection
+                    </h2>
+                    <p class="mt-3 text-lg text-gray-600 dark:text-gray-300">
+                        Select the relationship that resonates with you and start supporting an elder instantly.
+                    </p>
                     <div class="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
                         <div
                             v-for="card in relationshipCards"
                             :key="card.relation"
                             class="flex flex-col rounded-2xl border border-gray-100 bg-gradient-to-br p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-700/50 dark:bg-slate-900/70"
-                            :class="card.accent"
+                            :class="[card.accent, isRelationshipActive(card.relation) ? 'ring-2 ring-indigo-400/70 dark:ring-indigo-300/50 shadow-lg' : '']"
                         >
                             <div
                                 class="flex size-12 items-center justify-center rounded-xl bg-white/70 text-indigo-600 shadow-inner dark:bg-white/10 dark:text-indigo-300"
@@ -529,7 +603,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                                 <button
                                     type="button"
                                     class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-                                    @click="openRelationshipForm(card.relation)"
+                                    @click="openRelationshipGallery(card.relation)"
                                 >
                                     Start as a {{ card.label }}
                                 </button>
@@ -549,9 +623,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
             <!-- Impact Section (Live Counters) -->
             <section class="bg-gray-50 py-20 dark:bg-gray-800">
                 <div class="container mx-auto px-4 text-center">
-                    <h2
-                        class="text-4xl font-bold text-gray-800 dark:text-white"
-                    >
+                    <h2 class="text-4xl font-bold text-gray-800 dark:text-white">
                         Our Impact
                     </h2>
                     <p class="mt-4 text-xl text-gray-600 dark:text-gray-300">
@@ -567,14 +639,10 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                             >
                                 <Users class="size-10" />
                             </div>
-                            <p
-                                class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white"
-                            >
+                            <p class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white">
                                 {{ eldersWaitingCount }}
                             </p>
-                            <p
-                                class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300"
-                            >
+                            <p class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300">
                                 Elders Awaiting Sponsorship
                             </p>
                         </div>
@@ -587,14 +655,10 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                             >
                                 <UserCheck class="size-10" />
                             </div>
-                            <p
-                                class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white"
-                            >
+                            <p class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white">
                                 {{ matchedEldersCount }}
                             </p>
-                            <p
-                                class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300"
-                            >
+                            <p class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300">
                                 Elders Matched
                             </p>
                         </div>
@@ -607,88 +671,11 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                             >
                                 <CalendarHeart class="size-10" />
                             </div>
-                            <p
-                                class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white"
-                            >
+                            <p class="mt-6 text-5xl font-extrabold text-gray-800 dark:text-white">
                                 {{ visitsThisMonthCount }}
                             </p>
-                            <p
-                                class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300"
-                            >
+                            <p class="mt-2 text-lg font-semibold text-gray-600 dark:text-gray-300">
                                 Visits This Month
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- How It Works Section -->
-            <section id="how-it-works" class="bg-white py-20 dark:bg-gray-900">
-                <div class="container mx-auto px-4 text-center">
-                    <h2
-                        class="text-4xl font-bold text-gray-800 dark:text-white"
-                    >
-                        How It Works
-                    </h2>
-                    <p
-                        class="mx-auto mt-4 max-w-3xl text-xl text-gray-600 dark:text-gray-300"
-                    >
-                        Connecting hearts, changing lives. Simple steps to make
-                        a profound difference.
-                    </p>
-                    <div class="mt-12 grid grid-cols-1 gap-10 md:grid-cols-3">
-                        <div
-                            class="flex flex-col items-center rounded-xl bg-gray-50 p-6 shadow-lg dark:bg-gray-800"
-                        >
-                            <div
-                                class="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300"
-                            >
-                                <User class="size-10" />
-                            </div>
-                            <h3
-                                class="mt-6 text-xl font-semibold text-gray-800 dark:text-white"
-                            >
-                                1. Browse Elders
-                            </h3>
-                            <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                Discover compelling stories of elders needing
-                                support. Filter by location, needs, and more.
-                            </p>
-                        </div>
-                        <div
-                            class="flex flex-col items-center rounded-xl bg-gray-50 p-6 shadow-lg dark:bg-gray-800"
-                        >
-                            <div
-                                class="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
-                            >
-                                <Heart class="size-10" />
-                            </div>
-                            <h3
-                                class="mt-6 text-xl font-semibold text-gray-800 dark:text-white"
-                            >
-                                2. Choose Your Relationship
-                            </h3>
-                            <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                Decide how you want to support – as a Father,
-                                Mother, Brother, or Sister.
-                            </p>
-                        </div>
-                        <div
-                            class="flex flex-col items-center rounded-xl bg-gray-50 p-6 shadow-lg dark:bg-gray-800"
-                        >
-                            <div
-                                class="flex h-20 w-20 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300"
-                            >
-                                <DollarSign class="size-10" />
-                            </div>
-                            <h3
-                                class="mt-6 text-xl font-semibold text-gray-800 dark:text-white"
-                            >
-                                3. Make an Impact
-                            </h3>
-                            <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                Set up monthly contributions or make a one-time
-                                donation easily and securely.
                             </p>
                         </div>
                     </div>
@@ -1054,5 +1041,4 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
             </div>
         </footer>
     </div>
-    <PreSponsorshipForm ref="preSponsorshipFormRef" />
 </template>

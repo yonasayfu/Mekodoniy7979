@@ -43,6 +43,9 @@ class WelcomeController extends Controller
         if ($request->has('gender')) {
             $eldersQuery->where('gender', $request->input('gender'));
         }
+        if ($request->has('relationship')) {
+            $eldersQuery->where('relationship_type', $request->input('relationship'));
+        }
         // Add more filters (e.g., region/branch, age) as needed
 
         $elders = $eldersQuery->select('id', 'first_name', 'last_name', 'profile_picture_path', 'priority_level')
@@ -73,7 +76,7 @@ class WelcomeController extends Controller
                 'visitsThisMonth' => $liveCounters['visitsThisMonth'] ?? 0,
             ],
             'eldersGallery' => $elders,
-            'filters' => $request->only(['priority', 'gender']),
+            'filters' => $request->only(['priority', 'gender', 'relationship']),
             'heroSlides' => $heroSlides,
         ]);
     }

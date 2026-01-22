@@ -76,6 +76,8 @@ Route::get('/guest-donation', function () {
     ]);
 })->name('guest.donation');
 
+Route::get('/thank-you', [\App\Http\Controllers\ThankYouController::class, 'show'])->name('thank-you');
+
 Route::post('/donations/guest', [DonationController::class, 'storeGuest'])->name('donations.guest.store');
 
 Route::post('/donations', [DonationController::class, 'store'])

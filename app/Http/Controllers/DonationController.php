@@ -37,6 +37,8 @@ class DonationController extends Controller
         }
 
         $kycRequired = $kycService->shouldRequire($validatedData['amount'], 'ETB');
+        $donationMode = $validatedData['donation_mode'] ?? 'one_time';
+
         $donation = Donation::create([
             'elder_id' => $elder?->id,
             'branch_id' => $elder?->branch_id,
@@ -49,7 +51,7 @@ class DonationController extends Controller
             'payment_id' => null,
             'status' => 'pending',
             'currency' => 'ETB', // Default currency
-            'donation_type' => 'guest_meal',
+            'donation_type' => $donationMode === 'sponsorship' ? 'guest_sponsorship' : 'guest_meal',
             'campaign_id' => $validatedData['campaign_id'] ?? null,
             'notes' => $validatedData['notes'] ?? null,
             'kyc_required' => $kycRequired,
@@ -68,7 +70,12 @@ class DonationController extends Controller
 
         $this->notifyBranchTeam($donation, $receiptUrl);
 
-        return redirect()->route('home')->with('success', 'Thank you! Your donation is pending confirmation.');
+        return redirect()->route('thank-you')->with('donation_summary', [
+            'relationship' => $validatedData['relationship'] ?? 'sponsorship',
+            'amount' => $donation->amount,
+            'elder_name' => optional($elder)->first_name ? ($elder->first_name . ' ' . $elder->last_name) : null,
+            'mode' => $donationMode,
+        ])->with('success', 'Thank you! Your donation is pending confirmation.');
     }
 
     /**

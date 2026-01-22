@@ -4,7 +4,7 @@ import GlassCard from '@/components/GlassCard.vue';
 import InputError from '@/components/InputError.vue';
 import GuestLayout from '@/layouts/GuestLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { route } from 'ziggy-js';
 
 type DonationMode = 'one_time' | 'sponsorship';
@@ -73,6 +73,8 @@ const form = useForm({
     email: '',
     phone: '',
     notes: inferredNotes,
+    relationship: selectedRelationship || null,
+    donation_mode: donationMode.value,
     elder_id: getQueryParam('elder_id')
         ? parseInt(getQueryParam('elder_id')!)
         : (null as number | null),
@@ -118,6 +120,10 @@ const leadContext = computed(() => {
 });
 
 const homeHref = route('home', undefined, false);
+
+watch(donationMode, (value) => {
+    form.setData('donation_mode', value);
+});
 
 const submit = () => {
     form.post(route('donations.guest.store'));
