@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import RegisteredUserController from '@/actions/App/Http/Controllers/Auth/RegisteredUserController';
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRoute } from '@/composables/useRoute';
 import AuthBase from '@/layouts/AuthLayout.vue';
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 
@@ -23,10 +22,24 @@ const props = defineProps<{
 
 const route = useRoute();
 
-const form = RegisteredUserController.store.form();
 const selectedRole = ref<'donor' | 'internal' | 'external'>(
     props.defaultRole ?? 'external',
 );
+
+const form = useForm({
+    name: '',
+    branch_id: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+    address: '',
+    city: '',
+    country: '',
+    phone_number: '',
+    date_of_birth: '',
+    gender: '',
+    role: selectedRole.value,
+});
 
 const roleDescriptions: Record<
     'donor' | 'internal' | 'external',
