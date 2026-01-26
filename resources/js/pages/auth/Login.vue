@@ -272,7 +272,12 @@ watch(isDonorDialogOpen, (open) => {
 
             <div class="text-center text-sm text-muted-foreground">
                 Don't have an account?
-                <TextLink :href="route('register')" :tabindex="5">Sign up</TextLink>
+                <TextLink
+                    :href="route('register', undefined, false)"
+                    :tabindex="5"
+                >
+                    Sign up
+                </TextLink>
             </div>
         </Form>
         <div class="mt-6 flex flex-col items-center gap-2 text-sm text-slate-500">

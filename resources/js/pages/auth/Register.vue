@@ -9,6 +9,7 @@ import { useRoute } from '@/composables/useRoute';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Form, Head } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 
 interface BranchOption {
     id: number;
@@ -17,11 +18,34 @@ interface BranchOption {
 
 const props = defineProps<{
     branches: BranchOption[];
+    defaultRole?: 'donor' | 'internal' | 'external';
 }>();
 
 const route = useRoute();
 
 const form = RegisteredUserController.store.form();
+const selectedRole = ref<'donor' | 'internal' | 'external'>(
+    props.defaultRole ?? 'external',
+);
+
+const roleDescriptions: Record<
+    'donor' | 'internal' | 'external',
+    string
+> = {
+    donor: 'Use this to join as a donor, track your pledges, and manage receipts.',
+    internal: 'For admins or staff who need branch, elder, and reconciliation access.',
+    external: 'A basic guest donor account—use this unless you need admin privileges.',
+};
+
+const selectRole = (role: 'donor' | 'internal' | 'external') => {
+    selectedRole.value = role;
+};
+
+form.setData('role', selectedRole.value);
+
+watch(selectedRole, (value) => {
+    form.setData('role', value);
+});
 
 const submit = () => {
     form.post(route('register.store'));
@@ -35,6 +59,47 @@ const submit = () => {
     >
         <Head title="Register" />
 
+        <div class="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-xs font-semibold uppercase tracking-[0.35em] text-indigo-500">
+                Registering as
+            </p>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+                <button
+                    type="button"
+                    class="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] transition"
+                    :class="selectedRole === 'donor'
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-600 dark:border-indigo-400 dark:bg-indigo-500/10 dark:text-indigo-200'
+                        : 'border-slate-200 text-slate-600 hover:border-slate-400 dark:border-slate-700 dark:text-slate-300'"
+                    @click.prevent="selectRole('donor')"
+                >
+                    Donor
+                </button>
+                <button
+                    type="button"
+                    class="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] transition"
+                    :class="selectedRole === 'internal'
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-600 dark:border-emerald-400 dark:bg-emerald-500/10 dark:text-emerald-200'
+                        : 'border-slate-200 text-slate-600 hover:border-slate-400 dark:border-slate-700 dark:text-slate-300'"
+                    @click.prevent="selectRole('internal')"
+                >
+                    Internal staff
+                </button>
+                <button
+                    type="button"
+                    class="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] transition"
+                    :class="selectedRole === 'external'
+                        ? 'border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900'
+                        : 'border-slate-200 text-slate-600 hover:border-slate-400 dark:border-slate-700 dark:text-slate-300'"
+                    @click.prevent="selectRole('external')"
+                >
+                    Guest donor
+                </button>
+            </div>
+            <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                {{ roleDescriptions[selectedRole] }}
+            </p>
+        </div>
+
         <Form
             @submit.prevent="submit"
             :form="form"
@@ -42,6 +107,7 @@ const submit = () => {
             v-slot="{ errors, processing }"
             class="flex flex-col gap-6"
         >
+            <input type="hidden" name="role" :value="selectedRole" />
             <div class="grid gap-6">
                 <div class="grid gap-2">
                     <Label for="name">Name</Label>
@@ -220,11 +286,12 @@ const submit = () => {
             <div class="text-center text-sm text-muted-foreground">
                 Already have an account?
                 <TextLink
-                    :href="route('login')"
+                    :href="route('login', undefined, false)"
                     class="underline underline-offset-4"
                     :tabindex="13"
-                    >Log in</TextLink
                 >
+                    Log in
+                </TextLink>
             </div>
         </Form>
     </AuthBase>

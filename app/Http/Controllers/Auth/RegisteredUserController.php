@@ -20,11 +20,13 @@ class RegisteredUserController extends Controller
     /**
      * Show the registration page.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $branches = Branch::all(['id', 'name']);
+        $defaultRole = $request->query('role', 'external');
         return Inertia::render('auth/Register', [
             'branches' => $branches,
+            'defaultRole' => $defaultRole,
         ]);
     }
 
@@ -45,7 +47,11 @@ class RegisteredUserController extends Controller
             'phone_number' => 'nullable|string|max:255',
             'date_of_birth' => 'nullable|date',
             'gender' => 'nullable|string|in:male,female,other',
+            'role' => 'nullable|string|in:donor,internal,external',
         ]);
+
+        $role = $request->input('role', 'external');
+        $accountType = $role === 'internal' ? User::TYPE_INTERNAL : User::TYPE_EXTERNAL;
 
         $user = User::create([
             'name' => $request->name,
@@ -58,10 +64,14 @@ class RegisteredUserController extends Controller
             'date_of_birth' => $request->date_of_birth,
             'gender' => $request->gender,
             'account_status' => User::STATUS_PENDING,
-            'account_type' => User::TYPE_EXTERNAL,
+            'account_type' => $accountType,
         ]);
 
-        $user->assignRole('External');
+        $rolesToSync = ['External'];
+        if ($role === 'donor') {
+            $rolesToSync[] = 'Donor';
+        }
+        $user->syncRoles($rolesToSync);
 
         event(new Registered($user));
 
