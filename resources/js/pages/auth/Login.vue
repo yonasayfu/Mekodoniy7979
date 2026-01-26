@@ -292,10 +292,10 @@ watch(isDonorDialogOpen, (open) => {
                             Enter the phone number and password provided on your thank-you page. We'll redirect you to your personal dashboard on success.
                         </DialogDescription>
                     </DialogHeader>
-                    <form
-                        @submit.prevent="submitDonorQuickLogin"
-                        class="space-y-4"
-                    >
+                            <form
+                                @submit.prevent="submitDonorQuickLogin"
+                                class="space-y-4"
+                            >
                         <div class="space-y-2">
                             <Label for="donor-phone">Phone or email</Label>
                             <Input
@@ -343,9 +343,17 @@ watch(isDonorDialogOpen, (open) => {
                                 Cancel
                             </Button>
                         </div>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                            </form>
+                            <div class="pt-4 text-center text-xs text-slate-500">
+                                Need to register first?
+                                <TextLink
+                                    :href="`${route('register', undefined, false)}?role=donor`"
+                                >
+                                    Sign up as a donor
+                                </TextLink>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
             <p class="text-xs text-slate-400">
                 Use this if you already have a donor account (phone/password shown on your thank-you receipt). Once logged in you'll see your dashboard, donation history, and manage links.
             </p>

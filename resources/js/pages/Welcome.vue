@@ -780,6 +780,38 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                     </div>
                 </section>
 
+                <section class="bg-indigo-50 py-10 dark:bg-slate-900/80">
+                    <div class="container mx-auto px-4">
+                        <div class="flex flex-col gap-4 rounded-2xl border border-indigo-100 bg-white/90 p-6 shadow-lg dark:border-slate-700 dark:bg-slate-900/70 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-xs uppercase tracking-[0.5em] text-indigo-600 dark:text-indigo-300">
+                                    Ready to join the circle?
+                                </p>
+                                <p class="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
+                                    Create a donor account and unlock your personalized dashboard.
+                                </p>
+                                <p class="text-sm text-slate-500 dark:text-slate-300">
+                                    We’ll assign the External/Donor role, sync your phone/name, and keep every pledge organized in one place.
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <Link
+                                    :href="`${route('register', undefined, false)}?role=donor`"
+                                    class="rounded-full border border-indigo-500/70 bg-indigo-500/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-indigo-700 transition hover:bg-indigo-500/20 dark:border-indigo-400/60 dark:bg-indigo-500/10 dark:text-indigo-200"
+                                >
+                                    Register as donor
+                                </Link>
+                                <Link
+                                    :href="route('login', undefined, false)"
+                                    class="rounded-full border border-slate-200 px-5 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-slate-700 transition hover:border-indigo-500 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-indigo-300"
+                                >
+                                    Already have creds?
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section
                     id="trust-signals"
                     class="bg-white py-16 dark:bg-gray-900"
