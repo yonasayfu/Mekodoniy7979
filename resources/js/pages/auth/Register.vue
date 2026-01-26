@@ -54,8 +54,6 @@ const selectRole = (role: 'donor' | 'internal' | 'external') => {
     selectedRole.value = role;
 };
 
-form.setData('role', selectedRole.value);
-
 watch(selectedRole, (value) => {
     form.setData('role', value);
 });
