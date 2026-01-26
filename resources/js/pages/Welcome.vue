@@ -32,6 +32,14 @@ interface ElderSummary {
     full_name: string;
     profile_photo_url: string;
     priority_level: 'low' | 'medium' | 'high';
+    relationship_type?: RelationshipPreset | null;
+    branch_name?: string | null;
+    location?: string | null;
+    funding_goal?: number;
+    funding_received?: number;
+    funding_progress?: number;
+    funding_needed?: number;
+    is_funded?: boolean;
 }
 
 interface PaginationLink {
@@ -105,6 +113,8 @@ const props = defineProps<{
     filters: {
         priority?: string;
         gender?: string;
+        relationship?: string;
+        include_funded?: boolean;
     };
     heroSlides: {
         title: string;
@@ -118,7 +128,37 @@ const props = defineProps<{
 const currentPriority = ref(props.filters.priority || '');
 const currentGender = ref(props.filters.gender || '');
 const currentRelationship = ref(props.filters.relationship || '');
+const includeFunded = ref(!!props.filters.include_funded);
 const heroBackgroundVideo = '/images/6096-188704568_small.mp4';
+
+const heroSlidesFallback = [
+    {
+        title: 'Mekodonia Home Connect',
+        description:
+            'Support elders with a simple click—sponsor an elder or donate a meal today.',
+        image: '/images/hero-father.svg',
+        cta_text: 'See How It Works',
+        cta_link: '#how-it-works',
+    },
+];
+
+const currencyFormatter = new Intl.NumberFormat('en-ET', {
+    style: 'currency',
+    currency: 'ETB',
+    maximumFractionDigits: 0,
+});
+
+const formatCurrency = (value?: number | null) =>
+    currencyFormatter.format(value ?? 0);
+
+const progressPercent = (value?: number) => {
+    const percent = Math.round((value ?? 0) * 100);
+    return `${Math.min(100, Math.max(0, percent))}%`;
+};
+
+const heroSlidesToShow = computed(() =>
+    props.heroSlides.length ? props.heroSlides : heroSlidesFallback,
+);
 
 const priorityOptions = [
     { value: '', label: 'All Priorities' },
@@ -134,15 +174,158 @@ const genderOptions = [
     { value: 'Other', label: 'Other' },
 ];
 
-const guestDonationHref = route('guest.donation', undefined, false);
+const guestMealDonationHref = route(
+    'guest.donation',
+    { mode: 'one_time' },
+    false,
+);
+
+const relationshipPresets: RelationshipPreset[] = [
+    'father',
+    'mother',
+    'brother',
+    'sister',
+];
+
+const normalizeRelationshipParam = (
+    value?: string | null,
+): string | undefined => {
+    if (!value) {
+        return undefined;
+    }
+
+    return relationshipPresets.includes(value as RelationshipPreset)
+        ? (value as RelationshipPreset)
+        : undefined;
+};
+
+const buildGuestDonationParams = (
+    relationship?: string,
+    elderId?: number,
+) => {
+    const params: Record<string, string> = {
+        mode: 'sponsorship',
+    };
+
+    if (relationship) {
+        params.relationship = relationship;
+    }
+
+    if (elderId !== undefined) {
+        params.elder_id = elderId.toString();
+    }
+
+    return params;
+};
+
+const openGuestDonation = (relationship?: string, elderId?: number) => {
+    router.visit(
+        route(
+            'guest.donation',
+            buildGuestDonationParams(relationship, elderId),
+            false,
+        ),
+    );
+};
+
+const openSponsorThisElder = (elder: ElderSummary) => {
+    if (elder.is_funded) {
+        return;
+    }
+
+    const candidateRelation =
+        elder.relationship_type ?? currentRelationship.value;
+    const relationship = normalizeRelationshipParam(candidateRelation);
+    openGuestDonation(relationship, elder.id);
+};
+
+const heroHighlights = [
+    {
+        title: 'Verified Elders',
+        description: 'Every profile passes through our caregivers so donors trust the stories.',
+        icon: User,
+    },
+    {
+        title: 'Transparent Support',
+        description: 'Monthly gifts map to living essentials, therapy, and visits we track for you.',
+        icon: Heart,
+    },
+    {
+        title: 'Responsive Team',
+        description: 'Our staff follow through on questions, delivery, and thank-you updates.',
+        icon: Users,
+    },
+];
+
+const donorJourneySteps = [
+    {
+        title: 'Discover a family role',
+        description:
+            'Filter elders by relationship, priority, and location so you can sponsor someone aligned with your heart.',
+        icon: UserCheck,
+    },
+    {
+        title: 'Choose a story',
+        description:
+            'Review elder stories, needs, and priority levels—each card links to the public profile before you commit.',
+        icon: HeartHandshake,
+    },
+    {
+        title: 'Seal the commitment',
+        description:
+            'Click “Sponsor this elder” to open the guest form pre-filled with your elder and relationship.',
+        icon: DollarSign,
+    },
+];
+
+const formatRelationshipLabel = (relation?: RelationshipPreset) => {
+    if (!relation) {
+        return 'All relationships';
+    }
+
+    const card = relationshipCards.find((item) => item.relation === relation);
+    return card?.label ?? relation.charAt(0).toUpperCase() + relation.slice(1);
+};
+
+const formatPriorityLabel = (value: string) =>
+    priorityOptions.find((option) => option.value === value)?.label ?? value;
+
+const formatGenderLabel = (value: string) =>
+    genderOptions.find((option) => option.value === value)?.label ?? value;
+
+const activeFilterBadges = computed(() => {
+    const filters: string[] = [];
+    if (currentRelationship.value) {
+        filters.push(`Relationship: ${formatRelationshipLabel(currentRelationship.value)}`);
+    }
+    if (currentPriority.value) {
+        filters.push(`Priority: ${formatPriorityLabel(currentPriority.value)}`);
+    }
+    if (currentGender.value) {
+        filters.push(`Gender: ${formatGenderLabel(currentGender.value)}`);
+    }
+    return filters;
+});
+
+const hasActiveFilters = computed(() => activeFilterBadges.value.length > 0);
+
+const clearFilters = () => {
+    currentRelationship.value = '';
+    currentPriority.value = '';
+    currentGender.value = '';
+    includeFunded.value = false;
+    applyFilters();
+};
 
 const applyFilters = () => {
+    // Keep filters in the query string so guests can bookmark/share filtered galleries.
     router.get(
         route('home'),
         {
             priority: currentPriority.value,
             gender: currentGender.value,
             relationship: currentRelationship.value,
+            include_funded: includeFunded.value ? 1 : undefined,
         },
         {
             replace: true,
@@ -154,10 +337,36 @@ const applyFilters = () => {
     );
 };
 
+const toggleIncludeFunded = () => {
+    includeFunded.value = !includeFunded.value;
+    applyFilters();
+};
+
 watch(
     () => props.filters.relationship,
     (value) => {
         currentRelationship.value = value ?? '';
+    },
+);
+
+watch(
+    () => props.filters.priority,
+    (value) => {
+        currentPriority.value = value ?? '';
+    },
+);
+
+watch(
+    () => props.filters.gender,
+    (value) => {
+        currentGender.value = value ?? '';
+    },
+);
+
+watch(
+    () => props.filters.include_funded,
+    (value) => {
+        includeFunded.value = Boolean(value);
     },
 );
 
@@ -169,12 +378,17 @@ const heroCurrentSlide = ref(0);
 let heroSlideInterval: number;
 
 const nextHeroSlide = () => {
-    heroCurrentSlide.value =
-        (heroCurrentSlide.value + 1) % props.heroSlides.length;
+    const length = heroSlidesToShow.value.length;
+    if (!length) {
+        return;
+    }
+
+    heroCurrentSlide.value = (heroCurrentSlide.value + 1) % length;
 };
 
 const goToHeroSlide = (index: number) => {
-    heroCurrentSlide.value = index;
+    const length = heroSlidesToShow.value.length || 1;
+    heroCurrentSlide.value = index % length;
 };
 
 const scrollToAnchor = (selector: string) => {
@@ -194,6 +408,7 @@ const openRelationshipGallery = (relation: RelationshipPreset = 'father') => {
         route('home'),
         {
             relationship: relation,
+            include_funded: includeFunded.value ? 1 : undefined,
         },
         {
             replace: true,
@@ -205,8 +420,17 @@ const openRelationshipGallery = (relation: RelationshipPreset = 'father') => {
     );
 };
 
+watch(
+    heroSlidesToShow,
+    (slides) => {
+        if (heroCurrentSlide.value >= slides.length) {
+            heroCurrentSlide.value = 0;
+        }
+    },
+);
+
 const handleHeroCTA = () => {
-    const slide = props.heroSlides[heroCurrentSlide.value];
+    const slide = heroSlidesToShow.value[heroCurrentSlide.value];
     if (!slide?.cta_link) {
         openRelationshipGallery('father');
         return;
@@ -227,7 +451,7 @@ const handleHeroCTA = () => {
 };
 
 onMounted(() => {
-    if (props.heroSlides.length > 1) {
+    if (heroSlidesToShow.value.length > 1) {
         heroSlideInterval = setInterval(nextHeroSlide, 7000); // Change slide every 7 seconds
     }
 });
@@ -399,13 +623,13 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
 
         <main>
             <!-- Hero Section -->
-            <section
-                v-if="heroSlides.length"
-                class="relative flex min-h-[90vh] items-end justify-center overflow-hidden bg-cover bg-center text-white"
-                :style="{
-                    backgroundImage: `url(${heroSlides[heroCurrentSlide].image})`,
-                }"
-            >
+            <template v-if="heroSlidesToShow.length">
+                <section
+                    class="relative flex min-h-[90vh] items-end justify-center overflow-hidden bg-cover bg-center text-white pt-16 pb-16"
+                    :style="{
+                        backgroundImage: `url(${heroSlidesToShow[heroCurrentSlide].image})`,
+                    }"
+                >
                 <video
                     v-if="heroBackgroundVideo"
                     :src="heroBackgroundVideo"
@@ -431,10 +655,13 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                                     Mekodonia Home Connect
                                 </p>
                                 <h1 class="mt-2 text-3xl font-extrabold leading-snug text-white md:text-4xl">
-                                    {{ heroSlides[heroCurrentSlide].title }}
+                                    {{ heroSlidesToShow[heroCurrentSlide].title }}
                                 </h1>
                                 <p class="mt-2 text-sm leading-relaxed text-slate-100 md:text-base">
-                                    {{ heroSlides[heroCurrentSlide].description }}
+                                    {{ heroSlidesToShow[heroCurrentSlide].description }}
+                                </p>
+                                <p class="mt-4 text-sm text-indigo-100">
+                                    Expert caregivers and donors unite here—every pledge is tracked, acknowledged, and reported.
                                 </p>
                             </div>
                             <div class="flex flex-col gap-3 md:items-end">
@@ -442,14 +669,15 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                                     @click="handleHeroCTA"
                                     class="w-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-3 text-sm font-semibold uppercase tracking-[0.35em] text-white shadow-lg transition hover:scale-[1.01] hover:from-indigo-600 hover:to-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                                 >
-                                    {{ heroSlides[heroCurrentSlide].cta_text }}
+                                    {{ heroSlidesToShow[heroCurrentSlide].cta_text }}
                                 </button>
-                                <Link
-                                    href="#how-it-works"
+                                <button
+                                    type="button"
                                     class="w-full rounded-full border border-white/30 px-6 py-3 text-sm font-semibold uppercase tracking-[0.35em] text-white/90 shadow-lg transition hover:bg-white/10 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                                    @click="scrollToAnchor('#how-it-works')"
                                 >
                                     Learn More
-                                </Link>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -478,31 +706,91 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                                 Browse Elders
                             </button>
                             <Link
-                                :href="guestDonationHref"
+                                :href="guestMealDonationHref"
                                 class="rounded-full border border-white/60 px-3 py-1 text-[10px] uppercase text-white transition hover:bg-white/20"
                             >
                                 Donate a Meal
                             </Link>
                         </div>
                     </div>
+                    <div
+                        v-if="hasActiveFilters"
+                        class="relative z-10 mt-3 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-white"
+                    >
+                        <span class="text-white/70">Filtered by</span>
+                        <span
+                            v-for="filter in activeFilterBadges"
+                            :key="filter"
+                            class="rounded-full border border-white/40 bg-white/10 px-3 py-1 text-[9px] text-white/90"
+                        >
+                            {{ filter }}
+                        </span>
+                        <button
+                            type="button"
+                            @click="clearFilters"
+                            class="rounded-full border border-white/60 px-3 py-1 text-[10px] uppercase text-white transition hover:bg-white/20"
+                        >
+                            Clear
+                        </button>
+                    </div>
                 </div>
                 <!-- Slider Indicators -->
                 <div
                     class="absolute bottom-6 left-0 right-0 z-10 flex justify-center gap-2"
                 >
-                    <button
-                        v-for="(_, index) in heroSlides"
-                        :key="`dot-${index}`"
-                        @click="goToHeroSlide(index)"
-                        :class="[
-                            'h-3 w-3 rounded-full border border-white/40 transition-colors duration-300',
-                            heroCurrentSlide === index
-                                ? 'bg-indigo-400'
-                                : 'bg-white/30 hover:bg-white/60',
-                        ]"
-                    ></button>
+                            <button
+                                v-for="(_, index) in heroSlidesToShow"
+                                :key="`dot-${index}`"
+                                @click="goToHeroSlide(index)"
+                                :class="[
+                                    'h-3 w-3 rounded-full border border-white/40 transition-colors duration-300',
+                                    heroCurrentSlide === index
+                                        ? 'bg-indigo-400'
+                                        : 'bg-white/30 hover:bg-white/60',
+                                ]"
+                            ></button>
+                </div>
+                </section>
+
+                <section
+                    id="trust-signals"
+                    class="bg-white py-16 dark:bg-gray-900"
+                >
+                <div class="container mx-auto px-4 text-center">
+                    <p class="text-sm uppercase tracking-[0.5em] text-indigo-600 dark:text-indigo-300">
+                        Trust Signals
+                    </p>
+                    <h2 class="mt-2 text-3xl font-bold text-gray-800 dark:text-white md:text-4xl">
+                        How we safeguard every sponsorship
+                    </h2>
+                    <p class="mx-auto mt-3 max-w-3xl text-lg text-gray-600 dark:text-gray-300">
+                        Every donor and elder benefit from a structured care pathway—the cards below explain how we verify, track, and support each relationship.
+                    </p>
+                    <div class="mt-10 grid gap-6 md:grid-cols-3">
+                        <article
+                            v-for="highlight in heroHighlights"
+                            :key="highlight.title"
+                            class="flex flex-col gap-3 rounded-3xl border border-gray-100/70 bg-gray-50 p-6 text-left shadow-sm transition hover:border-indigo-400 hover:bg-white dark:border-gray-800 dark:bg-gray-800/60"
+                        >
+                            <div
+                                class="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-200"
+                            >
+                                <component :is="highlight.icon" class="size-6" />
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                                {{ highlight.title }}
+                            </h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                {{ highlight.description }}
+                            </p>
+                            <p class="text-xs uppercase tracking-[0.4em] text-gray-500 dark:text-gray-400">
+                                Verified quality signal
+                            </p>
+                        </article>
+                    </div>
                 </div>
             </section>
+            </template>
             <section
                 v-else
                 class="flex h-[60vh] items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-600 px-6 text-center text-white"
@@ -515,53 +803,102 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                 </div>
             </section>
 
-            <!-- How It Works Section -->
+            <!-- How Support Works Section -->
             <section id="how-it-works" class="bg-white py-20 dark:bg-gray-900">
                 <div class="container mx-auto px-4 text-center">
                     <h2 class="text-4xl font-bold text-gray-800 dark:text-white">
-                        How It Works
+                        How Support Happens
                     </h2>
                     <p class="mx-auto mt-4 max-w-3xl text-xl text-gray-600 dark:text-gray-300">
-                        Connecting hearts, changing lives. Simple steps to make
-                        a profound difference.
+                        Every gift passes through a caring workflow so donors can see impact, staff can coordinate care, and elders receive essentials on time.
                     </p>
                     <div class="mt-12 grid grid-cols-1 gap-10 md:grid-cols-3">
                         <div class="flex flex-col items-center rounded-xl bg-gray-50 p-6 shadow-lg dark:bg-gray-800">
                             <div class="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
                                 <User class="size-10" />
                             </div>
-                            <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">
-                                1. Browse Elders
-                            </h3>
-                            <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                Discover compelling stories of elders needing
-                                support. Filter by location, needs, and more.
-                            </p>
+                                <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">
+                                    1. Discover the need
+                                </h3>
+                                <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                    Explore elder stories curated by the care team, with priority levels, photos, and needs transparent at a glance.
+                                </p>
                         </div>
                         <div class="flex flex-col items-center rounded-xl bg-gray-50 p-6 shadow-lg dark:bg-gray-800">
                             <div class="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300">
                                 <Heart class="size-10" />
                             </div>
-                            <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">
-                                2. Choose Your Relationship
-                            </h3>
-                            <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                Decide how you want to support – as a Father,
-                                Mother, Brother, or Sister.
-                            </p>
+                                <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">
+                                    2. Match by relationship
+                                </h3>
+                                <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                    Pick the role that resonates—father, mother, brother, or sister—and we frame the needs list around that commitment.
+                                </p>
                         </div>
                         <div class="flex flex-col items-center rounded-xl bg-gray-50 p-6 shadow-lg dark:bg-gray-800">
                             <div class="flex h-20 w-20 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
                                 <DollarSign class="size-10" />
                             </div>
-                            <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">
-                                3. Make an Impact
-                            </h3>
-                            <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                Set up monthly contributions or make a one-time
-                                donation easily and securely.
-                            </p>
+                                <h3 class="mt-6 text-xl font-semibold text-gray-800 dark:text-white">
+                                    3. Confirm the commitment
+                                </h3>
+                                <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                    Complete the guest donation form with the elder, relationship, and payment details—you’ll receive a receipt plus thank-you updates.
+                                </p>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Donor Journey Section -->
+            <section
+                id="guest-journey"
+                class="bg-gradient-to-br from-indigo-50 to-purple-50 py-16 text-gray-900 dark:bg-gray-900/50 dark:text-white"
+            >
+            <div class="container mx-auto px-4 text-center">
+                    <p class="text-sm uppercase tracking-[0.6em] text-indigo-600 dark:text-indigo-300">
+                        Donor Journey
+                    </p>
+                    <h2 class="mt-2 text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
+                        From curiosity to commitment
+                    </h2>
+                    <p class="mx-auto mt-3 max-w-3xl text-lg text-gray-600 dark:text-gray-300">
+                        Narrow the search, read the stories, and finalize your pledge with confidence—our team handles the rest.
+                    </p>
+                    <div class="mt-10 grid gap-6 md:grid-cols-3">
+                        <article
+                            v-for="step in donorJourneySteps"
+                            :key="step.title"
+                            class="flex flex-col gap-3 rounded-3xl border border-indigo-100/50 bg-white/70 p-6 shadow-sm transition hover:border-indigo-400 hover:shadow-lg dark:border-indigo-900/60 dark:bg-gray-900/60"
+                        >
+                            <div
+                                class="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-200"
+                            >
+                                <component :is="step.icon" class="size-6" />
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                                {{ step.title }}
+                            </h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                {{ step.description }}
+                            </p>
+                        </article>
+                    </div>
+                    <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+                        <button
+                            type="button"
+                            class="rounded-full bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                            @click="scrollToAnchor('#elders-gallery')"
+                        >
+                            Browse Elders
+                        </button>
+                        <button
+                            type="button"
+                            class="rounded-full border border-indigo-600 px-6 py-3 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-300 dark:text-indigo-200 dark:hover:bg-indigo-500/20"
+                            @click="openRelationshipGallery('father')"
+                        >
+                            Find a Father
+                        </button>
                     </div>
                 </div>
             </section>
@@ -603,7 +940,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                                 <button
                                     type="button"
                                     class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-                                    @click="openRelationshipGallery(card.relation)"
+                                    @click="openGuestDonation(card.relation)"
                                 >
                                     Start as a {{ card.label }}
                                 </button>
@@ -621,13 +958,16 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
             </section>
 
             <!-- Impact Section (Live Counters) -->
-            <section class="bg-gray-50 py-20 dark:bg-gray-800">
+            <section class="bg-gradient-to-br from-indigo-100 via-white to-purple-100 py-24 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
                 <div class="container mx-auto px-4 text-center">
-                    <h2 class="text-4xl font-bold text-gray-800 dark:text-white">
-                        Our Impact
+                    <p class="text-sm uppercase tracking-[0.4em] text-indigo-600 dark:text-indigo-300">
+                        Impact Metrics
+                    </p>
+                    <h2 class="mt-2 text-4xl font-extrabold text-gray-900 dark:text-white">
+                        Stories told through numbers
                     </h2>
-                    <p class="mt-4 text-xl text-gray-600 dark:text-gray-300">
-                        Numbers that speak volumes about our mission.
+                    <p class="mx-auto mt-4 max-w-3xl text-lg text-gray-600 dark:text-gray-300">
+                        Every stat below represents elders supported, visits completed, and the hearts that keep Mekodonia Home Connect alive.
                     </p>
                     <div class="mt-12 grid grid-cols-1 gap-10 md:grid-cols-3">
                         <div
@@ -736,6 +1076,17 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                             >
                                 Filter
                             </button>
+                            <button
+                                type="button"
+                                @click="toggleIncludeFunded"
+                                class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-indigo-500 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300 dark:hover:text-indigo-300"
+                            >
+                                {{
+                                    includeFunded
+                                        ? 'Hide fully funded elders'
+                                        : 'Show fully funded elders'
+                                }}
+                            </button>
                         </div>
                     </div>
                     <div
@@ -747,12 +1098,13 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                                 :key="elder.id"
                                 class="overflow-hidden rounded-xl bg-white shadow-lg transition-all hover:shadow-xl dark:bg-gray-700"
                             >
-                                <Link
-                                    :href="
-                                        route('elders.public.show', elder.id, false)
-                                    "
-                                >
-                                    <div class="relative h-56 w-full">
+                                <div class="relative h-56 w-full">
+                                    <Link
+                                        :href="
+                                            route('elders.public.show', elder.id, false)
+                                        "
+                                        class="relative block h-full w-full"
+                                    >
                                         <img
                                             :src="elder.profile_photo_url"
                                             class="h-full w-full object-cover"
@@ -763,20 +1115,96 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                                         >
                                             {{ elder.priority_level }}
                                         </div>
-                                    </div>
-                                    <div class="p-6">
+                                    </Link>
+                                </div>
+                                <div class="p-6">
+                                    <Link
+                                        :href="
+                                            route('elders.public.show', elder.id, false)
+                                        "
+                                        class="inline-block"
+                                    >
                                         <h3
                                             class="text-2xl font-bold text-gray-900 dark:text-white"
                                         >
                                             {{ elder.full_name }}
                                         </h3>
-                                        <p
-                                            class="mt-2 text-gray-600 dark:text-gray-300"
+                                    </Link>
+                                    <p
+                                        class="mt-2 text-gray-600 dark:text-gray-300"
+                                    >
+                                        Awaiting your compassionate support.
+                                    </p>
+                                    <div
+                                        v-if="
+                                            elder.relationship_type ||
+                                            elder.branch_name ||
+                                            elder.location
+                                        "
+                                        class="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500 dark:text-slate-400"
+                                    >
+                                        <span
+                                            v-if="elder.relationship_type"
+                                            class="font-semibold text-slate-700 dark:text-white"
                                         >
-                                            Awaiting your compassionate support.
-                                        </p>
-                                        <div
-                                            class="mt-4 inline-flex items-center text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+                                            Relationship:
+                                            {{
+                                                formatRelationshipLabel(
+                                                    elder.relationship_type,
+                                                )
+                                            }}
+                                        </span>
+                                        <span
+                                            v-if="elder.branch_name"
+                                            class="font-semibold text-slate-700 dark:text-white"
+                                        >
+                                            Branch: {{ elder.branch_name }}
+                                        </span>
+                                        <span
+                                            v-if="elder.location"
+                                            class="font-semibold text-slate-700 dark:text-white"
+                                            >
+                                            Location: {{ elder.location }}
+                                        </span>
+                                    </div>
+                                    <div
+                                        v-if="elder.funding_goal && elder.funding_goal > 0"
+                                        class="mt-3 space-y-2 text-[11px] text-slate-500 dark:text-slate-400"
+                                    >
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-semibold text-slate-700 dark:text-white">
+                                                Goal: {{ formatCurrency(elder.funding_goal) }}
+                                            </span>
+                                            <span
+                                                :class="elder.is_funded
+                                                    ? 'text-emerald-600 dark:text-emerald-300'
+                                                    : 'text-amber-600 dark:text-amber-300'"
+                                            >
+                                                {{
+                                                    elder.is_funded
+                                                        ? 'Fully funded'
+                                                        : `Remaining ${formatCurrency(
+                                                              elder.funding_needed,
+                                                          )}`
+                                                }}
+                                            </span>
+                                        </div>
+                                        <div class="relative h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                                            <div
+                                                class="h-full rounded-full transition-all"
+                                                :class="elder.is_funded
+                                                    ? 'bg-emerald-500 dark:bg-emerald-400'
+                                                    : 'bg-indigo-500 dark:bg-indigo-400'"
+                                                :style="{ width: progressPercent(elder.funding_progress) }"
+                                            ></div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex flex-wrap items-center gap-3">
+                                        <Link
+                                            :href="
+                                                route('elders.public.show', elder.id, false)
+                                            "
+                                            class="inline-flex items-center text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
                                         >
                                             Learn More
                                             <svg
@@ -793,9 +1221,23 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                                                     d="M9 5l7 7-7 7"
                                                 />
                                             </svg>
-                                        </div>
+                                        </Link>
+                                        <button
+                                            type="button"
+                                            @click="openSponsorThisElder(elder)"
+                                            :disabled="elder.is_funded"
+                                            class="rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20 disabled:border-slate-200 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
+                                        >
+                                            {{ elder.is_funded ? 'Campaign closed' : 'Sponsor this elder' }}
+                                        </button>
+                                        <p
+                                            v-if="elder.is_funded"
+                                            class="text-[11px] font-semibold text-emerald-600"
+                                        >
+                                            Campaign goal achieved—thank you!
+                                        </p>
                                     </div>
-                                </Link>
+                                </div>
                             </div>
                         </template>
                         <p
@@ -947,7 +1389,7 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                             Sponsor an Elder
                         </Link>
                         <Link
-                            :href="route('guest.donation', undefined, false)"
+                            :href="route('guest.donation', { mode: 'one_time' }, false)"
                             class="rounded-lg border border-white px-8 py-3 text-lg font-semibold text-white shadow-lg transition-all hover:bg-white/20 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:outline-none"
                         >
                             Make a One-Time Donation

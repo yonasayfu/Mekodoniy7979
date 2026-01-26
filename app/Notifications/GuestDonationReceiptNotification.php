@@ -15,7 +15,9 @@ class GuestDonationReceiptNotification extends Notification implements ShouldQue
 
     public function __construct(
         protected Donation $donation,
-        protected string $receiptPath
+        protected string $receiptPath,
+        protected ?string $memberPassword = null,
+        protected ?string $memberPhone = null
     ) {
     }
 
@@ -35,6 +37,14 @@ class GuestDonationReceiptNotification extends Notification implements ShouldQue
             ->line('We have recorded your guest donation of ' . number_format((float) $this->donation->amount, 2) . ' ETB.')
             ->line('Please keep the attached receipt for your records.')
             ->line('We will notify you once the branch confirms the funds.');
+
+        if ($this->memberPhone && $this->memberPassword) {
+            $message->line(sprintf(
+                'You can log in with phone %s and the password %s to manage your donations or update the pledge.',
+                $this->memberPhone,
+                $this->memberPassword,
+            ));
+        }
 
         if (Storage::disk('public')->exists($this->receiptPath)) {
             $message->attach(

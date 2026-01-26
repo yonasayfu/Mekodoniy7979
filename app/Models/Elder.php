@@ -30,6 +30,7 @@ class Elder extends Model
         'bio',
         'profile_picture_path',
         'priority_level',
+        'relationship_type',
         'health_status',
         'special_needs',
         'monthly_expenses',
@@ -42,6 +43,8 @@ class Elder extends Model
         'current_status',
         'admitted_at',
         'deceased_at',
+        'funding_goal',
+        'funding_received',
     ];
 
     protected $casts = [
@@ -49,6 +52,8 @@ class Elder extends Model
         'admitted_at' => 'datetime',
         'deceased_at' => 'datetime',
         'consent_received_at' => 'datetime',
+        'funding_goal' => 'integer',
+        'funding_received' => 'integer',
     ];
 
     protected $appends = [

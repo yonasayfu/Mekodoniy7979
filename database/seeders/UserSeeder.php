@@ -30,8 +30,8 @@ class UserSeeder extends Seeder
         // Create additional staff users for testing
         $this->createAdditionalStaff();
         
-        // Create 10 random users
-        User::factory(10)->create();
+        // Create 2 random users
+        User::factory(2)->create();
     }
 
     /**
@@ -52,39 +52,12 @@ class UserSeeder extends Seeder
                 'status' => 'active',
             ],
             [
-                'role' => 'Reporting Analyst',
-                'name' => 'Riley Readonly',
-                'email' => 'readonly@example.com',
-                'first_name' => 'Riley',
-                'last_name' => 'Readonly',
-                'job_title' => 'Reporting Analyst',
-                'status' => 'inactive',
-            ],
-            [
-                'role' => 'Manager',
-                'name' => 'Maya Manager',
-                'email' => 'manager@example.com',
-                'first_name' => 'Maya',
-                'last_name' => 'Manager',
-                'job_title' => 'Branch Manager',
-                'status' => 'active',
-            ],
-            [
                 'role' => 'Finance Officer',
                 'name' => 'Faith Finance',
                 'email' => 'finance@example.com',
                 'first_name' => 'Faith',
                 'last_name' => 'Finance',
                 'job_title' => 'Finance Officer',
-                'status' => 'active',
-            ],
-            [
-                'role' => 'Field Officer',
-                'name' => 'Felix Field',
-                'email' => 'field@example.com',
-                'first_name' => 'Felix',
-                'last_name' => 'Field',
-                'job_title' => 'Field Officer',
                 'status' => 'active',
             ],
         ];

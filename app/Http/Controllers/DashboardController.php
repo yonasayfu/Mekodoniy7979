@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\DataExport;
+use App\Models\Donation;
 use App\Models\Elder; // Added for Elders metrics
 use App\Models\Sponsorship; // Added for Sponsorships metrics
 use App\Models\Staff;
@@ -11,6 +12,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -147,12 +149,66 @@ class DashboardController extends Controller
                 ];
             });
 
+        $pendingGuestDonations = Donation::with(['elder', 'branch'])
+            ->whereIn('donation_type', ['guest_sponsorship', 'guest_meal'])
+            ->whereIn('payment_status', ['pending', 'awaiting_receipt'])
+            ->latest('created_at')
+            ->take(3)
+            ->get()
+            ->map(function (Donation $donation) {
+                return [
+                    'id' => $donation->id,
+                    'amount' => $donation->amount,
+                    'currency' => $donation->currency,
+                    'guest_name' => $donation->guest_name,
+                    'guest_email' => $donation->guest_email,
+                    'guest_phone' => $donation->guest_phone,
+                    'payment_gateway' => $donation->payment_gateway,
+                    'payment_status' => $donation->payment_status,
+                    'cadence' => $donation->cadence,
+                    'deduction_schedule' => $donation->deduction_schedule,
+                    'payment_reference' => $donation->payment_reference,
+                    'payment_id' => $donation->payment_id,
+                    'elder_name' => optional($donation->elder)->name,
+                    'elder_relationship' => optional($donation->elder)->relationship_type,
+                    'branch_name' => optional($donation->branch)->name,
+                    'donation_type' => $donation->donation_type,
+                    'notes' => $donation->notes,
+                    'receipt_url' => $donation->receipt_path
+                        ? Storage::disk('public')->url($donation->receipt_path)
+                        : null,
+                    'mandate_url' => $donation->mandate_path
+                        ? Storage::disk('public')->url($donation->mandate_path)
+                        : null,
+                    'elder_funding_goal' => optional($donation->elder)->funding_goal,
+                    'elder_funding_received' => optional($donation->elder)->funding_received,
+                    'elder_funding_progress' => optional($donation->elder)->funding_goal
+                        ? min(
+                            (optional($donation->elder)->funding_received ?? 0) /
+                                optional($donation->elder)->funding_goal,
+                            1,
+                        )
+                        : 0,
+                    'elder_is_funded' => optional($donation->elder)->funding_goal > 0
+                        && (optional($donation->elder)->funding_received ?? 0)
+                            >= optional($donation->elder)->funding_goal,
+                    'elder_funding_needed' => max(
+                        optional($donation->elder)->funding_goal - (
+                            optional($donation->elder)->funding_received ?? 0
+                        ),
+                        0,
+                    ),
+                    'created_at' => optional($donation->created_at)->toDateTimeString(),
+                ];
+            });
+
         return Inertia::render('Dashboard', [
             'metrics' => $metrics,
             'staffTrend' => $staffTrend,
             'maintenance' => [], // TODO: Implement maintenance data
             'recentExports' => $recentExports,
             'recentActivity' => $recentActivity,
+            'pendingGuestDonations' => $pendingGuestDonations,
         ]);
     }
 
@@ -216,4 +272,3 @@ class DashboardController extends Controller
 
 
 }
-

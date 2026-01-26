@@ -10,15 +10,67 @@
             <p class="max-w-3xl text-lg text-slate-200">
                 {{ descriptionText }}
             </p>
-            <div class="space-y-3 rounded-3xl border border-white/30 bg-white/5 p-6 text-left shadow-2xl backdrop-blur">
-                <p class="text-xs uppercase tracking-[0.5em] text-slate-400">Donation summary</p>
-                <p class="text-xl font-semibold text-white">
-                    {{ giverLabel }}<span v-if="donation.amount"> — {{ donation.amount }} ETB</span>
-                </p>
-                <p class="text-sm text-slate-300">
-                    {{ reminderText }}
-                </p>
-            </div>
+                <div class="space-y-3 rounded-3xl border border-white/30 bg-white/5 p-6 text-left shadow-2xl backdrop-blur">
+                    <p class="text-xs uppercase tracking-[0.5em] text-slate-400">Donation summary</p>
+                    <p class="text-xl font-semibold text-white">
+                        {{ giverLabel }}<span v-if="donation.amount"> — {{ donation.amount }} ETB</span>
+                    </p>
+                    <p class="text-sm text-slate-300">
+                        {{ reminderText }}
+                    </p>
+                    <div class="space-y-1 text-[11px] text-slate-300">
+                    <p>{{ paymentGatewayLabel }}</p>
+                    <p>{{ paymentStatusLabel }}</p>
+                    <p>
+                        Reference:
+                        <span class="font-semibold text-white">{{ paymentReferenceLabel }}</span>
+                    </p>
+                    <p>
+                        Cadence:
+                        <span class="font-semibold text-white">{{ cadenceLabel }}</span>
+                    </p>
+                    <p>
+                        {{ scheduleLabel }}
+                    </p>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        <a
+                        v-if="receiptLink"
+                        :href="receiptLink"
+                        target="_blank"
+                        rel="noreferrer"
+                        class="rounded-full border border-indigo-200 px-3 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:border-indigo-500/40 dark:text-indigo-200"
+                    >
+                        Download receipt
+                    </a>
+                    <a
+                        v-if="mandateLink"
+                        :href="mandateLink"
+                        target="_blank"
+                        rel="noreferrer"
+                        class="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-100"
+                    >
+                        Download mandate
+                        </a>
+                    </div>
+                    <div
+                        v-if="memberCredentials"
+                        class="mt-4 rounded-2xl border border-indigo-300/60 bg-indigo-50/60 p-3 text-xs text-slate-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-100"
+                    >
+                        <p class="font-semibold text-slate-900 dark:text-white">
+                            Your member access
+                        </p>
+                        <p>
+                            Phone: <strong>{{ memberCredentials.phone }}</strong>
+                        </p>
+                        <p>
+                            Password: <strong>{{ memberCredentials.password }}</strong>
+                        </p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-300">
+                            Use these credentials to log in and review your history.
+                        </p>
+                    </div>
+                </div>
             <div class="grid gap-4 text-left text-sm sm:grid-cols-2">
                 <div class="rounded-2xl border border-white/20 bg-white/5 p-4">
                     <p class="font-semibold text-white">{{ instructionsTitle }}</p>
@@ -33,7 +85,17 @@
                     </ul>
                 </div>
             </div>
-            <div class="flex flex-wrap justify-center gap-3 pt-4 text-sm">
+            <p class="mt-4 text-[11px] text-slate-300">
+                Prefer to check all your gifts before editing a pledge? Visit
+                <Link
+                    :href="myDonationsLink"
+                    class="font-semibold text-indigo-200 hover:text-white"
+                >
+                    My donations
+                </Link>
+                for a full archive.
+            </p>
+            <div class="flex flex-wrap justify-center gap-3 pt-2 text-sm">
                 <Link
                     :href="route('home')"
                     class="rounded-full border border-white/50 px-6 py-3 text-sm font-semibold uppercase tracking-[0.4em] text-white transition hover:border-white hover:bg-white/10"
@@ -46,6 +108,19 @@
                     class="rounded-full border border-indigo-400 px-6 py-3 text-sm font-semibold uppercase tracking-[0.4em] text-indigo-200 transition hover:border-indigo-100 hover:bg-indigo-500/30"
                 >
                     Record another one-day meal
+                </Link>
+                <Link
+                    v-if="managePledgeLink"
+                    :href="managePledgeLink"
+                    class="rounded-full border border-emerald-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.4em] text-emerald-200 transition hover:border-emerald-400 hover:bg-emerald-500/20"
+                >
+                    Manage my pledge
+                </Link>
+                <Link
+                    :href="myDonationsLink"
+                    class="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold uppercase tracking-[0.4em] text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                >
+                    View my donations
                 </Link>
             </div>
         </main>
@@ -63,11 +138,61 @@ const props = defineProps<{
         amount: number | null;
         elder_name: string | null;
         mode?: 'one_time' | 'sponsorship';
+        cadence?: string | null;
+        payment_gateway?: string | null;
+        payment_status?: string | null;
+        deduction_schedule?: string | null;
+        receipt_url?: string | null;
+        mandate_url?: string | null;
+        payment_reference?: string | null;
+        donor_name?: string | null;
+        donor_phone?: string | null;
+        member_login_phone?: string | null;
+        member_password?: string | null;
     };
 }>();
 
 const mode = computed(() => props.donation.mode ?? 'sponsorship');
 const isOneTime = computed(() => mode.value === 'one_time');
+
+const cadenceLabel = computed(() => {
+    if (props.donation.cadence) {
+        return props.donation.cadence;
+    }
+
+    return isOneTime.value ? 'One-time' : 'Recurring';
+});
+
+const scheduleLabel = computed(() =>
+    props.donation.deduction_schedule
+        ? props.donation.deduction_schedule
+        : 'Schedule will follow once the finance team confirms the transfer.',
+);
+
+const paymentGatewayLabel = computed(() => {
+    if (!props.donation.payment_gateway) {
+        return 'Payment method: not specified';
+    }
+
+    return props.donation.payment_gateway === 'telebirr'
+        ? 'Telebirr transfer'
+        : props.donation.payment_gateway === 'bank'
+        ? 'Bank transfer'
+        : props.donation.payment_gateway;
+});
+
+const paymentStatusLabel = computed(() =>
+    props.donation.payment_status
+        ? `Status: ${props.donation.payment_status}`
+        : 'Status: pending confirmation',
+);
+
+const paymentReferenceLabel = computed(
+    () => props.donation.payment_reference ?? 'Awaiting reference link from Telebirr or bank transfer',
+);
+
+const receiptLink = computed(() => props.donation.receipt_url ?? null);
+const mandateLink = computed(() => props.donation.mandate_url ?? null);
 
 const giverLabel = computed(() => {
     if (isOneTime.value) {
@@ -133,4 +258,25 @@ const donorTips = computed(() =>
               'Save this page or bookmark the welcome screen to log back in anytime.',
           ],
 );
+
+const memberCredentials = computed(() => {
+    if (!props.donation.member_login_phone || !props.donation.member_password) {
+        return null;
+    }
+
+    return {
+        phone: props.donation.member_login_phone,
+        password: props.donation.member_password,
+    };
+});
+
+const managePledgeLink = computed(() =>
+    props.donation.payment_reference
+        ? `${route('guest.donation', undefined, false)}?payment_reference=${encodeURIComponent(
+              props.donation.payment_reference,
+          )}`
+        : null,
+);
+
+const myDonationsLink = route('donors.donations.index', undefined, false);
 </script>

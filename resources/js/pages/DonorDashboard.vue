@@ -3,7 +3,6 @@ import ActivityTimeline from '@/components/ActivityTimeline.vue'; // Import Acti
 import GlassButton from '@/components/GlassButton.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import MetricCard from '@/components/dashboard/MetricCard.vue';
-import { useRoute } from '@/composables/useRoute';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItemType } from '@/types';
@@ -15,6 +14,7 @@ import {
     HeartHandshake,
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import { route } from 'ziggy-js';
 
 type Metric = {
     label: string;
@@ -63,7 +63,7 @@ const props = defineProps<{
         causer: string | null;
         occurred_at: string | null;
     }>;
-    timelineEvents: TimelineEntry[]; // New prop for timeline events
+    timelineEvents: TimelineEntry[];
     pendingProposals: Array<{
         id: number;
         elder: ElderSummary | null;
@@ -80,9 +80,8 @@ const props = defineProps<{
         download_url: string;
         generated_at?: string | null;
     }>;
+    latestDonationReference?: string | null;
 }>();
-
-const route = useRoute();
 
 const breadcrumbs: BreadcrumbItemType[] = [
     {
@@ -149,6 +148,16 @@ const isProcessingAction = (proposalId: number, action: 'accept' | 'decline') =>
         proposalActionType.value === action
     );
 };
+
+const guestDonationBase = route('guest.donation', undefined, false);
+const myDonationsUrl = route('donors.donations.index', undefined, false);
+const managePledgeUrl = computed(() =>
+    props.latestDonationReference
+        ? `${guestDonationBase}?payment_reference=${encodeURIComponent(
+              props.latestDonationReference,
+          )}`
+        : null,
+);
 </script>
 
 <template>
@@ -167,6 +176,46 @@ const isProcessingAction = (proposalId: number, action: 'accept' | 'decline') =>
                     :icon="metric.icon ?? undefined"
                 />
             </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/60">
+                <div>
+                    <p class="text-sm font-semibold text-slate-900 dark:text-white">Manage your giving</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        Every pledge you record becomes a private member record—use the links to revisit receipts, edit cadences, and stay on top of transfers.
+                    </p>
+                </div>
+            <div class="flex flex-wrap gap-3">
+                <Link
+                    class="rounded-full border border-indigo-500/70 bg-indigo-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-700 transition hover:bg-indigo-500/20 dark:border-indigo-400/60 dark:bg-indigo-500/10 dark:text-indigo-200"
+                    :href="myDonationsUrl"
+                >
+                    View my donations
+                </Link>
+                    <Link
+                        v-if="managePledgeUrl"
+                        class="rounded-full border border-emerald-500/70 bg-emerald-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700 transition hover:bg-emerald-500/20 dark:border-emerald-400/60 dark:bg-emerald-500/10 dark:text-emerald-200"
+                        :href="managePledgeUrl"
+                    >
+                        Manage my latest pledge
+                    </Link>
+                    <span
+                        v-else
+                        class="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500"
+                    >
+                        Record a donation to unlock edits
+                    </span>
+                </div>
+            </div>
+            <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                Prefer to browse everything you’ve given? Open
+                <Link
+                    :href="myDonationsUrl"
+                    class="font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+                >
+                    My donations
+                </Link>
+                for a full history before you manage a pledge.
+            </p>
 
             <GlassCard variant="lite" padding="p-0">
                 <div

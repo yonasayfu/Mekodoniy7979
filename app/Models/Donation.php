@@ -39,6 +39,12 @@ class Donation extends Model
         'kyc_verified_at',
         'kyc_document_path',
         'kyc_review_notes',
+        'cadence',
+        'recurrence_duration',
+        'deduction_schedule',
+        'payment_status',
+        'mandate_path',
+        'payment_reference',
     ];
 
     /**

@@ -132,6 +132,12 @@ const sidebarGroups = computed(() => {
                         permission: null,
                     },
                     {
+                        title: 'My donations',
+                        href: '/donors/donations',
+                        icon: 'ClipboardList',
+                        permission: null,
+                    },
+                    {
                         title: 'Impact Reports',
                         href: '/reports',
                         icon: 'ScrollText',

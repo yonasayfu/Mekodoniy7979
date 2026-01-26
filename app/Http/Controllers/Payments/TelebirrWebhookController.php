@@ -9,6 +9,7 @@ use App\Models\PaymentTransaction;
 use App\Models\User;
 use App\Notifications\DonationCompletedStaffNotification;
 use App\Notifications\DonationReceiptNotification;
+use App\Notifications\GuestDonationReceiptNotification;
 use App\Support\Services\DonationReceiptService;
 use App\Support\Services\TelebirrService;
 use App\Support\Services\TimelineEventService;
@@ -63,7 +64,10 @@ class TelebirrWebhookController extends Controller
             );
 
             $donation = Donation::where('payment_gateway', 'telebirr')
-                ->where('payment_id', $gatewayReference)
+                ->where(function ($query) use ($gatewayReference) {
+                    $query->where('payment_id', $gatewayReference)
+                        ->orWhere('payment_reference', $gatewayReference);
+                })
                 ->latest('id')
                 ->first();
 
@@ -94,42 +98,74 @@ class TelebirrWebhookController extends Controller
                 return;
             }
 
-            if ($effectiveStatus === 'completed' && $donation->status !== 'completed') {
-                $donation->update([
-                    'status' => 'completed',
-                ]);
+            $alreadyFinalDonation = in_array(
+                $donation->status,
+                ['completed', 'confirmed'],
+                true,
+            );
 
-                RefreshCountersJob::dispatch($donation->user_id);
+            if ($effectiveStatus === 'completed' && ! $alreadyFinalDonation) {
+                $updateData = [
+                    'payment_status' => 'confirmed',
+                    'payment_id' => $gatewayTransactionId ?: $donation->payment_id,
+                ];
 
-                $recipients = User::role('Super Admin')->get();
-                if ($donation->branch_id) {
-                    $branchRecipients = User::where('branch_id', $donation->branch_id)
-                        ->role(['Branch Admin', 'Admin'])
-                        ->get();
-                    $recipients = $recipients->merge($branchRecipients)->unique('id');
-                }
+                if (str_starts_with($donation->donation_type, 'guest_')) {
+                    $updateData['status'] = $donation->donation_type === 'guest_sponsorship'
+                        ? 'confirmed'
+                        : 'completed';
 
-                Notification::send($recipients, new DonationCompletedStaffNotification($donation));
+                    $donation->update($updateData);
 
-                if ($donation->user) {
-                    $donation->loadMissing('user');
                     $receiptPath = $receiptService->ensureReceipt($donation);
-                    $donation->user->notify(new DonationReceiptNotification($donation, $receiptPath));
-                }
+                    if ($donation->guest_email && $receiptPath) {
+                        Notification::route('mail', $donation->guest_email)
+                            ->notify(new GuestDonationReceiptNotification($donation, $receiptPath, null, null));
+                    }
+                } else {
+                    $updateData['status'] = 'completed';
+                    $donation->update($updateData);
 
-                $timelineEventService->createEvent(
-                    'donation',
-                    'Donation of ' . $donation->amount . ' ' . ($donation->currency ?? 'ETB') . ' received via Telebirr.',
-                    Carbon::now(),
-                    $donation->user,
-                    $donation->elder,
-                    $donation
-                );
+                    if ($donation->user_id) {
+                        RefreshCountersJob::dispatch($donation->user_id);
+                    }
+
+                    $recipients = User::role('Super Admin')->get();
+                    if ($donation->branch_id) {
+                        $branchRecipients = User::where('branch_id', $donation->branch_id)
+                            ->role(['Branch Admin', 'Admin'])
+                            ->get();
+                        $recipients = $recipients->merge($branchRecipients)->unique('id');
+                    }
+
+                    Notification::send(
+                        $recipients,
+                        new DonationCompletedStaffNotification($donation),
+                    );
+
+                    if ($donation->user) {
+                        $donation->loadMissing('user');
+                        $receiptPath = $receiptService->ensureReceipt($donation);
+                        $donation->user->notify(
+                            new DonationReceiptNotification($donation, $receiptPath),
+                        );
+                    }
+
+                    $timelineEventService->createEvent(
+                        'donation',
+                        'Donation of ' . $donation->amount . ' ' . ($donation->currency ?? 'ETB') . ' received via Telebirr.',
+                        Carbon::now(),
+                        $donation->user,
+                        $donation->elder,
+                        $donation,
+                    );
+                }
             }
 
             if ($effectiveStatus === 'failed' && $donation->status !== 'failed') {
                 $donation->update([
                     'status' => 'failed',
+                    'payment_status' => 'failed',
                 ]);
             }
         });

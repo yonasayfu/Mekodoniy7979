@@ -36,6 +36,14 @@ class WelcomeController extends Controller
         // Fetch data for "Elder Gallery"
         $eldersQuery = Elder::query();
 
+        $includeFunded = $request->boolean('include_funded');
+        if (! $includeFunded) {
+            $eldersQuery->where(function ($query) {
+                $query->where('funding_goal', 0)
+                    ->orWhereColumn('funding_received', '<', 'funding_goal');
+            });
+        }
+
         // Apply filters based on request
         if ($request->has('priority')) {
             $eldersQuery->where('priority_level', $request->input('priority'));
@@ -48,13 +56,38 @@ class WelcomeController extends Controller
         }
         // Add more filters (e.g., region/branch, age) as needed
 
-        $elders = $eldersQuery->select('id', 'first_name', 'last_name', 'profile_picture_path', 'priority_level')
+        $elders = $eldersQuery
+            ->with('branch:id,name')
+            ->select(
+                'id',
+                'first_name',
+                'last_name',
+                'profile_picture_path',
+                'priority_level',
+                'relationship_type',
+                'branch_id',
+                'city',
+                'country',
+            )
             ->paginate(12) // Paginate results for the gallery
             ->through(fn (Elder $elder) => [
                 'id' => $elder->id,
                 'full_name' => $elder->first_name . ' ' . $elder->last_name,
                 'profile_photo_url' => $elder->profile_photo_url,
                 'priority_level' => $elder->priority_level,
+                'relationship_type' => $elder->relationship_type,
+                'branch_name' => optional($elder->branch)->name,
+                'location' => $elder->city && $elder->country
+                    ? "{$elder->city}, {$elder->country}"
+                    : $elder->country,
+                'funding_goal' => $elder->funding_goal,
+                'funding_received' => $elder->funding_received,
+                'funding_progress' => $elder->funding_goal
+                    ? min($elder->funding_received / $elder->funding_goal, 1)
+                    : 0,
+                'funding_needed' => max($elder->funding_goal - $elder->funding_received, 0),
+                'is_funded' => $elder->funding_goal > 0
+                    && $elder->funding_received >= $elder->funding_goal,
             ]);
 
         $heroSlides = \App\Models\HeroSlide::where('is_active', true)
@@ -76,7 +109,10 @@ class WelcomeController extends Controller
                 'visitsThisMonth' => $liveCounters['visitsThisMonth'] ?? 0,
             ],
             'eldersGallery' => $elders,
-            'filters' => $request->only(['priority', 'gender', 'relationship']),
+            'filters' => array_merge(
+                $request->only(['priority', 'gender', 'relationship']),
+                ['include_funded' => $includeFunded],
+            ),
             'heroSlides' => $heroSlides,
         ]);
     }

@@ -123,7 +123,7 @@ onMounted(() => {
     if (featuredMatches.value.length > 1) {
         setInterval(nextSlide, 5000);
     }
-]);
+});
 
 const monthlyTrend = computed(() => props.stats.monthly_trend ?? []);
 const trendMaxValue = computed(() => {
@@ -279,24 +279,6 @@ const missedPayments = computed(() => props.stats.missed_payments ?? 0);
                         </div>
                     </GlassCard>
                 </Link>
-            </div>
-                    <div
-                        class="inline-flex size-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-100"
-                    >
-                        <component :is="card.icon" class="size-5" />
-                    </div>
-                    <div>
-                        <p class="text-xs uppercase tracking-[0.35em] text-slate-500">
-                            {{ card.label }}
-                        </p>
-                        <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                            {{ card.value }}
-                        </p>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">
-                            {{ card.caption }}
-                        </p>
-                    </div>
-                </GlassCard>
             </div>
 
             <div class="grid gap-4 lg:grid-cols-3">

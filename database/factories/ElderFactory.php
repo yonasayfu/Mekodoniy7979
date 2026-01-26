@@ -25,6 +25,9 @@ class ElderFactory extends Factory
      */
     public function definition(): array
     {
+        $goal = $this->faker->numberBetween(3500, 9000);
+        $received = $this->faker->numberBetween(0, $goal);
+
         return [
             'branch_id' => Branch::inRandomOrder()->first()->id,
             'first_name' => $this->faker->firstName(),
@@ -41,6 +44,8 @@ class ElderFactory extends Factory
             'health_status' => $this->faker->randomElement(['good', 'fair', 'poor', 'critical']),
             'special_needs' => $this->faker->optional(0.3)->sentence(),
             'monthly_expenses' => $this->faker->numberBetween(500, 2000),
+            'funding_goal' => $goal,
+            'funding_received' => $received,
             'video_url' => null,
             'health_conditions' => implode(', ', $this->faker->randomElements(['Hypertension', 'Diabetes', 'Arthritis', 'Dementia', 'Osteoporosis'], $this->faker->numberBetween(1, 3))),
             'sponsorship_status' => $this->faker->randomElement(['sponsored', 'not_sponsored', 'partially_sponsored']),

@@ -29,6 +29,7 @@ use App\Http\Controllers\SponsorshipController;
 use App\Http\Controllers\SponsorshipProposalController;
 use App\Http\Controllers\VisitController;
 use App\Http\Controllers\DonorDashboardController;
+use App\Http\Controllers\DonorDonationController;
 use App\Http\Controllers\DonorOnboardingController;
 use App\Http\Controllers\AnnualReportController;
 use App\Http\Controllers\ReportController;
@@ -37,6 +38,7 @@ use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\PaymentReconciliationController;
 use App\Http\Controllers\Payments\TelebirrWebhookController;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Inertia\Inertia;
@@ -61,6 +63,25 @@ Route::post('payments/telebirr/webhook', TelebirrWebhookController::class)
     ->withoutMiddleware([ValidateCsrfToken::class])
     ->name('payments.telebirr.webhook');
 
+Route::get('pdf/mandate-template.pdf', function () {
+    $data = [
+        'date' => now()->format('d M Y'),
+        'reference' => 'MHC-GUEST-0001',
+        'donor_name' => '_________________________________________',
+        'donor_phone' => '(+251) __________________________',
+        'donor_email' => '_________________________________________',
+        'relationship' => 'Father / Mother / Brother / Sister',
+        'amount' => '__________',
+        'cadence' => 'Monthly',
+        'schedule' => 'Deduct on the 1st of every month',
+        'signature_line' => 'Donor signature',
+        'branch_signature' => 'Branch witness',
+    ];
+
+    $pdf = Pdf::loadView('pdf.mandate-template', $data);
+    return $pdf->inline('mandate-template.pdf');
+});
+
 Route::get('elders/{elder}/public', [ElderController::class, 'publicShow'])
     ->name('elders.public.show');
 
@@ -75,6 +96,9 @@ Route::get('/guest-donation', function () {
         ],
     ]);
 })->name('guest.donation');
+
+Route::middleware(['auth'])->get('/donations/prefill', [DonationController::class, 'prefillGuest'])
+    ->name('donations.prefill');
 
 Route::get('/thank-you', [\App\Http\Controllers\ThankYouController::class, 'show'])->name('thank-you');
 
@@ -133,6 +157,9 @@ Route::middleware('auth')->group(function () {
 
             Route::get('donors/dashboard', [DonorDashboardController::class, 'index'])
                 ->name('donors.dashboard');
+
+            Route::get('donors/donations', [DonorDonationController::class, 'index'])
+                ->name('donors.donations.index');
 
             Route::get('annual-reports/{annualReport}', [AnnualReportController::class, 'download'])
                 ->name('annual-reports.download');
@@ -285,6 +312,8 @@ Route::middleware('auth')->group(function () {
                 ->name('reconciliation.items.match');
             Route::post('reconciliation/{import}/items/{item}/ignore', [PaymentReconciliationController::class, 'ignoreItem'])
                 ->name('reconciliation.items.ignore');
+            Route::post('donations/{donation}/confirm', [DonationController::class, 'confirmGuestPayment'])
+                ->name('donations.confirm');
         });
 
         Route::resource('campaigns', CampaignController::class)

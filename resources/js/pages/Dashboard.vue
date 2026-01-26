@@ -2,9 +2,10 @@
 import MetricCard from '@/components/dashboard/MetricCard.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useRoute } from '@/composables/useRoute';
+import http from '@/lib/http';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItemType } from '@/types';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     CalendarClock,
     ClipboardList,
@@ -14,7 +15,7 @@ import {
     UserCheck,
     Users,
 } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 type Metric = {
     label: string;
@@ -37,10 +38,47 @@ type QuickLink = {
     tone: string;
 };
 
+type PendingGuestDonation = {
+    id: number;
+    amount: number;
+    currency: string | null;
+    guest_name: string | null;
+    guest_email: string | null;
+    guest_phone: string | null;
+    payment_gateway: string | null;
+    payment_status: string | null;
+    cadence: string | null;
+    deduction_schedule: string | null;
+    payment_reference: string | null;
+    payment_id: string | null;
+    elder_name: string | null;
+    elder_relationship: string | null;
+    branch_name: string | null;
+    donation_type: string | null;
+    notes: string | null;
+    receipt_url: string | null;
+    mandate_url: string | null;
+    created_at: string | null;
+};
+
 const route = useRoute();
+const currencyFormatter = new Intl.NumberFormat('en-ET', {
+    style: 'currency',
+    currency: 'ETB',
+    maximumFractionDigits: 0,
+});
+
+const formatCurrency = (value?: number | null) =>
+    currencyFormatter.format(value ?? 0);
+
+const progressPercent = (value?: number) => {
+    const percent = Math.round((value ?? 0) * 100);
+    return `${Math.min(100, Math.max(0, percent))}%`;
+};
 
 const props = defineProps<{
     metrics: Metric[];
+    pendingGuestDonations: PendingGuestDonation[];
 }>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
@@ -138,6 +176,47 @@ const metricCards = computed(() =>
         (metric) => !highlightLabels.has(metric.label),
     ),
 );
+
+const pendingGuestDonationList = computed(
+    (): PendingGuestDonation[] => props.pendingGuestDonations ?? [],
+);
+
+const hasPendingGuestDonations = computed(
+    () => pendingGuestDonationList.value.length > 0,
+);
+
+const confirmingDonationId = ref<number | null>(null);
+
+const formatTimestamp = (value?: string | null) => {
+    if (!value) {
+        return 'Unknown time';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+    return date.toLocaleString();
+};
+
+const confirmGuestDonation = async (donation: PendingGuestDonation) => {
+    if (!donation.id) {
+        return;
+    }
+
+    confirmingDonationId.value = donation.id;
+
+    try {
+        await http.post(
+            route('donations.confirm', { donation: donation.id }),
+            { send_receipt: true },
+        );
+        router.reload({ only: ['pendingGuestDonations'] });
+    } catch (error) {
+        console.error('Error confirming guest donation', error);
+    } finally {
+        confirmingDonationId.value = null;
+    }
+};
 </script>
 
 <template>
@@ -215,6 +294,150 @@ const metricCards = computed(() =>
                     </div>
                 </Link>
             </div>
+
+            <section class="mt-6 rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/60">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.4em] text-slate-500 dark:text-slate-400">
+                            Pending guest donations
+                        </p>
+                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-200">
+                            Download receipts/mandates and confirm verified transfers without leaving the dashboard.
+                        </p>
+                    </div>
+                    <span
+                        v-if="hasPendingGuestDonations"
+                        class="text-xs font-semibold uppercase tracking-[0.4em] text-indigo-600 dark:text-indigo-300"
+                    >
+                        {{ pendingGuestDonationList.length }} unresolved
+                    </span>
+                </div>
+
+                <div class="mt-6 space-y-4">
+                    <div
+                        v-if="!hasPendingGuestDonations"
+                        class="rounded-2xl border border-dashed border-slate-200/60 bg-slate-50 px-4 py-6 text-sm text-slate-500 dark:border-slate-800/60 dark:bg-slate-900/40 dark:text-slate-400"
+                    >
+                        No pending guest donations—everything is reconciled.
+                    </div>
+
+                    <article
+                        v-for="donation in pendingGuestDonationList"
+                        :key="donation.id"
+                        class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/60"
+                    >
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                    {{ donation.guest_name || 'Anonymous guest' }}
+                                    <span class="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
+                                        {{ donation.amount }} {{ donation.currency ?? 'ETB' }}
+                                    </span>
+                                </p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    {{ donation.elder_name ? `Elder: ${donation.elder_name}` : 'No elder assigned yet' }}
+                                    <span v-if="donation.elder_relationship">
+                                        • Relationship: {{ donation.elder_relationship }}
+                                    </span>
+                                </p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    Branch:
+                                    <span class="font-semibold text-slate-700 dark:text-white">
+                                        {{ donation.branch_name ?? 'Branch unknown' }}
+                                    </span>
+                                </p>
+                            </div>
+                            <span
+                                class="rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em]"
+                                :class="donation.payment_status === 'confirmed'
+                                    ? 'border-emerald-500 bg-emerald-50 text-emerald-600 dark:border-emerald-400/70 dark:bg-emerald-500/10'
+                                    : 'border-amber-400 bg-amber-50 text-amber-700 dark:border-amber-500/60 dark:bg-amber-600/20'"
+                            >
+                                {{ (donation.payment_status ?? 'pending').toUpperCase() }}
+                            </span>
+                        </div>
+
+                        <p class="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
+                            Gateway: {{ donation.payment_gateway ?? 'Manual' }} • Reference:
+                            <span class="font-semibold text-slate-700 dark:text-white">
+                                {{ donation.payment_reference ?? 'N/A' }}
+                            </span>
+                        </p>
+                        <div
+                            v-if="donation.elder_funding_goal"
+                            class="mt-3 space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400"
+                        >
+                            <div class="flex items-center justify-between">
+                                <span>Campaign goal</span>
+                                <span class="font-semibold text-slate-900 dark:text-white">
+                                    {{ formatCurrency(donation.elder_funding_goal) }}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Remaining</span>
+                                <span
+                                    :class="donation.elder_is_funded
+                                        ? 'text-emerald-600 dark:text-emerald-200'
+                                        : 'text-amber-600 dark:text-amber-200'"
+                                >
+                                    {{
+                                        donation.elder_is_funded
+                                            ? 'Fully funded'
+                                            : formatCurrency(donation.elder_funding_needed)
+                                    }}
+                                </span>
+                            </div>
+                            <div class="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                                <div
+                                    class="h-full rounded-full bg-indigo-500 dark:bg-indigo-400"
+                                    :style="{ width: progressPercent(donation.elder_funding_progress) }"
+                                ></div>
+                            </div>
+                        </div>
+                        <p v-if="donation.cadence" class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Cadence: {{ donation.cadence }}
+                            <span v-if="donation.deduction_schedule">• {{ donation.deduction_schedule }}</span>
+                        </p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Recorded: {{ formatTimestamp(donation.created_at) }}
+                        </p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <a
+                                v-if="donation.receipt_url"
+                                :href="donation.receipt_url"
+                                target="_blank"
+                                rel="noreferrer"
+                                class="rounded-full border border-indigo-200 px-3 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:border-indigo-500/50 dark:text-indigo-200"
+                            >
+                                View receipt
+                            </a>
+                            <a
+                                v-if="donation.mandate_url"
+                                :href="donation.mandate_url"
+                                target="_blank"
+                                rel="noreferrer"
+                                class="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-100"
+                            >
+                                Download mandate
+                            </a>
+                            <button
+                                type="button"
+                                class="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:bg-slate-300 disabled:text-slate-500"
+                                :disabled="
+                                    donation.payment_status === 'confirmed' ||
+                                    confirmingDonationId === donation.id
+                                "
+                                @click.prevent="confirmGuestDonation(donation)"
+                            >
+                                {{ confirmingDonationId === donation.id ? 'Confirming...' : 'Confirm payment' }}
+                            </button>
+                        </div>
+                        <p v-if="donation.notes" class="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
+                            Notes: {{ donation.notes }}
+                        </p>
+                    </article>
+                </div>
+            </section>
         </div>
     </AppLayout>
 </template>

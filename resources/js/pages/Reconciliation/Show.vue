@@ -6,6 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, reactive } from 'vue';
+import { route } from 'ziggy-js';
 
 type ImportDetails = {
     id: number;
@@ -41,7 +42,7 @@ type ReconciliationItem = {
 };
 
 const props = defineProps<{
-    import: ImportDetails;
+    reconciliationImport: ImportDetails;
     items: {
         data: ReconciliationItem[];
         links: Array<{ url: string | null; label: string; active: boolean }>;
@@ -61,7 +62,7 @@ const statusOptions = computed(() => [
 
 const filterByStatus = (status: string | null) => {
     router.get(
-        route('reconciliation.show', props.import.id),
+        route('reconciliation.show', props.reconciliationImport.id),
         { status },
         { preserveScroll: true, preserveState: true },
     );
@@ -81,7 +82,7 @@ const formFor = (itemId: number) => {
 
 const submitMatch = (itemId: number) => {
     const form = formFor(itemId);
-    form.post(route('reconciliation.items.match', { import: props.import.id, item: itemId }), {
+    form.post(route('reconciliation.items.match', { import: props.reconciliationImport.id, item: itemId }), {
         preserveScroll: true,
         onSuccess: () => form.reset(),
     });
@@ -89,7 +90,7 @@ const submitMatch = (itemId: number) => {
 
 const ignoreItem = (itemId: number) => {
     router.post(
-        route('reconciliation.items.ignore', { import: props.import.id, item: itemId }),
+        route('reconciliation.items.ignore', { import: props.reconciliationImport.id, item: itemId }),
         {},
         { preserveScroll: true },
     );
@@ -110,42 +111,42 @@ const statusPillClass = (status: string) => {
 </script>
 
 <template>
-    <Head :title="`Reconciliation – Import #${import.id}`" />
+    <Head :title="`Reconciliation – Import #${reconciliationImport.id}`" />
 
-    <AppLayout
-        :breadcrumbs="[
-            { title: 'Reconciliation', href: route('reconciliation.index') },
-            { title: `Import ${import.id}`, href: route('reconciliation.show', import.id) },
-        ]"
-    >
+            <AppLayout
+                :breadcrumbs="[
+                    { title: 'Reconciliation', href: route('reconciliation.index') },
+                    { title: `Import ${reconciliationImport.id}`, href: route('reconciliation.show', reconciliationImport.id) },
+                ]"
+            >
         <div class="flex flex-1 flex-col gap-6 px-4 py-6 lg:px-8">
             <GlassCard>
                 <div class="grid gap-4 md:grid-cols-4">
                     <div>
                         <p class="text-xs uppercase tracking-wide text-slate-500">Gateway</p>
                         <p class="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                            {{ import.gateway }}
+                            {{ reconciliationImport.gateway }}
                         </p>
                     </div>
                     <div>
                         <p class="text-xs uppercase tracking-wide text-slate-500">Branch</p>
                         <p class="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                            {{ import.branch?.name ?? 'All' }}
+                            {{ reconciliationImport.branch?.name ?? 'All' }}
                         </p>
                     </div>
                     <div>
                         <p class="text-xs uppercase tracking-wide text-slate-500">Uploaded by</p>
                         <p class="text-sm text-slate-700 dark:text-slate-200">
-                            {{ import.uploaded_by?.name ?? 'Unknown' }}
+                            {{ reconciliationImport.uploaded_by?.name ?? 'Unknown' }}
                         </p>
                         <p class="text-xs text-slate-500">
-                            {{ import.created_at ?? '—' }}
+                                    {{ reconciliationImport.created_at ?? '—' }}
                         </p>
                     </div>
                     <div>
                         <p class="text-xs uppercase tracking-wide text-slate-500">Rows</p>
                         <p class="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                            {{ import.matched_rows }} matched / {{ import.unmatched_rows }} unmatched
+                            {{ reconciliationImport.matched_rows }} matched / {{ reconciliationImport.unmatched_rows }} unmatched
                         </p>
                     </div>
                 </div>

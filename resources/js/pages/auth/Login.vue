@@ -80,16 +80,16 @@ watch(isDialogOpen, (open) => {
         >
             <div class="grid gap-6">
                 <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
+                    <Label for="email">Email or phone</Label>
                     <Input
                         id="email"
-                        type="email"
+                        type="text"
                         name="email"
                         required
                         autofocus
                         :tabindex="1"
                         autocomplete="email"
-                        placeholder="email@example.com"
+                        placeholder="email@example.com or +251 ..."
                     />
                     <InputError :message="errors.email" />
                 </div>

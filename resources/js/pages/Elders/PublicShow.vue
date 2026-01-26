@@ -18,11 +18,22 @@ const props = defineProps<{
         branch: {
             name: string;
         };
+        funding_goal?: number | null;
+        funding_received?: number | null;
     };
 }>();
 
 const donationHref = route('guest.donation', undefined, false);
 const homeHref = route('home', undefined, false);
+
+const currencyFormatter = new Intl.NumberFormat('en-ET', {
+    style: 'currency',
+    currency: 'ETB',
+    maximumFractionDigits: 0,
+});
+
+const formatCurrency = (value?: number | null) =>
+    currencyFormatter.format(value ?? 0);
 
 const priorityChip = computed(() => {
     const level = props.elder.priority_level?.toLowerCase() ?? 'medium';
@@ -45,6 +56,23 @@ const priorityChip = computed(() => {
         map[level] ?? map.medium
     );
 });
+
+const fundingGoal = computed(() => props.elder.funding_goal ?? 0);
+const fundingReceived = computed(() => props.elder.funding_received ?? 0);
+const fundingProgress = computed(() => {
+    const goal = fundingGoal.value;
+    if (goal === 0) {
+        return 0;
+    }
+    return Math.min(fundingReceived.value / goal, 1);
+});
+const fundingNeeded = computed(() => Math.max(fundingGoal.value - fundingReceived.value, 0));
+const isFunded = computed(() => fundingGoal.value > 0 && fundingReceived.value >= fundingGoal.value);
+
+const progressPercent = (value?: number) => {
+    const percent = Math.round((value ?? 0) * 100);
+    return `${Math.min(100, Math.max(0, percent))}%`;
+};
 </script>
 
 <template>
@@ -138,6 +166,38 @@ const priorityChip = computed(() => {
                                 </div>
                             </section>
 
+                            <section v-if="fundingGoal > 0" class="space-y-3">
+                                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+                                    Campaign progress
+                                </h3>
+                                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40">
+                                    <div class="flex items-center justify-between text-xs uppercase tracking-[0.4em] text-slate-500 dark:text-slate-400">
+                                        <span>Goal</span>
+                                        <span class="font-semibold text-slate-900 dark:text-white">
+                                            {{ formatCurrency(fundingGoal) }}
+                                        </span>
+                                    </div>
+                                    <div class="mt-2 flex items-center justify-between text-xs">
+                                        <span class="text-slate-500 dark:text-slate-400">Remaining</span>
+                                        <span
+                                            :class="isFunded ? 'text-emerald-600 dark:text-emerald-300' : 'text-amber-600 dark:text-amber-300'"
+                                        >
+                                            {{
+                                                isFunded
+                                                    ? 'Fully funded'
+                                                    : formatCurrency(fundingNeeded)
+                                            }}
+                                        </span>
+                                    </div>
+                                    <div class="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                                        <div
+                                            class="h-full rounded-full bg-indigo-500 dark:bg-indigo-400"
+                                            :style="{ width: progressPercent(fundingProgress) }"
+                                        ></div>
+                                    </div>
+                                </div>
+                            </section>
+
                             <section>
                                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
                                     Choose How to Help
@@ -147,11 +207,18 @@ const priorityChip = computed(() => {
                                 </p>
                                 <div class="mt-4 flex flex-wrap gap-3">
                                     <Link
+                                        v-if="!isFunded"
                                         :href="`${donationHref}?elder_id=${props.elder.id}&mode=sponsorship`"
                                         class="inline-flex items-center rounded-full bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     >
                                         Sponsor {{ props.elder.first_name }}
                                     </Link>
+                                    <span
+                                        v-else
+                                        class="inline-flex items-center rounded-full border border-emerald-500/70 bg-emerald-50 px-6 py-3 text-sm font-semibold text-emerald-700"
+                                    >
+                                        Campaign goal achieved
+                                    </span>
                                     <Link
                                         :href="`${donationHref}?elder_id=${props.elder.id}&mode=one_time`"
                                         class="inline-flex items-center rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800/50"
