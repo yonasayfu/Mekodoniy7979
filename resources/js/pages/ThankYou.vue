@@ -110,13 +110,6 @@
                     Record another one-day meal
                 </Link>
                 <Link
-                    v-if="managePledgeLink"
-                    :href="managePledgeLink"
-                    class="rounded-full border border-emerald-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.4em] text-emerald-200 transition hover:border-emerald-400 hover:bg-emerald-500/20"
-                >
-                    Manage my pledge
-                </Link>
-                <Link
                     :href="myDonationsLink"
                     class="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold uppercase tracking-[0.4em] text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
                 >
@@ -269,14 +262,6 @@ const memberCredentials = computed(() => {
         password: props.donation.member_password,
     };
 });
-
-const managePledgeLink = computed(() =>
-    props.donation.payment_reference
-        ? `${route('guest.donation', undefined, false)}?payment_reference=${encodeURIComponent(
-              props.donation.payment_reference,
-          )}`
-        : null,
-);
 
 const myDonationsLink = route('donors.donations.index', undefined, false);
 </script>

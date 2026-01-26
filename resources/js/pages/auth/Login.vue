@@ -27,9 +27,16 @@ defineProps<{
 
 const isDialogOpen = ref(false);
 const isEmailSent = ref(false);
+const isDonorDialogOpen = ref(false);
 
 const forgotPasswordForm = useForm({
     email: '',
+});
+
+const donorQuickLoginForm = useForm({
+    email: '',
+    password: '',
+    remember: true,
 });
 
 const submitForgotPassword = () => {
@@ -54,6 +61,26 @@ watch(isDialogOpen, (open) => {
         forgotPasswordForm.reset();
         forgotPasswordForm.clearErrors();
         isEmailSent.value = false;
+    }
+});
+
+const closeDonorDialog = () => {
+    isDonorDialogOpen.value = false;
+};
+
+const submitDonorQuickLogin = () => {
+    donorQuickLoginForm.post(store.url(), {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeDonorDialog();
+        },
+    });
+};
+
+watch(isDonorDialogOpen, (open) => {
+    if (!open) {
+        donorQuickLoginForm.reset();
+        donorQuickLoginForm.clearErrors();
     }
 });
 </script>
@@ -248,5 +275,80 @@ watch(isDialogOpen, (open) => {
                 <TextLink :href="route('register')" :tabindex="5">Sign up</TextLink>
             </div>
         </Form>
+        <div class="mt-6 flex flex-col items-center gap-2 text-sm text-slate-500">
+            <Dialog v-model:open="isDonorDialogOpen">
+                <DialogTrigger as-child>
+                    <button
+                        type="button"
+                        class="rounded-full border border-slate-200 px-6 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                    >
+                        Are you a donor? Quick login
+                    </button>
+                </DialogTrigger>
+                <DialogContent class="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Donor quick login</DialogTitle>
+                        <DialogDescription>
+                            Enter the phone number and password provided on your thank-you page. We'll redirect you to your personal dashboard on success.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form
+                        @submit.prevent="submitDonorQuickLogin"
+                        class="space-y-4"
+                    >
+                        <div class="space-y-2">
+                            <Label for="donor-phone">Phone or email</Label>
+                            <Input
+                                id="donor-phone"
+                                v-model="donorQuickLoginForm.email"
+                                type="text"
+                                placeholder="+251 9..."
+                                :disabled="donorQuickLoginForm.processing"
+                            />
+                            <InputError
+                                :message="donorQuickLoginForm.errors.email"
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <Label for="donor-password">Password</Label>
+                            <Input
+                                id="donor-password"
+                                v-model="donorQuickLoginForm.password"
+                                type="password"
+                                placeholder="••••••••"
+                                :disabled="donorQuickLoginForm.processing"
+                            />
+                            <InputError
+                                :message="donorQuickLoginForm.errors.password"
+                            />
+                        </div>
+                        <div class="flex gap-2">
+                            <Button
+                                type="submit"
+                                class="flex-1"
+                                :disabled="donorQuickLoginForm.processing"
+                            >
+                                <LoaderCircle
+                                    v-if="donorQuickLoginForm.processing"
+                                    class="mr-2 h-4 w-4 animate-spin"
+                                />
+                                Continue to dashboard
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                @click="closeDonorDialog"
+                                :disabled="donorQuickLoginForm.processing"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+            <p class="text-xs text-slate-400">
+                Use this if you already have a donor account (phone/password shown on your thank-you receipt). Once logged in you'll see your dashboard, donation history, and manage links.
+            </p>
+        </div>
     </AuthBase>
 </template>

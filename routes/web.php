@@ -79,7 +79,7 @@ Route::get('pdf/mandate-template.pdf', function () {
     ];
 
     $pdf = Pdf::loadView('pdf.mandate-template', $data);
-    return $pdf->inline('mandate-template.pdf');
+    return $pdf->stream('mandate-template.pdf');
 });
 
 Route::get('elders/{elder}/public', [ElderController::class, 'publicShow'])

@@ -80,7 +80,6 @@ const props = defineProps<{
         download_url: string;
         generated_at?: string | null;
     }>;
-    latestDonationReference?: string | null;
 }>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
@@ -149,15 +148,7 @@ const isProcessingAction = (proposalId: number, action: 'accept' | 'decline') =>
     );
 };
 
-const guestDonationBase = route('guest.donation', undefined, false);
 const myDonationsUrl = route('donors.donations.index', undefined, false);
-const managePledgeUrl = computed(() =>
-    props.latestDonationReference
-        ? `${guestDonationBase}?payment_reference=${encodeURIComponent(
-              props.latestDonationReference,
-          )}`
-        : null,
-);
 </script>
 
 <template>
@@ -184,37 +175,24 @@ const managePledgeUrl = computed(() =>
                         Every pledge you record becomes a private member record—use the links to revisit receipts, edit cadences, and stay on top of transfers.
                     </p>
                 </div>
-            <div class="flex flex-wrap gap-3">
-                <Link
-                    class="rounded-full border border-indigo-500/70 bg-indigo-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-700 transition hover:bg-indigo-500/20 dark:border-indigo-400/60 dark:bg-indigo-500/10 dark:text-indigo-200"
-                    :href="myDonationsUrl"
-                >
-                    View my donations
-                </Link>
+                <div class="flex flex-wrap gap-3">
                     <Link
-                        v-if="managePledgeUrl"
-                        class="rounded-full border border-emerald-500/70 bg-emerald-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700 transition hover:bg-emerald-500/20 dark:border-emerald-400/60 dark:bg-emerald-500/10 dark:text-emerald-200"
-                        :href="managePledgeUrl"
+                        class="rounded-full border border-indigo-500/70 bg-indigo-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-700 transition hover:bg-indigo-500/20 dark:border-indigo-400/60 dark:bg-indigo-500/10 dark:text-indigo-200"
+                        :href="myDonationsUrl"
                     >
-                        Manage my latest pledge
+                        View my donations
                     </Link>
-                    <span
-                        v-else
-                        class="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500"
-                    >
-                        Record a donation to unlock edits
-                    </span>
                 </div>
             </div>
             <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                Prefer to browse everything you’ve given? Open
+                Prefer to browse everything you’ve given? Open the same
                 <Link
                     :href="myDonationsUrl"
                     class="font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
                 >
                     My donations
                 </Link>
-                for a full history before you manage a pledge.
+                page to review history and click “Manage pledge” for any gift.
             </p>
 
             <GlassCard variant="lite" padding="p-0">

@@ -92,17 +92,12 @@ class DonorDashboardController extends Controller
                 'generated_at' => $report->updated_at?->toDateTimeString(),
             ]);
 
-        $latestDonationReference = Donation::where('user_id', $user->id)
-            ->latest('created_at')
-            ->value('payment_reference');
-
         return Inertia::render('DonorDashboard', [
             'metrics' => $metrics,
             'myElders' => $myElders,
             'timelineEvents' => $timelineEvents,
             'pendingProposals' => $pendingProposals,
             'annualReports' => $annualReports,
-            'latestDonationReference' => $latestDonationReference,
         ]);
     }
 }

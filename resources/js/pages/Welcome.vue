@@ -752,6 +752,34 @@ const { count: visitsThisMonthCount, element: visitsThisMonthRef } =
                 </div>
                 </section>
 
+                <section class="bg-slate-900 py-10">
+                    <div class="container mx-auto px-4">
+                        <div class="flex flex-col gap-4 rounded-2xl bg-gradient-to-r from-indigo-900/90 via-slate-900 to-slate-900/80 p-6 text-center text-white shadow-2xl sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-xs uppercase tracking-[0.5em] text-indigo-300">Returning donors</p>
+                                <p class="mt-1 text-xl font-semibold">Log in to access your dashboard & giving history</p>
+                                <p class="text-sm text-indigo-200">
+                                    Use the phone number and password you received on your thank-you screen to view receipts, manage pledges, or email proofs.
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap items-center justify-center gap-3">
+                                <Link
+                                    class="rounded-full border border-white/60 px-5 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-white transition hover:border-indigo-200 hover:text-indigo-100"
+                                    :href="route('login', undefined, false)"
+                                >
+                                    Log in
+                                </Link>
+                                <Link
+                                    class="rounded-full border border-white/60 bg-white/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-white transition hover:border-white hover:bg-white/20"
+                                    :href="route('donors.donations.index', undefined, false)"
+                                >
+                                    View my donations
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section
                     id="trust-signals"
                     class="bg-white py-16 dark:bg-gray-900"
