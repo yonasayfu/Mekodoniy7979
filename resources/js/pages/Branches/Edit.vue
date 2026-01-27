@@ -35,6 +35,8 @@ const props = defineProps<{
     activity: ActivityEntry[];
 }>();
 
+const branch = props.branch;
+
 const form = useForm({
     name: props.branch.name,
     location: props.branch.location,
@@ -55,7 +57,8 @@ const submit = () => {
     <AppLayout
         :breadcrumbs="[
             { title: 'Branches', href: route('branches.index') },
-            { title: branch.name, href: route('branches.edit', branch.id) },
+            { title: branch.name, href: route('branches.show', branch.id) },
+            { title: 'Edit' },
         ]"
     >
         <div class="flex flex-col gap-4">

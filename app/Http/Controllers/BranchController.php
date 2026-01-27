@@ -85,11 +85,11 @@ class BranchController extends Controller
             'activity' => $branch->activityLogs,
             'breadcrumbs' => [
                 [
-                    'label' => 'Branches',
-                    'url' => route('branches.index'),
+                    'title' => 'Branches',
+                    'href' => route('branches.index'),
                 ],
                 [
-                    'label' => $branch->name,
+                    'title' => $branch->name,
                 ],
             ],
         ]);
@@ -107,15 +107,15 @@ class BranchController extends Controller
             'activity' => $branch->activityLogs,
             'breadcrumbs' => [
                 [
-                    'label' => 'Branches',
-                    'url' => route('branches.index'),
+                    'title' => 'Branches',
+                    'href' => route('branches.index'),
                 ],
                 [
-                    'label' => $branch->name,
-                    'url' => route('branches.show', $branch),
+                    'title' => $branch->name,
+                    'href' => route('branches.show', $branch),
                 ],
                 [
-                    'label' => 'Edit',
+                    'title' => 'Edit',
                 ],
             ],
         ]);

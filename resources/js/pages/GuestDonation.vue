@@ -205,20 +205,20 @@ const prefillDonationBase = async (reference: string) => {
                 ? 'sponsorship'
                 : 'one_time');
         donationMode.value = modeFromDonation as DonationMode;
-        form.setData('donation_mode', donationMode.value);
+        form.donation_mode = donationMode.value;
 
         selectedRelationship.value = normalizeRelationshipParam(
             donation.relationship,
         );
         selectedPaymentMethod.value = donation.payment_gateway ?? 'manual';
         selectedCadence.value = donation.cadence ?? initialCadence;
-        form.setData('amount', donation.amount ?? form.amount);
-        form.setData('notes', donation.notes ?? '');
-        form.setData('elder_id', donation.elder_id ?? form.elder_id);
-        form.setData('campaign_id', donation.campaign_id ?? form.campaign_id);
-        form.setData('existing_donation_id', donation.id);
+        form.amount = donation.amount ?? form.amount;
+        form.notes = donation.notes ?? '';
+        form.elder_id = donation.elder_id ?? form.elder_id;
+        form.campaign_id = donation.campaign_id ?? form.campaign_id;
+        form.existing_donation_id = donation.id;
         paymentReference.value = donation.payment_reference ?? paymentReference.value;
-        form.setData('payment_reference', paymentReference.value);
+        form.payment_reference = paymentReference.value;
     } catch (error) {
         prefillError.value = 'Unable to load your pledge.';
     } finally {
@@ -284,7 +284,7 @@ const activeCadenceDescription = computed(() => {
 const homeHref = route('home', undefined, false);
 
 watch(donationMode, (value) => {
-    form.setData('donation_mode', value);
+    form.donation_mode = value;
     if (value === 'sponsorship' && selectedCadence.value === 'one_time') {
         selectedCadence.value = 'monthly';
     }
@@ -294,39 +294,39 @@ watch(donationMode, (value) => {
 });
 
 watch(selectedRelationship, (value) => {
-    form.setData('relationship', value);
+    form.relationship = value;
 });
 
 watch(selectedPaymentMethod, (value) => {
-    form.setData('payment_gateway', value ?? 'manual');
+    form.payment_gateway = value ?? 'manual';
 });
 
 watch(selectedCadence, (value) => {
-    form.setData('cadence', value);
+    form.cadence = value;
 });
 
 watch(recurrenceDuration, (value) => {
-    form.setData('recurrence_duration', value ?? null);
+    form.recurrence_duration = value ?? null;
 });
 
 watch(deductionSchedule, (value) => {
-    form.setData('deduction_schedule', value);
+    form.deduction_schedule = value;
 });
 
 watch(paymentReference, (value) => {
-    form.setData('payment_reference', value ?? null);
+    form.payment_reference = value ?? null;
 });
 
 const handleReceiptUpload = (event: Event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0] ?? null;
-    form.setData('receipt', file);
+    form.receipt = file;
 };
 
 const handleMandateUpload = (event: Event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0] ?? null;
-    form.setData('mandate', file);
+    form.mandate = file;
 };
 
 const selectPaymentMethod = (method: PaymentMethod) => {
